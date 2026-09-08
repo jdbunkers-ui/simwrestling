@@ -114,7 +114,7 @@
         <td class="rank-number">${row.wrestler_rank}</td>
         <td>${SimSite.escape(row.weight_class_code)}</td>
         <td><a class="wrestler-link" href="${SimSite.profileUrl(row.wrestler_guid)}">${SimSite.escape(row.wrestler_name)}</a></td>
-        <td>${row.team_name ? SimSite.escape(row.team_name) : '<span class="subtext">—</span>'}</td>
+        <td>${row.team_name ? `<a class="table-link" href="${SimSite.teamUrl(row.team_guid)}">${SimSite.escape(row.team_name)}</a>` : '<span class="subtext">—</span>'}</td>
         <td>${row.state_code ? SimSite.escape(row.state_code) : '—'}</td>
         <td>${SimSite.escape(row.record_display)}</td>
         <td>${pct(row.win_pct)}</td>

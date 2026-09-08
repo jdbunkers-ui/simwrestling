@@ -1,9 +1,12 @@
 (async function () {
   const root = document.getElementById('match-root');
   const matchGuid = SimSite.query('match');
+  const requestedReturn = SimSite.query('return') || '';
+  const safeReturn = /^(dual|tournament|wrestler)\.html\?/.test(requestedReturn) ? requestedReturn : 'index.html';
+  const returnLabel = safeReturn.startsWith('dual.html') ? 'Return to Dual Meet' : safeReturn.startsWith('tournament.html') ? 'Return to Tournament' : safeReturn.startsWith('wrestler.html') ? 'Return to Wrestler' : 'Return to Rankings';
   if (!matchGuid) {
     SimSite.showError(root, 'No match was selected.');
-    root.insertAdjacentHTML('beforeend','<div class="match-return"><a class="secondary-button" href="index.html">Return to Rankings</a></div>');
+    root.insertAdjacentHTML('beforeend',`<div class="match-return"><a class="secondary-button" href="${SimSite.escape(safeReturn)}">${returnLabel}</a></div>`);
     return;
   }
   if (!window.SimSite.configuredOrMessage(root)) return;
@@ -27,7 +30,7 @@
         <div class="control-buttons"><button id="pause-button" type="button">Pause</button><button class="active" data-speed="1800" type="button">Review</button><button data-speed="700" type="button">Fast</button><button id="show-all" type="button">Show all</button></div>
       </div>
       <section class="pbp-feed" id="pbp-feed" aria-label="Match play-by-play"></section>
-      <div class="match-return"><a class="secondary-button" href="index.html">Return to Rankings</a></div>`;
+      <div class="match-return"><a class="secondary-button" href="${SimSite.escape(safeReturn)}">${returnLabel}</a></div>`;
 
     const feed = document.getElementById('pbp-feed');
     const period = document.getElementById('score-period');
@@ -93,6 +96,6 @@
     schedule();
   } catch (error) {
     SimSite.showError(root, error.message);
-    root.insertAdjacentHTML('beforeend','<div class="match-return"><a class="secondary-button" href="index.html">Return to Rankings</a></div>');
+    root.insertAdjacentHTML('beforeend',`<div class="match-return"><a class="secondary-button" href="${SimSite.escape(safeReturn)}">${returnLabel}</a></div>`);
   }
 })();

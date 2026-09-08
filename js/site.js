@@ -46,19 +46,32 @@
     profileUrl(guid) {
       return `wrestler.html?wrestler=${encodeURIComponent(guid)}`;
     },
-    matchUrl(guid) {
-      return `match.html?match=${encodeURIComponent(guid)}`;
+    teamUrl(guid) {
+      return `team.html?team=${encodeURIComponent(guid)}`;
     },
-    selectedWeight(rows) {
+    dualUrl(guid) {
+      return `dual.html?dual=${encodeURIComponent(guid)}`;
+    },
+    tournamentUrl(guid) {
+      return `tournament.html?tournament=${encodeURIComponent(guid)}`;
+    },
+    matchUrl(guid, returnTo = '') {
+      const url = `match.html?match=${encodeURIComponent(guid)}`;
+      return returnTo ? `${url}&return=${encodeURIComponent(returnTo)}` : url;
+    },
+    selectedWeight(rows, includeTeam = false) {
       const available = new Set(rows.map((row) => String(row.weight_class_code)));
       const requested = String(this.query('weight') || '').toUpperCase();
+      if (includeTeam && requested === 'TEAM') return 'TEAM';
       if (requested === 'PBP' || requested === 'ALL') return 'PBP';
       if (available.has(requested)) return requested;
       return available.has('125') ? '125' : 'PBP';
     },
-    weightOptions(rows) {
+    weightOptions(rows, includeTeam = false) {
       const available = new Set(rows.map((row) => String(row.weight_class_code)));
-      const options = ['<option value="PBP">PBP · All wrestlers</option>'];
+      const options = [];
+      if (includeTeam) options.push('<option value="TEAM">Team</option>');
+      options.push('<option value="PBP">Pound-for-Pound</option>');
       this.weightOrder.forEach((weight) => {
         if (available.has(weight)) {
           const label = weight === 'HWT' ? 'HWT' : `${weight} lb`;
@@ -89,6 +102,9 @@
     },
     number(value, digits = 0) {
       return Number(value || 0).toFixed(digits);
+    },
+    resultLabel(value) {
+      return String(value || '').replaceAll('_', ' ').toLocaleLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase());
     },
     showError(container, message) {
       container.innerHTML = `<div class="state-card error-state"><strong>We couldn't load this page.</strong><p>${this.escape(message)}</p></div>`;
