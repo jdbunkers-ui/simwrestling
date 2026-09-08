@@ -1,18 +1,26 @@
-# Sim Wrestling Public Prototype
+# Sim Wrestling Public Prototype v1.1.0
 
 This is a build-free static website. It uses plain HTML, CSS and JavaScript and reads the existing Supabase views and functions directly.
 
 ## Included pages
 
-- `index.html` — overall wrestler rankings with a weight-class filter
+- `index.html` — wrestler rankings with weight, state and type-ahead search filters
 - `wrestler.html?wrestler=<uuid>` — complete wrestler profile and opponent selection
-- `match.html?match=<uuid>` — progressive customer play-by-play
-- `statistics.html` — public media statistics
+- `match.html?match=<uuid>` — half-speed progressive customer play-by-play with scoring alerts
+- `statistics.html` — sortable public media statistics and per-match averages
 - `about.html` — attribute categories and rating-band definitions
 
 Every page uses the same navigation and the White Blaze Analytics footer.
 
-## 1. Install the public demo RPC
+## 1. Install the Supabase presentation update
+
+In the Supabase SQL Editor, first run:
+
+`supabase/College_Wrestling_Simulation_Public_Web_Enhancements_v1_1_0.sql`
+
+This adds the public directory and statistics views used by the updated pages and removes numeric attribute ranges from the anonymous wrestler-profile payload. It does not change the engine or delete data.
+
+If the public match endpoint has not already been installed, also run:
 
 In the Supabase SQL Editor, run:
 
@@ -20,14 +28,16 @@ In the Supabase SQL Editor, run:
 
 This creates `public.run_demo_match(uuid,uuid)`. It permits anonymous prototype matches, accepts only active wrestlers in the same weight class, and limits the demo to 60 requests per 10 minutes and 500 per rolling 24 hours.
 
-The rest of the site expects these previously installed objects:
+The site expects these objects:
 
-- `public.v_landing_wrestler_rankings`
-- `public.v_wrestler_media_statistics`
+- `public.v_public_wrestler_directory`
+- `public.v_public_wrestler_statistics`
 - `public.get_wrestler_profile(uuid)`
 - `public.v_customer_match_experience`
 
 ## 2. Connect Supabase
+
+If you are replacing files in the already-live GitHub repository, keep your existing working `js/config.js`; the packaged copy intentionally contains placeholders so a project key is never redistributed in the ZIP.
 
 Open `js/config.js` and replace:
 
@@ -63,9 +73,12 @@ js/
   statistics.js
 supabase/
   College_Wrestling_Simulation_Public_Demo_API_v1_0_0.sql
+  College_Wrestling_Simulation_Public_Web_Enhancements_v1_1_0.sql
 ```
 
 Commit the files to the `main` branch.
+
+The rankings and statistics pages default to 125 pounds. They also accept `?weight=165`, `?weight=HWT`, or `?weight=PBP`. The PBP value displays the pound-for-pound list across all weights.
 
 ## 4. Deploy through Vercel
 
