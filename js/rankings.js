@@ -1,18 +1,43 @@
 (async function () {
   const content = document.getElementById('rankings-content');
-  const filter = document.getElementById('weight-filter');
+  const weightFilter = document.getElementById('weight-filter');
+  const stateFilter = document.getElementById('state-filter');
+  const search = document.getElementById('ranking-search');
   const count = document.getElementById('ranking-count');
   if (!window.SimSite.configuredOrMessage(content)) return;
 
   let rankings = [];
+
+  function normalized(value) {
+    return String(value || '').trim().toLocaleLowerCase();
+  }
+
+  function visibleRows() {
+    const weight = weightFilter.value;
+    const state = stateFilter.value;
+    const phrase = normalized(search.value);
+    return rankings.filter((row) => {
+      const weightMatches = weight === 'PBP' || row.weight_class_code === weight;
+      const stateMatches = state === 'ALL' || row.state_code === state;
+      const textMatches = !phrase || normalized(`${row.wrestler_name} ${row.team_name || ''}`).includes(phrase);
+      return weightMatches && stateMatches && textMatches;
+    });
+  }
+
   function render() {
-    const weight = filter.value;
-    const rows = weight === 'ALL' ? rankings : rankings.filter((row) => row.weight_class_code === weight);
+    const rows = visibleRows();
     count.textContent = `${rows.length} wrestler${rows.length === 1 ? '' : 's'}`;
+    SimSite.syncFilters({
+      weight: weightFilter.value,
+      state: stateFilter.value,
+      q: search.value.trim()
+    });
+
     if (!rows.length) {
-      content.innerHTML = '<div class="state-card"><p>No wrestlers are available in this weight class.</p></div>';
+      content.innerHTML = '<div class="state-card"><p>No wrestlers match the selected filters.</p></div>';
       return;
     }
+
     content.innerHTML = `<div class="table-wrap"><table>
       <thead><tr><th>Rank</th><th>Weight</th><th>Wrestler</th><th>College team</th><th>Wins</th><th>Losses</th><th>Bonus %</th></tr></thead>
       <tbody>${rows.map((row) => `<tr>
@@ -28,10 +53,21 @@
 
   try {
     rankings = await SimApi.rankings();
-    const weights = [...new Set(rankings.map((row) => row.weight_class_code))];
-    filter.innerHTML = '<option value="ALL">All weights</option>' + weights.map((weight) => `<option value="${SimSite.escape(weight)}">${SimSite.escape(weight)} lb</option>`).join('');
-    filter.disabled = false;
-    filter.addEventListener('change', render);
+    weightFilter.innerHTML = SimSite.weightOptions(rankings);
+    weightFilter.value = SimSite.selectedWeight(rankings);
+
+    const states = SimSite.inventoryStates(rankings);
+    stateFilter.innerHTML = '<option value="ALL">All states</option>'
+      + states.map((state) => `<option value="${SimSite.escape(state)}">${SimSite.escape(state)}</option>`).join('');
+    const requestedState = String(SimSite.query('state') || '').toUpperCase();
+    stateFilter.value = states.includes(requestedState) ? requestedState : 'ALL';
+    search.value = SimSite.query('q') || '';
+
+    weightFilter.disabled = false;
+    stateFilter.disabled = !states.length;
+    weightFilter.addEventListener('change', render);
+    stateFilter.addEventListener('change', render);
+    search.addEventListener('input', render);
     render();
   } catch (error) {
     SimSite.showError(content, error.message);

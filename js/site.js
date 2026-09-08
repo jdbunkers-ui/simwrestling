@@ -34,6 +34,7 @@
   }
 
   window.SimSite = {
+    weightOrder: ['125','133','141','149','157','165','174','184','197','HWT'],
     escape(value) {
       return String(value ?? '').replace(/[&<>'"]/g, (character) => ({
         '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
@@ -47,6 +48,41 @@
     },
     matchUrl(guid) {
       return `match.html?match=${encodeURIComponent(guid)}`;
+    },
+    selectedWeight(rows) {
+      const available = new Set(rows.map((row) => String(row.weight_class_code)));
+      const requested = String(this.query('weight') || '').toUpperCase();
+      if (requested === 'PBP' || requested === 'ALL') return 'PBP';
+      if (available.has(requested)) return requested;
+      return available.has('125') ? '125' : 'PBP';
+    },
+    weightOptions(rows) {
+      const available = new Set(rows.map((row) => String(row.weight_class_code)));
+      const options = ['<option value="PBP">PBP · All wrestlers</option>'];
+      this.weightOrder.forEach((weight) => {
+        if (available.has(weight)) {
+          const label = weight === 'HWT' ? 'HWT' : `${weight} lb`;
+          options.push(`<option value="${this.escape(weight)}">${this.escape(label)}</option>`);
+        }
+      });
+      return options.join('');
+    },
+    inventoryStates(rows) {
+      return [...new Set(rows.map((row) => String(row.state_code || '').toUpperCase()).filter(Boolean))]
+        .sort((a, b) => a.localeCompare(b));
+    },
+    syncFilters(filters) {
+      const url = new URL(window.location.href);
+      Object.entries(filters).forEach(([name, value]) => {
+        const text = String(value || '').trim();
+        if (!text || (name === 'state' && text === 'ALL')) url.searchParams.delete(name);
+        else url.searchParams.set(name, text);
+      });
+      window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
+    },
+    duration(seconds) {
+      const total = Math.max(0, Math.round(Number(seconds || 0)));
+      return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
     },
     percent(value, digits = 1) {
       return `${(Number(value || 0) * 100).toFixed(digits)}%`;

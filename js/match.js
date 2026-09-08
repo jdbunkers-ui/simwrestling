@@ -24,7 +24,7 @@
       </section>
       <div class="playback-controls">
         <p>The completed match is being revealed at review speed.</p>
-        <div class="control-buttons"><button id="pause-button" type="button">Pause</button><button class="active" data-speed="900" type="button">Review</button><button data-speed="350" type="button">Fast</button><button id="show-all" type="button">Show all</button></div>
+        <div class="control-buttons"><button id="pause-button" type="button">Pause</button><button class="active" data-speed="1800" type="button">Review</button><button data-speed="700" type="button">Fast</button><button id="show-all" type="button">Show all</button></div>
       </div>
       <section class="pbp-feed" id="pbp-feed" aria-label="Match play-by-play"></section>
       <div class="match-return"><a class="secondary-button" href="index.html">Return to Rankings</a></div>`;
@@ -36,11 +36,23 @@
     const scoreTwo = document.getElementById('score-two');
     const eventNumber = document.getElementById('event-number');
     const pause = document.getElementById('pause-button');
-    let index = 0, delay = 900, timer = null, paused = false;
+    let index = 0, delay = 1800, timer = null, paused = false;
+
+    function flashScorer(element) {
+      const wrestler = element.closest('.score-wrestler');
+      wrestler.classList.remove('score-flash');
+      void wrestler.offsetWidth;
+      wrestler.classList.add('score-flash');
+      window.setTimeout(() => wrestler.classList.remove('score-flash'), 3000);
+    }
 
     function addEvent(event, eventIndex) {
       const final = eventIndex === events.length - 1;
-      feed.insertAdjacentHTML('beforeend', `<article class="pbp-event ${final ? 'final-event' : ''}">
+      const previous = eventIndex > 0 ? events[eventIndex - 1] : event;
+      const wrestlerOneScored = Number(event.wrestler_1_score) > Number(previous.wrestler_1_score);
+      const wrestlerTwoScored = Number(event.wrestler_2_score) > Number(previous.wrestler_2_score);
+      const scoringEvent = wrestlerOneScored || wrestlerTwoScored;
+      feed.insertAdjacentHTML('beforeend', `<article class="pbp-event ${scoringEvent ? 'scoring-event' : ''} ${final ? 'final-event' : ''}">
         <div class="event-time"><strong>${SimSite.escape(event.period)}</strong><span>${SimSite.escape(event.time_remaining)}</span></div>
         <div><p class="event-copy">${SimSite.escape(event.play_by_play)}</p><span class="event-score">${SimSite.escape(event.wrestler_1_name)} ${event.wrestler_1_score} – ${event.wrestler_2_score} ${SimSite.escape(event.wrestler_2_name)}</span></div>
       </article>`);
@@ -48,6 +60,8 @@
       time.textContent = event.time_remaining;
       scoreOne.textContent = event.wrestler_1_score;
       scoreTwo.textContent = event.wrestler_2_score;
+      if (wrestlerOneScored) flashScorer(scoreOne);
+      if (wrestlerTwoScored) flashScorer(scoreTwo);
       eventNumber.textContent = eventIndex + 1;
       feed.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
@@ -59,7 +73,7 @@
         addEvent(events[index], index);
         index += 1;
         schedule();
-      }, index === 0 ? 100 : delay);
+      }, index === 0 ? 200 : delay);
     }
 
     pause.addEventListener('click', () => {

@@ -50,8 +50,8 @@
 
   window.SimApi = {
     isConfigured,
-    rankings: () => query('v_landing_wrestler_rankings', 'select=*&order=wrestler_rank.asc'),
-    mediaStatistics: () => query('v_wrestler_media_statistics', 'select=*&order=win_pct.desc,wrestler_name.asc'),
+    rankings: () => query('v_public_wrestler_directory', 'select=*&order=wrestler_rank.asc'),
+    mediaStatistics: () => query('v_public_wrestler_statistics', 'select=*&order=wrestler_rank.asc'),
     profile: (guid) => rpc('get_wrestler_profile', { p_wrestler_guid: guid }),
     runMatch: (firstGuid, secondGuid) => rpc('run_demo_match', {
       p_wrestler_1_guid: firstGuid,
