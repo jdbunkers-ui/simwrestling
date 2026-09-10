@@ -34,6 +34,8 @@
   }
 
   window.SimSite = {
+    collegeWeightOrder: ['125','133','141','149','157','165','174','184','197','HWT'],
+    highSchoolWeightOrder: ['106','113','120','126','132','138','144','150','157','165','175','190','215','HWT'],
     weightOrder: ['125','133','141','149','157','165','174','184','197','HWT'],
     escape(value) {
       return String(value ?? '').replace(/[&<>'"]/g, (character) => ({
@@ -59,20 +61,28 @@
       const url = `match.html?match=${encodeURIComponent(guid)}`;
       return returnTo ? `${url}&return=${encodeURIComponent(returnTo)}` : url;
     },
-    selectedWeight(rows, includeTeam = false) {
+    selectedLevel() {
+      return String(this.query('level') || 'COLLEGE').toUpperCase() === 'HIGH_SCHOOL'
+        ? 'HIGH_SCHOOL' : 'COLLEGE';
+    },
+    weightOrderFor(level) {
+      return level === 'HIGH_SCHOOL' ? this.highSchoolWeightOrder : this.collegeWeightOrder;
+    },
+    selectedWeight(rows, includeTeam = false, level = 'COLLEGE') {
       const available = new Set(rows.map((row) => String(row.weight_class_code)));
       const requested = String(this.query('weight') || '').toUpperCase();
-      if (includeTeam && requested === 'TEAM') return 'TEAM';
+      if (includeTeam && level === 'COLLEGE' && requested === 'TEAM') return 'TEAM';
       if (requested === 'PBP' || requested === 'ALL') return 'PBP';
       if (available.has(requested)) return requested;
-      return available.has('125') ? '125' : 'PBP';
+      const preferred = level === 'HIGH_SCHOOL' ? '106' : '125';
+      return available.has(preferred) ? preferred : 'PBP';
     },
-    weightOptions(rows, includeTeam = false) {
+    weightOptions(rows, includeTeam = false, level = 'COLLEGE') {
       const available = new Set(rows.map((row) => String(row.weight_class_code)));
       const options = [];
-      if (includeTeam) options.push('<option value="TEAM">Team</option>');
+      if (includeTeam && level === 'COLLEGE') options.push('<option value="TEAM">Team</option>');
       options.push('<option value="PBP">Pound-for-Pound</option>');
-      this.weightOrder.forEach((weight) => {
+      this.weightOrderFor(level).forEach((weight) => {
         if (available.has(weight)) {
           const label = weight === 'HWT' ? 'HWT' : `${weight} lb`;
           options.push(`<option value="${this.escape(weight)}">${this.escape(label)}</option>`);
@@ -88,7 +98,7 @@
       const url = new URL(window.location.href);
       Object.entries(filters).forEach(([name, value]) => {
         const text = String(value || '').trim();
-        if (!text || (name === 'state' && text === 'ALL')) url.searchParams.delete(name);
+        if (!text || (name === 'state' && text === 'ALL') || (name === 'level' && text === 'COLLEGE')) url.searchParams.delete(name);
         else url.searchParams.set(name, text);
       });
       window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
@@ -105,6 +115,9 @@
     },
     resultLabel(value) {
       return String(value || '').replaceAll('_', ' ').toLocaleLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase());
+    },
+    levelLabel(value) {
+      return value === 'HIGH_SCHOOL' ? 'High School' : 'College';
     },
     showError(container, message) {
       container.innerHTML = `<div class="state-card error-state"><strong>We couldn't load this page.</strong><p>${this.escape(message)}</p></div>`;

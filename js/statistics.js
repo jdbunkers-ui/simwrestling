@@ -1,5 +1,6 @@
 (async function () {
   const content = document.getElementById('statistics-content');
+  const levelFilter = document.getElementById('statistics-level-filter');
   const weightFilter = document.getElementById('statistics-weight-filter');
   const stateFilter = document.getElementById('statistics-state-filter');
   const search = document.getElementById('statistics-search');
@@ -9,14 +10,21 @@
   let rows = [];
   let sort = { key: 'wrestler_rank', direction: 'asc' };
 
+  function displayedRank(row) {
+    if (weightFilter.value === 'PBP') {
+      return stateFilter.value === 'ALL' ? row.pound_for_pound_rank : row.state_pound_for_pound_rank;
+    }
+    return stateFilter.value === 'ALL' ? row.weight_class_rank : row.state_weight_rank;
+  }
+
   const sortValues = {
-    wrestler_rank: (row) => Number(row.wrestler_rank || 0),
+    wrestler_rank: (row) => Number(displayedRank(row) || 0),
     weight: (row) => {
-      const index = SimSite.weightOrder.indexOf(String(row.weight_class_code));
+      const index = SimSite.weightOrderFor(levelFilter.value).indexOf(String(row.weight_class_code));
       return index < 0 ? 999 : index;
     },
     wrestler_name: (row) => row.wrestler_name || '',
-    team_name: (row) => row.team_name || '',
+    team_name: (row) => row.team_name || row.hometown_display || '',
     state_code: (row) => row.state_code || '',
     record: (row) => Number(row.win_pct || 0) * 100000 + Number(row.win_qty || 0) * 100 - Number(row.loss_qty || 0),
     win_pct: (row) => Number(row.win_pct || 0),
@@ -55,14 +63,16 @@
   }
 
   function visibleRows() {
+    const level = levelFilter.value;
     const weight = weightFilter.value;
     const state = stateFilter.value;
     const phrase = normalized(search.value);
     return rows.filter((row) => {
+      const levelMatches = row.competition_level === level;
       const weightMatches = weight === 'PBP' || row.weight_class_code === weight;
       const stateMatches = state === 'ALL' || row.state_code === state;
-      const textMatches = !phrase || normalized(`${row.wrestler_name} ${row.team_name || ''}`).includes(phrase);
-      return weightMatches && stateMatches && textMatches;
+      const textMatches = !phrase || normalized(`${row.wrestler_name} ${row.team_name || ''} ${row.hometown_display || ''}`).includes(phrase);
+      return levelMatches && weightMatches && stateMatches && textMatches;
     }).sort(compare);
   }
 
@@ -74,6 +84,7 @@
     const visible = visibleRows();
     count.textContent = `${visible.length} wrestler${visible.length === 1 ? '' : 's'}`;
     SimSite.syncFilters({
+      level: levelFilter.value,
       weight: weightFilter.value,
       state: stateFilter.value,
       q: search.value.trim()
@@ -90,7 +101,7 @@
           <th rowspan="2">${header('Rank','wrestler_rank')}</th>
           <th rowspan="2">${header('Weight','weight')}</th>
           <th rowspan="2">${header('Wrestler','wrestler_name')}</th>
-          <th rowspan="2">${header('College','team_name')}</th>
+          <th rowspan="2">${header(levelFilter.value === 'COLLEGE' ? 'College' : 'Hometown','team_name')}</th>
           <th rowspan="2">${header('State','state_code')}</th>
           <th rowspan="2">${header('Record','record')}</th>
           <th rowspan="2">${header('Win %','win_pct')}</th>
@@ -111,10 +122,10 @@
         </tr>
       </thead>
       <tbody>${visible.map((row) => `<tr>
-        <td class="rank-number">${row.wrestler_rank}</td>
+        <td class="rank-number">${displayedRank(row)}</td>
         <td>${SimSite.escape(row.weight_class_code)}</td>
         <td><a class="wrestler-link" href="${SimSite.profileUrl(row.wrestler_guid)}">${SimSite.escape(row.wrestler_name)}</a></td>
-        <td>${row.team_name ? `<a class="table-link" href="${SimSite.teamUrl(row.team_guid)}">${SimSite.escape(row.team_name)}</a>` : '<span class="subtext">—</span>'}</td>
+        <td>${levelFilter.value === 'COLLEGE' ? (row.team_name ? `<a class="table-link" href="${SimSite.teamUrl(row.team_guid)}">${SimSite.escape(row.team_name)}</a>` : '<span class="subtext">—</span>') : SimSite.escape(row.hometown_display || row.wrestler_state_code || row.state_code || '—')}</td>
         <td>${row.state_code ? SimSite.escape(row.state_code) : '—'}</td>
         <td>${SimSite.escape(row.record_display)}</td>
         <td>${pct(row.win_pct)}</td>
@@ -147,18 +158,25 @@
 
   try {
     rows = await SimApi.mediaStatistics();
-    weightFilter.innerHTML = SimSite.weightOptions(rows);
-    weightFilter.value = SimSite.selectedWeight(rows);
-
-    const states = SimSite.inventoryStates(rows);
-    stateFilter.innerHTML = '<option value="ALL">All states</option>'
-      + states.map((state) => `<option value="${SimSite.escape(state)}">${SimSite.escape(state)}</option>`).join('');
-    const requestedState = String(SimSite.query('state') || '').toUpperCase();
-    stateFilter.value = states.includes(requestedState) ? requestedState : 'ALL';
+    levelFilter.value = SimSite.selectedLevel();
+    function rebuildFilters(preferredWeight = '', preferredState = '') {
+      const levelRows = rows.filter((row) => row.competition_level === levelFilter.value);
+      weightFilter.innerHTML = SimSite.weightOptions(levelRows, false, levelFilter.value);
+      const weights = [...weightFilter.options].map((option) => option.value);
+      const fallback = levelFilter.value === 'HIGH_SCHOOL' ? '106' : '125';
+      weightFilter.value = weights.includes(preferredWeight) ? preferredWeight : (weights.includes(fallback) ? fallback : 'PBP');
+      const states = SimSite.inventoryStates(levelRows);
+      stateFilter.innerHTML = '<option value="ALL">All states</option>'
+        + states.map((state) => `<option value="${SimSite.escape(state)}">${SimSite.escape(state)}</option>`).join('');
+      stateFilter.value = states.includes(preferredState) ? preferredState : 'ALL';
+      stateFilter.disabled = !states.length;
+    }
+    rebuildFilters(String(SimSite.query('weight') || '').toUpperCase(), String(SimSite.query('state') || '').toUpperCase());
     search.value = SimSite.query('q') || '';
 
+    levelFilter.disabled = false;
     weightFilter.disabled = false;
-    stateFilter.disabled = !states.length;
+    levelFilter.addEventListener('change', () => { rebuildFilters(); render(); });
     weightFilter.addEventListener('change', render);
     stateFilter.addEventListener('change', render);
     search.addEventListener('input', render);

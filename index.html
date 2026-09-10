@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Overall Sim Wrestling rankings across every weight class.">
+    <meta name="description" content="Current college and high-school Sim Wrestling rankings.">
     <title>Rankings | Sim Wrestling</title>
     <link rel="stylesheet" href="assets/styles.css">
   </head>
@@ -11,8 +11,11 @@
     <div data-site-header></div>
     <main class="page-shell">
       <section class="page-heading directory-heading">
-        <div><p class="eyebrow">State competition</p><h1 id="directory-page-title">Wrestler Rankings</h1><p id="directory-page-copy">Every active wrestler, ranked across all weight classes.</p></div>
+        <div><p class="eyebrow">Current season · <span id="ranking-season">Loading</span></p><h1 id="directory-page-title">College Wrestler Rankings</h1><p id="directory-page-copy">Current college wrestlers ranked across every program and weight class.</p></div>
         <div class="directory-filters" aria-label="Ranking filters">
+          <label class="filter-control">Level
+            <select id="competition-level-filter" disabled><option value="COLLEGE">College</option><option value="HIGH_SCHOOL">High School</option></select>
+          </label>
           <label class="filter-control">View
             <select id="weight-filter" disabled><option value="125">125 lb</option></select>
           </label>
@@ -25,8 +28,8 @@
         </div>
       </section>
       <nav class="event-actions" aria-label="Simulation events">
-        <a class="event-action" href="dual.html"><span>10 weight classes</span><strong>Run a Dual Meet</strong><i aria-hidden="true">→</i></a>
-        <a class="event-action" href="tournament.html"><span>12-wrestler bracket</span><strong>Run Tournament</strong><i aria-hidden="true">→</i></a>
+        <a class="event-action" id="dual-action" href="dual.html"><span>10 weight classes</span><strong>Run a Dual Meet</strong><i aria-hidden="true">→</i></a>
+        <a class="event-action" id="tournament-action" href="tournament.html"><span>16-wrestler bracket</span><strong>Run Tournament</strong><i aria-hidden="true">→</i></a>
       </nav>
       <section class="panel table-panel" aria-labelledby="rankings-title">
         <div class="panel-heading"><div><p class="eyebrow">Current standings</p><h2 id="rankings-title">Overall Rankings</h2></div><span class="record-pill" id="ranking-count">Loading…</span></div>

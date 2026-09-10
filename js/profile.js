@@ -30,7 +30,8 @@
     const fatigue = payload.coach_fatigue || [];
     const history = payload.match_history || [];
     const achievements = payload.tournament_achievements || [];
-    const opponents = rankings.filter((row) => row.weight_class_code === p.weight_class_code && row.wrestler_guid !== wrestlerGuid);
+    const seasonHistory = payload.season_history || [];
+    const opponents = rankings.filter((row) => row.competition_level === p.competition_level && row.weight_class_code === p.weight_class_code && row.match_eligible_ind && row.wrestler_guid !== wrestlerGuid);
     const initials = `${p.first_name?.[0] || ''}${p.last_name?.[0] || ''}`;
     const matchQty = Number(m.match_qty || 0);
     const perMatch = (value) => matchQty ? Number(value || 0) / matchQty : 0;
@@ -43,17 +44,17 @@
     root.innerHTML = `
       <section class="profile-hero">
         <div class="athlete-id"><div class="monogram" aria-hidden="true">${e(initials)}</div><div>
-          <p class="eyebrow">${e(p.weight_class_name)} · ${e(p.eligibility_year_display)}</p>
+          <p class="eyebrow">${e(p.competition_level_display)} · ${e(p.weight_class_name)} · ${e(p.eligibility_year_display)}</p>
           <h1>${e(p.wrestler_name)}</h1>
-          <p class="origin">${e(p.hometown_display || 'Hometown unavailable')} · ${e(p.height_display)} · ${num(p.current_weight_lbs,1)} lb</p>
+          <p class="origin">${e(p.hometown_display || 'Hometown unavailable')} · ${e(p.height_display)} · ${num(p.current_weight_lbs,1)} lb${p.team_name ? ` · <a href="${SimSite.teamUrl(p.team_guid)}">${e(p.team_name)}</a>` : ''}</p>
           <div class="style-tags">${achievements.some((item) => Number(item.final_placement) === 1) ? '<span class="champion-tag">Tournament Champion</span>' : ''}<span>${e(p.stance_display)}</span>${topTraits.map((trait) => `<span>${e(trait)}</span>`).join('')}</div>
         </div></div>
         <dl class="hero-record"><div><dt>Record</dt><dd>${m.win_qty || 0}–${m.loss_qty || 0}</dd></div><div><dt>Win rate</dt><dd>${pct(m.win_pct)}</dd></div><div><dt>Bonus wins</dt><dd>${bonusWins}</dd></div><div><dt>Avg. points</dt><dd>${num(m.average_match_points,1)}</dd></div></dl>
       </section>
-      <section class="match-selector" aria-labelledby="matchup-title">
+      <section class="match-selector${p.match_eligible_ind === false ? ' unavailable' : ''}" aria-labelledby="matchup-title">
         <div><p class="eyebrow">Create a match</p><h2 id="matchup-title">Choose ${e(p.first_name)}'s opponent</h2><p>Only active ${e(p.weight_class_code)}-pound wrestlers are eligible.</p></div>
         <label>Eligible opponent<select id="opponent-select"><option value="">Select a wrestler</option>${opponents.map((opponent) => `<option value="${e(opponent.wrestler_guid)}">${e(opponent.wrestler_name)}${opponent.team_name ? ` · ${e(opponent.team_name)}` : ''}</option>`).join('')}</select></label>
-        <button class="primary-button" id="wrestle-button" type="button" disabled>Let's Wrestle!</button>
+        <button class="primary-button" id="wrestle-button" type="button" disabled>${p.match_eligible_ind === false ? 'Backup roster' : "Let's Wrestle!"}</button>
       </section>
       <p id="match-status" class="section-note" role="status"></p>
       <nav class="tabs" aria-label="Wrestler profile sections"><button class="tab active" data-tab="public" type="button">Public profile</button><button class="tab" data-tab="coach" type="button">Coach analytics <span class="coach-tag">C</span></button><button class="tab" data-tab="history" type="button">Match history</button></nav>
@@ -62,6 +63,7 @@
           <div class="attribute-grid">${a.map((item) => `<article class="attribute-card"><div><h3>${e(item.category_name)}</h3><p>${e(item.category_description)}</p></div><span class="rating">${e(item.rating_label)}</span></article>`).join('')}</div>
         </section>
         ${achievements.length ? `<section class="achievement-panel section-block"><div><p class="eyebrow">Tournament honors</p><h2>Podium Finishes</h2></div><div class="achievement-list">${achievements.map((item) => `<a href="${SimSite.tournamentUrl(item.tournament_guid)}"><span class="placement-medal place-${item.final_placement}">${item.final_placement}</span><div><strong>${e(item.achievement_label)}</strong><small>${e(item.tournament_name)} · No. ${item.seed_number} seed</small></div><i aria-hidden="true">→</i></a>`).join('')}</div></section>` : ''}
+        ${seasonHistory.length ? `<section class="panel season-timeline section-block"><div class="panel-heading"><div><p class="eyebrow">Career progression</p><h2>Season History</h2></div></div><div class="timeline-list">${seasonHistory.map((item) => `<div><strong>${e(item.season_name)}</strong><span>${e(String(item.competition_level).replace('_',' '))} · ${e(String(item.academic_stage).replaceAll('_',' ').toLocaleLowerCase().replace(/\b\w/g,(letter)=>letter.toUpperCase()))}</span><small>${e(item.weight_class_code)} lb${item.team_name ? ` · ${e(item.team_name)}` : ''}</small></div>`).join('')}</div></section>` : ''}
         <section class="two-column section-block"><article class="panel"><div class="panel-heading"><div><p class="eyebrow">Average per match</p><h2>Media Statistics</h2></div><span class="record-pill">${m.match_qty || 0} matches</span></div><div class="media-stats">
           ${stat('Takedowns',num(perMatch(m.takedown_qty),2),`${pct(m.takedown_success_rate)} conversion`)}${stat('Escapes',num(perMatch(m.escape_qty),2),'per match')}${stat('Reversals',num(perMatch(m.reversal_qty),2),'per match')}${stat('Back points',num(perMatch(m.back_point_qty),2),'per match')}${stat('Riding time',SimSite.duration(m.average_riding_time_seconds),'per match')}${stat('Team points',num(perMatch(m.team_points_earned),2),`${pct(bonusRate)} bonus wins`)}</div></article>
           <article class="panel"><div class="panel-heading"><div><p class="eyebrow">Recent results</p><h2>Latest Matches</h2></div></div>${history.length ? `<div class="history-list">${history.slice(0,5).map((match) => `<div class="history-row"><span>${match.match_date ? new Date(match.match_date).toLocaleDateString(undefined,{month:'short',day:'numeric'}) : '—'}</span><strong><a class="history-link" href="${SimSite.matchUrl(match.match_guid)}">${e(match.opponent_name)}</a><span>${e(match.match_context)}</span></strong><a class="history-result ${match.result_outcome === 'WIN' ? 'result-win' : 'result-loss'}" href="${SimSite.matchUrl(match.match_guid)}">${e(match.result_outcome === 'WIN' ? 'W' : 'L')} ${e(match.score_display)}</a><span>${e(String(match.result_type).replaceAll('_',' '))}</span></div>`).join('')}</div>` : '<p class="coach-empty">No completed matches yet.</p>'}</article>
@@ -83,7 +85,7 @@
     const opponentSelect = document.getElementById('opponent-select');
     const wrestleButton = document.getElementById('wrestle-button');
     const status = document.getElementById('match-status');
-    opponentSelect.disabled = !opponents.length;
+    opponentSelect.disabled = !opponents.length || p.match_eligible_ind === false;
     opponentSelect.addEventListener('change', () => { wrestleButton.disabled = !opponentSelect.value; });
     wrestleButton.addEventListener('click', async () => {
       if (!opponentSelect.value) return;
