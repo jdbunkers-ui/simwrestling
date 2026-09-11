@@ -3,6 +3,7 @@
   const links = [
     ['rankings', 'index.html', 'Rankings'],
     ['statistics', 'statistics.html', 'Statistics'],
+    ['schedule', 'schedule.html', 'Schedule'],
     ['about', 'about.html', 'About']
   ];
 
@@ -57,6 +58,9 @@
     tournamentUrl(guid) {
       return `tournament.html?tournament=${encodeURIComponent(guid)}`;
     },
+    eventUrl(guid) {
+      return `event.html?event=${encodeURIComponent(guid)}`;
+    },
     matchUrl(guid, returnTo = '') {
       const url = `match.html?match=${encodeURIComponent(guid)}`;
       return returnTo ? `${url}&return=${encodeURIComponent(returnTo)}` : url;
@@ -106,6 +110,18 @@
     duration(seconds) {
       const total = Math.max(0, Math.round(Number(seconds || 0)));
       return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
+    },
+    date(value, includeYear = false) {
+      if (!value) return '—';
+      const text = String(value).slice(0, 10);
+      const parsed = new Date(`${text}T12:00:00`);
+      if (Number.isNaN(parsed.getTime())) return text;
+      return parsed.toLocaleDateString(undefined, {
+        month: 'short', day: 'numeric', ...(includeYear ? { year: 'numeric' } : {})
+      });
+    },
+    seasonLabel(row) {
+      return row?.game_season_display || (row?.game_season_number ? `Season ${row.game_season_number}` : 'Current season');
     },
     percent(value, digits = 1) {
       return `${(Number(value || 0) * 100).toFixed(digits)}%`;

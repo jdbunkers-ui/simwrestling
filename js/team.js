@@ -6,7 +6,7 @@
   const e = SimSite.escape;
 
   try {
-    const payload = await SimApi.teamProfile(teamGuid);
+    const [payload, awards] = await Promise.all([SimApi.teamProfile(teamGuid), SimApi.teamAwards(teamGuid)]);
     if (!payload?.profile) throw new Error('The requested team profile was not found.');
     const p = payload.profile;
     const lineup = payload.starting_lineup || [];
@@ -25,6 +25,7 @@
         <dl class="hero-record"><div><dt>Dual record</dt><dd>${e(p.dual_record_display || '0-0')}</dd></div><div><dt>Win rate</dt><dd>${SimSite.percent(p.dual_win_rate,1)}</dd></div><div><dt>Avg. margin</dt><dd>${Number(p.average_dual_margin || 0) > 0 ? '+' : ''}${SimSite.number(p.average_dual_margin,1)}</dd></div><div><dt>State rank</dt><dd>#${p.state_team_rank}</dd></div></dl>
       </section>
       <nav class="profile-actions"><a class="primary-button" href="dual.html?team=${encodeURIComponent(teamGuid)}">Run a Dual Meet</a><a class="quiet-link" href="index.html?weight=TEAM&state=${encodeURIComponent(p.state_code)}">Return to Team Rankings</a></nav>
+      ${awards.length ? `<section class="award-board section-block"><div class="section-heading"><div><p class="eyebrow">Program honors</p><h2>Team Awards Board</h2></div><span class="record-pill">${awards.length} award${awards.length === 1 ? '' : 's'}</span></div><div class="award-grid">${awards.map((item) => `<article><span class="placement-medal place-${Math.min(3, Number(item.placement || 4))}">${item.placement}</span><div><strong>${e(item.award_display_text)}</strong><small>${e(item.event_name)}</small></div></article>`).join('')}</div></section>` : ''}
       <section class="panel table-panel section-block">
         <div class="panel-heading"><div><p class="eyebrow">Automatic starters</p><h2>Starting Ten</h2></div><span class="record-pill">${lineup.length} weights</span></div>
         ${lineup.length ? `<div class="table-wrap"><table class="lineup-table"><thead><tr><th>Weight</th><th>State rank</th><th>Wrestler</th><th>Year</th><th>Wins</th><th>Losses</th><th>Bonus %</th></tr></thead><tbody>${lineup.map((row) => `<tr>

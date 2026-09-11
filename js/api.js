@@ -48,6 +48,12 @@
     });
   }
 
+  const encoded = (value) => encodeURIComponent(String(value));
+  const filtered = (table, guidColumn, guid, order = '') => query(
+    table,
+    `select=*&${guidColumn}=eq.${encoded(guid)}${order ? `&order=${order}` : ''}`
+  );
+
   window.SimApi = {
     isConfigured,
     season: () => query('v_public_season_context', 'select=*'),
@@ -75,5 +81,17 @@
         p_weight_class_code: weightClassCode
       }),
     tournament: (guid) => rpc('get_tournament_payload', { p_tournament_guid: guid })
+    ,leagueClock: async () => (await query('v_current_league_clock', 'select=*'))?.[0] || null
+    ,leagueCalendar: () => query('v_league_calendar', 'select=*&order=week_number.asc,starts_on.asc,event_name.asc')
+    ,leagueEvent: async (guid) => (await filtered('v_league_calendar', 'scheduled_event_guid', guid))?.[0] || null
+    ,leagueSessions: (guid) => filtered('v_league_event_sessions', 'scheduled_event_guid', guid, 'session_number.asc')
+    ,quadSchedule: (guid) => filtered('v_quad_schedule', 'scheduled_event_guid', guid, 'event_date.asc,event_name.asc')
+    ,scheduledDuals: (guid) => filtered('v_scheduled_dual_results', 'scheduled_event_guid', guid, 'scheduled_date.asc,dual_order.asc')
+    ,scheduledDivisions: (guid) => filtered('v_scheduled_tournament_divisions', 'scheduled_event_guid', guid, 'weight_display_order.asc')
+    ,scheduledPlacements: (guid) => filtered('v_scheduled_tournament_placements', 'scheduled_event_guid', guid, 'weight_class_code.asc,final_placement.asc')
+    ,eventTeamStandings: (guid) => filtered('v_event_team_standings', 'scheduled_event_guid', guid, 'team_placement.asc,total_points.desc')
+    ,wrestlerAwards: (guid) => filtered('v_wrestler_awards', 'wrestler_guid', guid, 'game_season_number.desc,awarded_at.desc')
+    ,teamAwards: (guid) => filtered('v_team_awards', 'team_guid', guid, 'game_season_number.desc,awarded_at.desc')
+    ,tournamentBracketRows: (guid) => filtered('v_tournament_bracket', 'tournament_guid', guid, 'bout_order.asc')
   };
 })();
