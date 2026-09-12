@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Current college and high-school Sim Wrestling rankings.">
+    <title>Rankings | Sim Wrestling</title>
+    <link rel="stylesheet" href="assets/styles.css">
+  </head>
+  <body data-page="rankings">
+    <div data-site-header></div>
+    <main class="page-shell">
+      <section class="page-heading directory-heading">
+        <div><p class="eyebrow">Current season · <span id="ranking-season">Loading</span></p><h1 id="directory-page-title">College Wrestler Rankings</h1><p id="directory-page-copy">Current college wrestlers ranked across every program and weight class.</p></div>
+        <div class="directory-filters" aria-label="Ranking filters">
+          <label class="filter-control">Level
+            <select id="competition-level-filter" disabled><option value="COLLEGE">College</option><option value="HIGH_SCHOOL">High School</option></select>
+          </label>
+          <label class="filter-control">View
+            <select id="weight-filter" disabled><option value="125">125 lb</option></select>
+          </label>
+          <label class="filter-control" id="region-filter-control">Region
+            <select id="region-filter" disabled><option value="ALL">All regions · National</option></select>
+          </label>
+          <label class="filter-control" id="state-filter-control">State
+            <select id="state-filter" disabled><option value="ALL">All states</option></select>
+          </label>
+          <label class="filter-control" id="county-filter-control" hidden>County
+            <select id="county-filter" disabled><option value="ALL">All counties</option></select>
+          </label>
+          <label class="filter-control" id="locality-filter-control" hidden>Town / City
+            <select id="locality-filter" disabled><option value="ALL">All towns and cities</option></select>
+          </label>
+          <label class="filter-control search-control">Search wrestler or college
+            <input id="ranking-search" type="search" placeholder="Start typing a name or college" autocomplete="off">
+          </label>
+        </div>
+      </section>
+      <nav class="event-actions schedule-only" aria-label="League schedule">
+        <a class="event-action" href="schedule.html"><span>Eight-week season</span><strong>View League Schedule</strong><i aria-hidden="true">→</i></a>
+      </nav>
+      <section class="panel table-panel" aria-labelledby="rankings-title">
+        <div class="panel-heading"><div><p class="eyebrow">Current standings</p><h2 id="rankings-title">Overall Rankings</h2></div><span class="record-pill" id="ranking-count">Loading…</span></div>
+        <div id="rankings-content" aria-live="polite">
+          <div class="state-card"><span class="spinner" aria-hidden="true"></span><p>Loading rankings…</p></div>
+        </div>
+      </section>
+    </main>
+    <div data-site-footer></div>
+    <script src="js/config.js"></script><script src="js/api.js"></script><script src="js/site.js"></script><script src="js/rankings.js"></script>
+  </body>
+</html>
