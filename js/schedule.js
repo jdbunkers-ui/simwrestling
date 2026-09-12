@@ -12,6 +12,7 @@
     HS_COUNTY_CIRCUIT: 'County Circuit',
     HS_COUNTY_CHAMPIONSHIP: 'County Championships',
     HS_STATE_CHAMPIONSHIP: 'High School State Championships',
+    HS_REGIONAL_CHAMPIONSHIP: 'High School Regional Championships',
     HS_NATIONAL_CHAMPIONSHIP: 'High School National Championships',
     HS_GRADUATION: 'High School Graduation',
     COLLEGE_QUAD: 'College Quads',
@@ -29,6 +30,17 @@
   let clock = null;
   let selectedWeek = Number(SimSite.query('week')) || 0;
 
+  function matchesLevelAndState(row) {
+    const levelMatches = levelFilter.value === 'ALL' || row.competition_level === levelFilter.value;
+    if (!levelMatches) return false;
+    if (Array.isArray(row.applicable_state_codes) && row.applicable_state_codes.length === 0) return false;
+    if (stateFilter.value === 'ALL') return true;
+    if (Array.isArray(row.applicable_state_codes)) {
+      return row.applicable_state_codes.includes(stateFilter.value);
+    }
+    return row.state_code === stateFilter.value;
+  }
+
   function renderClock() {
     if (!clock) {
       clockPanel.innerHTML = '<div class="clock-copy"><div><span>Season status</span><strong>Schedule available</strong></div><p>The live league date has not been initialized.</p></div>';
@@ -39,7 +51,7 @@
 
   function renderRail() {
     rail.innerHTML = Array.from({ length: 8 }, (_, index) => index + 1).map((week) => {
-      const qty = events.filter((row) => Number(row.week_number) === week).length;
+      const qty = events.filter((row) => Number(row.week_number) === week && matchesLevelAndState(row)).length;
       return `<button type="button" data-week="${week}" class="${week === selectedWeek ? 'active' : ''}${clock && Number(clock.current_week_number) === week ? ' current' : ''}"><span>Week ${week}</span><small>${qty} event${qty === 1 ? '' : 's'}</small></button>`;
     }).join('');
     rail.querySelectorAll('button').forEach((button) => button.addEventListener('click', () => {
@@ -49,8 +61,7 @@
 
   function visibleEvents() {
     return events.filter((row) => Number(row.week_number) === selectedWeek
-      && (levelFilter.value === 'ALL' || row.competition_level === levelFilter.value)
-      && (stateFilter.value === 'ALL' || row.state_code === stateFilter.value));
+      && matchesLevelAndState(row));
   }
 
   function eventCard(row) {
@@ -80,7 +91,8 @@
   }
 
   try {
-    [clock, events] = await Promise.all([SimApi.leagueClock(), SimApi.leagueCalendar()]);
+    clock = await SimApi.leagueClock();
+    events = await SimApi.leagueCalendar(clock?.season_guid || '');
     if (clock?.season_guid) events = events.filter((row) => row.season_guid === clock.season_guid);
     if (!events.length) throw new Error('No league schedule has been published for the open season.');
     const requestedLevel = String(SimSite.query('level') || 'ALL').toUpperCase();
@@ -92,8 +104,8 @@
     selectedWeek = selectedWeek >= 1 && selectedWeek <= 8 ? selectedWeek : Number(clock?.current_week_number || 1);
     seasonLabel.textContent = SimSite.seasonLabel(events[0]);
     renderClock(); renderRail(); render();
-    levelFilter.addEventListener('change', render);
-    stateFilter.addEventListener('change', render);
+    levelFilter.addEventListener('change', () => { renderRail(); render(); });
+    stateFilter.addEventListener('change', () => { renderRail(); render(); });
   } catch (error) {
     SimSite.showError(root, error.message);
     clockPanel.hidden = true; rail.hidden = true;

@@ -89,7 +89,10 @@
     dual: (guid) => rpc('get_dual_payload', { p_dual_guid: guid }),
     tournament: (guid) => rpc('get_tournament_payload', { p_tournament_guid: guid })
     ,leagueClock: async () => (await query('v_current_league_clock', 'select=*'))?.[0] || null
-    ,leagueCalendar: () => query('v_league_calendar', 'select=*&order=week_number.asc,starts_on.asc,event_name.asc')
+    ,leagueCalendar: (seasonGuid = '') => queryAll(
+      'v_league_calendar',
+      `select=*${seasonGuid ? `&season_guid=eq.${encoded(seasonGuid)}` : ''}&order=week_number.asc,starts_on.asc,event_name.asc,scheduled_event_guid.asc`
+    )
     ,leagueEvent: async (guid) => (await filtered('v_league_calendar', 'scheduled_event_guid', guid))?.[0] || null
     ,leagueSessions: (guid) => filtered('v_league_event_sessions', 'scheduled_event_guid', guid, 'session_number.asc')
     ,quadSchedule: (guid) => filtered('v_quad_schedule', 'scheduled_event_guid', guid, 'event_date.asc,event_name.asc')
