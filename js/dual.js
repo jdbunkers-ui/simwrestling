@@ -19,7 +19,7 @@
       <div class="playback-controls"><p id="dual-status">The completed dual is being revealed one weight at a time.</p><div class="control-buttons"><button id="dual-pause" type="button">Pause</button><button id="dual-show-all" type="button">Show all</button></div></div>
       <section class="dual-feed" id="dual-feed"></section>
       <div class="event-summary" id="dual-summary" hidden><p class="eyebrow">Final team score</p><h2>${e(dual.team_1_name)} ${SimSite.number(dual.team_1_score,0)} · ${SimSite.number(dual.team_2_score,0)} ${e(dual.team_2_name)}</h2></div>
-      <div class="match-return"><a class="secondary-button" href="index.html?weight=TEAM">Return to Team Rankings</a></div>`;
+      <div class="match-return"><a class="secondary-button" href="rankings.html?weight=TEAM">Return to Team Rankings</a></div>`;
 
     const feed = document.getElementById('dual-feed');
     const scoreOne = document.getElementById('dual-score-one');

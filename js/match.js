@@ -2,7 +2,7 @@
   const root = document.getElementById('match-root');
   const matchGuid = SimSite.query('match');
   const requestedReturn = SimSite.query('return') || '';
-  const safeReturn = /^(dual|tournament|wrestler|event)\.html\?/.test(requestedReturn) ? requestedReturn : 'index.html';
+  const safeReturn = /^(dual|tournament|wrestler|event)\.html\?/.test(requestedReturn) ? requestedReturn : 'rankings.html';
   const returnLabel = safeReturn.startsWith('dual.html') ? 'Return to Dual Meet' : safeReturn.startsWith('tournament.html') ? 'Return to Tournament' : safeReturn.startsWith('event.html') ? 'Return to Scheduled Event' : safeReturn.startsWith('wrestler.html') ? 'Return to Wrestler' : 'Return to Rankings';
   if (!matchGuid) {
     SimSite.showError(root, 'No match was selected.');

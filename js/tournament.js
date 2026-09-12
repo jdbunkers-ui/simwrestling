@@ -34,7 +34,7 @@
     const entries = payload.entries || [];
     const byes = payload.byes || [];
     const levelLabel = SimSite.levelLabel(tournament.competition_level || 'COLLEGE');
-    const returnUrl = `index.html?level=${encodeURIComponent(tournament.competition_level || 'COLLEGE')}&state=${encodeURIComponent(tournament.state_code)}&weight=${encodeURIComponent(tournament.weight_class_code)}`;
+    const returnUrl = `rankings.html?level=${encodeURIComponent(tournament.competition_level || 'COLLEGE')}&state=${encodeURIComponent(tournament.state_code)}&weight=${encodeURIComponent(tournament.weight_class_code)}`;
     document.title = `${tournament.tournament_name} | Sim Wrestling`;
     root.innerHTML = `<section class="tournament-header"><div><p class="eyebrow">${e(levelLabel)} · Double elimination · Engine v0.1.3</p><h1>${e(tournament.tournament_name)}</h1><p>${tournament.entrant_qty} wrestlers · ${tournament.bout_qty} matches${byes.length ? ` · ${byes.length} bracket byes` : ' · no byes'}</p></div><div class="tournament-live"><span id="tournament-counter">Opening bracket</span><strong id="tournament-round">Seeds locked</strong></div></section>
       <div class="playback-controls tournament-controls"><p id="bracket-status">The completed tournament is being revealed bout by bout.</p><div class="control-buttons"><button id="bracket-pause" type="button">Pause</button><button id="bracket-show-all" type="button">Show all</button></div></div>

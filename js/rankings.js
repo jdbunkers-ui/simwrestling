@@ -204,8 +204,9 @@
     syncUrl();
 
     if (teamMode) {
-      const rows = visibleTeams();
-      count.textContent = `${rows.length} team${rows.length === 1 ? '' : 's'}`;
+      const filteredRows = visibleTeams();
+      const rows = filteredRows.slice(0, 25);
+      count.textContent = `Top ${rows.length} of ${filteredRows.length} team${filteredRows.length === 1 ? '' : 's'}`;
       title.textContent = `${scope} Team Rankings`;
       pageTitle.textContent = 'Team Rankings';
       pageCopy.textContent = 'Active college programs ranked by dual record and starting-lineup performance.';
@@ -214,8 +215,9 @@
       return;
     }
 
-    const rows = visibleWrestlers();
-    count.textContent = `${rows.length} wrestler${rows.length === 1 ? '' : 's'}`;
+    const filteredRows = visibleWrestlers();
+    const rows = filteredRows.slice(0, 25);
+    count.textContent = `Top ${rows.length} of ${filteredRows.length} wrestler${filteredRows.length === 1 ? '' : 's'}`;
     const division = weightFilter.value === 'PBP' ? 'Pound-for-Pound' : `${weightFilter.value}-Pound`;
     title.textContent = `${scope} ${levelLabel} ${division} Rankings`;
     pageTitle.textContent = `${levelLabel} Wrestler Rankings`;

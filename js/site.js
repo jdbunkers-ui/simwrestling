@@ -1,8 +1,10 @@
 (function () {
   const page = document.body.dataset.page || '';
   const links = [
-    ['rankings', 'index.html', 'Rankings'],
+    ['coaching', 'index.html', 'Coaching'],
+    ['rankings', 'rankings.html', 'Rankings'],
     ['statistics', 'statistics.html', 'Statistics'],
+    ['recruiting', 'recruiting.html', 'Recruiting'],
     ['schedule', 'schedule.html', 'Schedule'],
     ['about', 'about.html', 'About']
   ];
@@ -12,7 +14,7 @@
     header.innerHTML = `
       <header class="site-header">
         <div class="nav-shell">
-          <a class="brand" href="index.html" aria-label="Sim Wrestling rankings">
+          <a class="brand" href="index.html" aria-label="Sim Wrestling coaching portal">
             <span class="brand-mark" aria-hidden="true"><span></span></span>
             <span>SIM WRESTLING</span>
           </a>
