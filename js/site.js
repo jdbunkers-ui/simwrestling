@@ -4,6 +4,7 @@
     ['coaching', 'index.html', 'Coaching'],
     ['rankings', 'rankings.html', 'Rankings'],
     ['statistics', 'statistics.html', 'Statistics'],
+    ['results', 'results.html', 'Results'],
     ['recruiting', 'recruiting.html', 'Recruiting'],
     ['schedule', 'schedule.html', 'Schedule'],
     ['about', 'about.html', 'About']

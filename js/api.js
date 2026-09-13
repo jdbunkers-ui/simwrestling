@@ -162,6 +162,14 @@
       'v_public_schedule_summary',
       `select=*${seasonGuid ? `&season_guid=eq.${encoded(seasonGuid)}` : ''}&order=week_number.asc,scheduled_date.asc,competition_level.asc,event_name.asc`
     )
+    ,resultsFiltered: (filters = {}) => rpc('get_public_results_v3_5_0', {
+      p_competition_level: filters.level || null,
+      p_region_code: filters.region || null,
+      p_state_code: filters.state || null,
+      p_week_number: filters.week ? Number(filters.week) : null,
+      p_day_name: filters.day || null,
+      p_limit: filters.limit || 500
+    })
     ,leagueEvent: async (guid) => (await filtered('v_league_calendar', 'scheduled_event_guid', guid))?.[0] || null
     ,leagueSessions: (guid) => filtered('v_league_event_sessions', 'scheduled_event_guid', guid, 'session_number.asc')
     ,quadSchedule: (guid) => filtered('v_quad_schedule', 'scheduled_event_guid', guid, 'event_date.asc,event_name.asc')
