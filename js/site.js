@@ -78,7 +78,7 @@
       const available = new Set(rows.map((row) => String(row.weight_class_code)));
       const requested = String(this.query('weight') || '').toUpperCase();
       if (includeTeam && level === 'COLLEGE' && requested === 'TEAM') return 'TEAM';
-      if (level === 'COLLEGE' && (requested === 'PBP' || requested === 'ALL')) return 'PBP';
+      if (requested === 'PBP' || requested === 'ALL') return 'PBP';
       if (available.has(requested)) return requested;
       const preferred = level === 'HIGH_SCHOOL' ? '106' : '125';
       return available.has(preferred) ? preferred : (level === 'COLLEGE' ? 'PBP' : this.highSchoolWeightOrder.find((weight) => available.has(weight)) || '106');
@@ -87,7 +87,7 @@
       const available = new Set(rows.map((row) => String(row.weight_class_code)));
       const options = [];
       if (includeTeam && level === 'COLLEGE') options.push('<option value="TEAM">Team</option>');
-      if (level === 'COLLEGE') options.push('<option value="PBP">Pound-for-Pound</option>');
+      options.push('<option value="PBP">Pound-for-Pound</option>');
       this.weightOrderFor(level).forEach((weight) => {
         if (available.has(weight)) {
           const label = weight === 'HWT' ? 'HWT' : `${weight} lb`;

@@ -49,7 +49,9 @@
     const container = document.getElementById('division-detail');
     const division = divisions.find((row) => row.scheduled_event_division_guid === selectedDivision);
     if (!container || !division) return;
-    const podium = placements.filter((row) => row.weight_class_code === division.weight_class_code).sort((a,b) => a.final_placement-b.final_placement);
+    const placementLimit = event.competition_level === 'HIGH_SCHOOL' ? 8 : 4;
+    const podium = placements.filter((row) => row.weight_class_code === division.weight_class_code
+      && Number(row.final_placement) <= placementLimit).sort((a,b) => a.final_placement-b.final_placement);
     container.innerHTML = `<article class="division-summary panel"><div><p class="eyebrow">${e(division.weight_class_code)} pounds</p><h2>${e(division.event_name)}</h2><p>${division.entrant_qty} entrants · ${division.completed_bout_qty} completed bouts</p></div>${status(division.division_status)}</article>${podium.length ? `<section class="event-podium"><h3>Placement Winners</h3><ol>${podium.map((row) => `<li><span>${row.final_placement}</span><div><strong>${wrestlerLink(row.wrestler_guid,row.wrestler_name)}</strong><small>${e(row.team_name || row.state_code || 'Unattached')}</small></div></li>`).join('')}</ol></section>` : '<div class="state-card compact-state"><p>Placements will post when the division is complete.</p></div>'}`;
     if (!division.tournament_guid) return;
     const bracketState = document.createElement('section');

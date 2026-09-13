@@ -134,6 +134,24 @@
     isConfigured,
     season: () => query('v_public_season_context', 'select=*'),
     rankings: () => queryAll('v_public_competitor_directory_v2', 'select=*&order=competition_level.asc,wrestler_rank.asc,wrestler_guid.asc'),
+    rankingsFiltered: (filters = {}) => rpc('get_public_rankings_v3_4_0', {
+      p_competition_level: filters.level || 'COLLEGE',
+      p_weight: filters.weight || '125',
+      p_region_code: filters.region || null,
+      p_state_code: filters.state || null,
+      p_county_guid: filters.county || null,
+      p_locality_guid: filters.locality || null,
+      p_search: filters.search || null,
+      p_limit: filters.limit || 25
+    }),
+    geographyInventory: () => queryAll(
+      'v_public_geography_inventory',
+      'select=*&order=region_code.asc,state_code.asc,county_name.asc,locality_name.asc'
+    ),
+    regionStateInventory: () => query(
+      'v_public_region_state_inventory',
+      'select=*&order=region_code.asc,state_code.asc'
+    ),
     mediaStatistics: () => queryAll('v_public_competitor_statistics_v2', 'select=*&order=competition_level.asc,wrestler_rank.asc,wrestler_guid.asc'),
     teamRankings: () => queryAll('v_team_rankings_v2', 'select=*&order=region_code.asc,state_code.asc,state_team_rank.asc,team_guid.asc'),
     recruitingSeniors: () => queryAll(
@@ -156,6 +174,10 @@
       'v_league_calendar',
       `select=*${seasonGuid ? `&season_guid=eq.${encoded(seasonGuid)}` : ''}&order=week_number.asc,starts_on.asc,event_name.asc,scheduled_event_guid.asc`
     )
+    ,publicScheduleSummary: (seasonGuid = '') => queryAll(
+      'v_public_schedule_summary',
+      `select=*${seasonGuid ? `&season_guid=eq.${encoded(seasonGuid)}` : ''}&order=week_number.asc,scheduled_date.asc,competition_level.asc,event_name.asc`
+    )
     ,leagueEvent: async (guid) => (await filtered('v_league_calendar', 'scheduled_event_guid', guid))?.[0] || null
     ,leagueSessions: (guid) => filtered('v_league_event_sessions', 'scheduled_event_guid', guid, 'session_number.asc')
     ,quadSchedule: (guid) => filtered('v_quad_schedule', 'scheduled_event_guid', guid, 'event_date.asc,event_name.asc')
@@ -166,7 +188,9 @@
     ,wrestlerAwards: (guid) => filtered('v_wrestler_awards', 'wrestler_guid', guid, 'game_season_number.desc,awarded_at.desc')
     ,teamAwards: (guid) => filtered('v_team_awards', 'team_guid', guid, 'game_season_number.desc,awarded_at.desc')
     ,wrestlerSeasonSummary: (guid) => filtered('v_wrestler_season_summary', 'wrestler_guid', guid, 'game_season_number.desc')
+    ,wrestlerCareerSummary: (guid) => filtered('v_wrestler_career_summary', 'wrestler_guid', guid, 'competition_level.asc')
     ,teamSeasonSummary: (guid) => filtered('v_team_season_summary', 'team_guid', guid, 'game_season_number.desc')
+    ,teamFullSchedule: (guid) => filtered('v_team_full_schedule', 'team_guid', guid, 'week_number.asc,scheduled_date.asc,dual_order.asc')
     ,tournamentBracketRows: (guid) => filtered('v_tournament_bracket', 'tournament_guid', guid, 'bout_order.asc')
   };
 })();

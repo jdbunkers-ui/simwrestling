@@ -15,14 +15,14 @@
   }
 
   try {
-    const [payload, structuredAwards, seasonHistory] = await Promise.all([
+    const [payload, seasonHistory, careerSummary] = await Promise.all([
       SimApi.profile(wrestlerGuid),
-      SimApi.wrestlerAwards(wrestlerGuid).catch((error) => {
-        console.warn('Optional wrestler awards failed to load.', error);
-        return [];
-      }),
       SimApi.wrestlerSeasonSummary(wrestlerGuid).catch((error) => {
         console.warn('Optional wrestler season history failed to load.', error);
+        return [];
+      }),
+      SimApi.wrestlerCareerSummary(wrestlerGuid).catch((error) => {
+        console.warn('Optional wrestler career summary failed to load.', error);
         return [];
       })
     ]);
@@ -44,8 +44,21 @@
     const history = [...(payload.match_history || [])].sort((x, y) => chronology(y, 'match_date') - chronology(x, 'match_date'));
     const achievements = [...(payload.tournament_achievements || [])].sort((x, y) =>
       seasonNumber(y) - seasonNumber(x) || chronology(y, 'tournament_date') - chronology(x, 'tournament_date'));
-    const awards = [...structuredAwards].sort((x, y) =>
-      seasonNumber(y) - seasonNumber(x) || chronology(y, 'awarded_at') - chronology(x, 'awarded_at'));
+    const honors = achievements;
+    const honorSeasons = [...new Set(honors.map((item) => seasonNumber(item)))].sort((a,b) => b-a);
+    const historyByLevel = (level) => seasonHistory.filter((item) => item.competition_level === level)
+      .sort((a,b) => seasonNumber(b)-seasonNumber(a));
+    const careerFor = (level) => careerSummary.find((item) => item.competition_level === level);
+    const honorLabel = (item) => item.achievement_label || item.award_display_text || SimSite.resultLabel(item.award_type);
+    const honorEvent = (item) => item.tournament_name || item.event_name || 'Tournament';
+    const honorWeight = (item) => item.weight_class_code ? `${item.weight_class_code} lb` : '';
+    const honorPlacement = (item) => Number(item.final_placement || item.placement || 0);
+    const careerTable = (level, heading) => {
+      const rows = historyByLevel(level);
+      const total = careerFor(level);
+      if (!rows.length && !total) return `<section class="career-level-group"><div class="career-level-heading"><h3>${e(heading)}</h3></div><p class="coach-empty">No ${e(heading.toLocaleLowerCase())} history is available.</p></section>`;
+      return `<section class="career-level-group"><div class="career-level-heading"><h3>${e(heading)}</h3><span>${rows.length} season${rows.length===1?'':'s'}</span></div><div class="table-wrap"><table class="season-summary-table"><thead><tr><th>Season</th><th>Level / Team</th><th>Weight</th><th>Record</th><th>Win %</th><th>Bonus %</th><th>State rank</th><th>Accomplishments</th></tr></thead><tbody>${rows.map((item) => `<tr><td><strong>${e(item.game_season_display || item.season_name)}</strong></td><td>${e(item.competition_level_display)} · ${e(item.academic_stage_display)}${item.team_name?`<span class="subtext">${e(item.team_name)}</span>`:''}</td><td>${e(item.weight_class_code)}</td><td>${e(item.record_display)}</td><td>${pct(item.win_percentage)}</td><td>${pct(item.bonus_point_rate)}</td><td>${item.final_state_rank?`#${item.final_state_rank}<span class="subtext">${e(SimSite.resultLabel(item.rank_status))}</span>`:'—'}</td><td>${e(item.accomplishments||'—')}</td></tr>`).join('')}${total?`<tr class="career-total-row"><td><strong>Career Total</strong></td><td>${e(heading)}</td><td aria-label="Weight not applicable">—</td><td><strong>${e(total.record_display)}</strong><span class="subtext">${total.win_qty} wins · ${total.loss_qty} losses</span></td><td><strong>${pct(total.career_win_percentage)}</strong></td><td><strong>${pct(total.career_bonus_percentage)}</strong></td><td>—</td><td>${total.match_qty} matches</td></tr>`:''}</tbody></table></div></section>`;
+    };
     const initials = `${p.first_name?.[0] || ''}${p.last_name?.[0] || ''}`;
     const matchQty = Number(m.match_qty || 0);
     const perMatch = (value) => matchQty ? Number(value || 0) / matchQty : 0;
@@ -70,8 +83,8 @@
         <section class="section-block" data-collapse-label="Attribute Summary" data-mobile-open="true"><div class="section-heading"><div><p class="eyebrow">Scouting profile</p><h2>Attribute Summary</h2></div><p class="section-note">Descriptive bands are public. Exact engine attributes remain hidden.</p></div>
           <div class="attribute-grid">${a.map((item) => `<article class="attribute-card"><div><h3>${e(item.category_name)}</h3><p>${e(item.category_description)}</p></div><span class="rating">${e(item.rating_label)}</span></article>`).join('')}</div>
         </section>
-        ${awards.length ? `<section class="award-board section-block" data-collapse-label="Awards Board"><div class="section-heading"><div><p class="eyebrow">Career honors</p><h2>Awards Board</h2></div><span class="record-pill">${awards.length} award${awards.length === 1 ? '' : 's'}</span></div><div class="award-grid">${awards.map((item) => `<article><span class="placement-medal place-${Math.min(3, Number(item.placement || 4))}">${item.placement}</span><div><strong>${e(item.award_display_text)}</strong><small>${e(seasonText(item))} · ${e(item.weight_class_code)} lb · ${e(item.event_name)}</small></div></article>`).join('')}</div></section>` : achievements.length ? `<section class="achievement-panel section-block" data-collapse-label="Podium Finishes"><div><p class="eyebrow">Tournament honors</p><h2>Podium Finishes</h2></div><div class="achievement-list">${achievements.map((item) => `<a href="${SimSite.tournamentUrl(item.tournament_guid)}"><span class="placement-medal place-${item.final_placement}">${item.final_placement}</span><div><strong>${e(item.achievement_label)}</strong><small>${e(seasonText(item))} · ${e(item.tournament_name)} · No. ${item.seed_number} seed</small></div><i aria-hidden="true">→</i></a>`).join('')}</div></section>` : ''}
-        <section class="panel season-timeline section-block" data-collapse-label="Season-by-Season Record"><div class="panel-heading"><div><p class="eyebrow">Career progression</p><h2>Season-by-Season Record</h2></div><span class="record-pill">${seasonHistory.length} seasons</span></div>${seasonHistory.length ? `<div class="table-wrap"><table class="season-summary-table"><thead><tr><th>Season</th><th>Level / Team</th><th>Weight</th><th>Record</th><th>Win %</th><th>Bonus %</th><th>State rank</th><th>Accomplishments</th></tr></thead><tbody>${seasonHistory.map((item) => `<tr><td><strong>${e(item.game_season_display || item.season_name)}</strong></td><td>${e(item.competition_level_display)} · ${e(item.academic_stage_display)}${item.team_name ? `<span class="subtext">${e(item.team_name)}</span>` : ''}</td><td>${e(item.weight_class_code)}</td><td>${e(item.record_display)}</td><td>${pct(item.win_percentage)}</td><td>${pct(item.bonus_point_rate)}</td><td>${item.final_state_rank ? `#${item.final_state_rank}<span class="subtext">${e(SimSite.resultLabel(item.rank_status))}</span>` : '—'}</td><td>${e(item.accomplishments || '—')}</td></tr>`).join('')}</tbody></table></div>` : '<p class="coach-empty">Season summaries will appear after results are recorded.</p>'}</section>
+        ${honors.length ? `<section class="award-board section-block" data-collapse-label="Podium Finishes"><div class="section-heading"><div><p class="eyebrow">Tournament honors</p><h2>Podium Finishes</h2></div><span class="record-pill">${honors.length} finish${honors.length===1?'':'es'}</span></div><div class="season-award-groups">${honorSeasons.map((number) => `<section class="season-award-group"><header><h3>Season ${number}</h3><span>${honors.filter((item)=>seasonNumber(item)===number).length} honor${honors.filter((item)=>seasonNumber(item)===number).length===1?'':'s'}</span></header><div class="award-grid">${honors.filter((item)=>seasonNumber(item)===number).map((item) => { const place=honorPlacement(item); const body=`<span class="placement-medal place-${Math.min(3,place||4)}">${place||'—'}</span><div><strong>${e(honorLabel(item))}</strong><small>${e([honorEvent(item),honorWeight(item),item.seed_number?`No. ${item.seed_number} seed`:null].filter(Boolean).join(' · '))}</small></div>${item.tournament_guid?'<i aria-hidden="true">→</i>':''}`; return item.tournament_guid?`<a class="award-card-link" href="${SimSite.tournamentUrl(item.tournament_guid)}">${body}</a>`:`<article>${body}</article>`; }).join('')}</div></section>`).join('')}</div></section>` : ''}
+        <section class="panel season-timeline section-block" data-collapse-label="Career Progression"><div class="panel-heading"><div><p class="eyebrow">Career progression</p><h2>Season and Career Records</h2></div><span class="record-pill">${seasonHistory.length} seasons</span></div><div class="career-level-groups">${careerTable('COLLEGE','College Career')}${careerTable('HIGH_SCHOOL','High School Career')}</div></section>
         <section class="two-column section-block" data-collapse-label="Media Statistics and Recent Results"><article class="panel"><div class="panel-heading"><div><p class="eyebrow">Average per match</p><h2>Media Statistics</h2></div><span class="record-pill">${m.match_qty || 0} matches</span></div><div class="media-stats">
           ${stat('Takedowns',num(perMatch(m.takedown_qty),2),`${pct(m.takedown_success_rate)} conversion`)}${stat('Escapes',num(perMatch(m.escape_qty),2),'per match')}${stat('Reversals',num(perMatch(m.reversal_qty),2),'per match')}${stat('Back points',num(perMatch(m.back_point_qty),2),'per match')}${stat('Riding time',SimSite.duration(m.average_riding_time_seconds),'per match')}${stat('Team points',num(perMatch(m.team_points_earned),2),`${pct(bonusRate)} bonus wins`)}</div></article>
           <article class="panel"><div class="panel-heading"><div><p class="eyebrow">Recent results</p><h2>Latest Matches</h2></div></div>${history.length ? `<div class="history-list">${history.slice(0,5).map((match) => `<div class="history-row"><span>${e(seasonText(match))}</span><strong><a class="history-link" href="${SimSite.matchUrl(match.match_guid)}">${e(match.opponent_name)}</a><span>${e(match.match_context)}</span></strong><a class="history-result ${match.result_outcome === 'WIN' ? 'result-win' : 'result-loss'}" href="${SimSite.matchUrl(match.match_guid)}">${e(match.result_outcome === 'WIN' ? 'W' : 'L')} ${e(match.score_display)}</a><span>${e(String(match.result_type).replaceAll('_',' '))}</span></div>`).join('')}</div>` : '<p class="coach-empty">No completed matches yet.</p>'}</article>
