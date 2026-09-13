@@ -136,6 +136,10 @@
     rankings: () => queryAll('v_public_competitor_directory_v2', 'select=*&order=competition_level.asc,wrestler_rank.asc,wrestler_guid.asc'),
     mediaStatistics: () => queryAll('v_public_competitor_statistics_v2', 'select=*&order=competition_level.asc,wrestler_rank.asc,wrestler_guid.asc'),
     teamRankings: () => queryAll('v_team_rankings_v2', 'select=*&order=region_code.asc,state_code.asc,state_team_rank.asc,team_guid.asc'),
+    recruitingSeniors: () => queryAll(
+      'v_public_recruiting_seniors',
+      'select=*&order=national_recruiting_rank.asc,wrestler_guid.asc'
+    ),
     teamProfile: (guid) => rpc('get_team_profile', { p_team_guid: guid }),
     // The legacy RPC combines every analytics view in one statement and can
     // exceed PostgREST's statement timeout once the match ledger grows. Keep

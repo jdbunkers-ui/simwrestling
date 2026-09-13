@@ -1,123 +1,142 @@
-(function () {
+(async function () {
+  const board = document.getElementById('prospect-board');
+  const title = document.getElementById('prospect-title');
+  const count = document.getElementById('recruiting-count');
+  const seasonLabel = document.getElementById('recruiting-season');
+  const scopeFilter = document.getElementById('recruiting-scope');
+  const regionFilter = document.getElementById('recruiting-region');
   const stateFilter = document.getElementById('recruiting-state');
-  const prospectTitle = document.getElementById('prospect-title');
-  const prospectBoard = document.getElementById('prospect-board');
-  const scopeFilter = document.getElementById('class-scope');
-  const regionFilter = document.getElementById('class-region');
-  const stateClassFilter = document.getElementById('class-state');
-  const regionControl = document.getElementById('class-region-control');
-  const stateControl = document.getElementById('class-state-control');
-  const classTitle = document.getElementById('class-title');
-  const classBoard = document.getElementById('class-board');
+  const weightFilter = document.getElementById('recruiting-weight');
+  const regionControl = document.getElementById('recruiting-region-control');
+  const stateControl = document.getElementById('recruiting-state-control');
   const e = SimSite.escape;
 
-  const prospectNames = {
-    DE: ['Mason Ford','Elijah Turner','Nolan Brooks','Carter Hayes','Andre Coleman','Isaiah Ward'],
-    MD: ['Cameron Ellis','Micah Bennett','Julian Carter','Malcolm Reed','Owen Price','Darius Foster'],
-    NJ: ['Micah Torres','Sean Walker','Dominic Russo','Caleb Morgan','Jayden Patel','Elias Rivera'],
-    NY: ['Jayden Russo','Miles Johnson','Roman Delgado','Isaac Powell','Tyler Simmons','Noah Grant'],
-    PA: ['Elijah Monroe','Gavin Porter','Malik Jenkins','Cole Harrison','Bryce Sullivan','Jonah Martin'],
-    WV: ['Wyatt Harper','Logan Perry','Evan Fields','Nico Lawson','Silas Stone','Levi Barrett']
-  };
-  const weights = ['149','174','133','197','141','HWT'];
-  const hometowns = {
-    DE:['Wilmington','Dover','Newark','Milford','Seaford','Lewes'],
-    MD:['Baltimore','Annapolis','Frederick','Rockville','Bowie','Hagerstown'],
-    NJ:['Vineland','Morristown','Hoboken','Paterson','Jersey City','Wildwood'],
-    NY:['Albany','Syracuse','Buffalo','Yonkers','Rochester','White Plains'],
-    PA:['Philadelphia','Pittsburgh','Erie','Allentown','Scranton','Reading'],
-    WV:['Morgantown','Charleston','Wheeling','Beckley','Huntington','Fairmont']
-  };
-  const schoolPool = [
-    'Atlantic City University','Newark State','Jersey City University','Trenton State',
-    'University of Paterson','Hoboken University','Pittsburgh State','Philadelphia Tech',
-    'Baltimore University','Annapolis State','Albany University','Syracuse Tech',
-    'Dover State','Wilmington University','Morgantown Tech','Charleston State'
-  ];
+  if (!window.SimSite.configuredOrMessage(board)) return;
 
-  const teamNamesByState = {
-    DE:['Rehoboth Coastal College','Seaford University','Millsboro State','Camden Delaware College','Lewes University','Dover State','Milford College','Wilmington Tech','Newark Delaware University','Georgetown State'],
-    MD:['Baltimore University','Annapolis State','Frederick Tech','Rockville University','Bowie State','Hagerstown College','College Park A&M','Silver Spring University','Towson Tech','Ocean City State'],
-    NJ:['Atlantic City University','Newark State','Jersey City University','Trenton State','University of Paterson','Hoboken University','University of Asbury Park','Morristown University','University of Cape May','Camden State'],
-    NY:['Albany University','Syracuse Tech','Buffalo State','White Plains University','Rochester College','Yonkers State','Ithaca A&M','Utica University','Troy Tech','Poughkeepsie State'],
-    PA:['Pittsburgh State','Philadelphia Tech','Erie University','Allentown State','Scranton College','Reading A&M','Harrisburg University','Bethlehem Tech','Lancaster State','State College University'],
-    WV:['Morgantown Tech','Charleston State','Wheeling University','Beckley College','Huntington State','Fairmont University','Parkersburg Tech','Martinsburg State','Bluefield College','Clarksburg University']
-  };
-  const signeeFirst = ['Aiden','Malik','Roman','Caleb','Nico','Elijah','Mason','Andre','Jonah','Owen','Silas','Darius'];
-  const signeeLast = ['Rivera','Brooks','Jenkins','Holloway','Bennett','Coleman','Patel','Monroe','Russo','Torres','Price','Walker'];
+  let prospects = [];
 
-  function rankingSearch(params) {
-    const query = new URLSearchParams(params);
-    return `rankings.html?${query.toString()}`;
+  function option(value, label) {
+    return `<option value="${e(value)}">${e(label)}</option>`;
   }
 
-  function prospectsFor(state) {
-    return prospectNames[state].map((name, index) => ({
-      rank: index + 1,
-      name,
-      state,
-      hometown: hometowns[state][index],
-      weight: weights[index],
-      schools: schoolPool.slice(index, index + 3 + (index % 4)).map((school, order) => ({ school, order: order + 1 }))
-    }));
+  function regionName(code) {
+    return prospects.find((row) => row.region_code === code)?.region_name || code;
   }
 
-  function renderProspects() {
-    const state = stateFilter.value;
-    const rows = prospectsFor(state);
-    prospectTitle.textContent = `${state} Most-Recruited High-School Wrestlers`;
-    prospectBoard.innerHTML = rows.map((row) => `<article class="prospect-row">
-      <span class="prospect-rank">${row.rank}</span>
-      <div class="prospect-identity"><a href="${rankingSearch({ level:'HIGH_SCHOOL', state:row.state, weight:row.weight, q:row.name })}">${e(row.name)}</a><small>${e(row.hometown)}, ${e(row.state)} · ${e(row.weight)} lb · Senior</small></div>
-      <div class="school-preferences"><span>Current preferred schools</span><ol>${row.schools.map((item) => `<li><b>${item.order}</b><a href="${rankingSearch({ weight:'TEAM', q:item.school })}">${e(item.school)}</a></li>`).join('')}</ol></div>
-      <div class="interest-meter"><span>${6 - row.rank + 3} programs recruiting</span><i style="--interest:${96 - row.rank * 8}%"></i><small>Sample interest index</small></div>
-    </article>`).join('');
+  function rebuildFilters() {
+    const regions = SimSite.inventoryRegions(prospects);
+    const states = SimSite.inventoryStates(prospects);
+    const availableWeights = new Set(prospects.map((row) => String(row.weight_class_code)));
+
+    regionFilter.innerHTML = regions.map((region) => option(region.code, region.name)).join('');
+    stateFilter.innerHTML = states.map((state) => option(state, state)).join('');
+    if (states.includes('NJ')) stateFilter.value = 'NJ';
+
+    weightFilter.innerHTML = option('ALL', 'All weights')
+      + SimSite.highSchoolWeightOrder
+        .filter((weight) => availableWeights.has(weight))
+        .map((weight) => option(weight, weight === 'HWT' ? 'HWT' : `${weight} lb`))
+        .join('');
+
+    const requestedScope = String(SimSite.query('scope') || 'NATIONAL').toUpperCase();
+    scopeFilter.value = ['NATIONAL','REGION','STATE'].includes(requestedScope)
+      ? requestedScope : 'NATIONAL';
+
+    const requestedRegion = String(SimSite.query('region') || '');
+    if (regions.some((region) => region.code === requestedRegion)) {
+      regionFilter.value = requestedRegion;
+    }
+
+    const requestedState = String(SimSite.query('state') || '');
+    if (states.includes(requestedState)) stateFilter.value = requestedState;
+
+    const requestedWeight = String(SimSite.query('weight') || 'ALL').toUpperCase();
+    weightFilter.value = requestedWeight === 'ALL' || availableWeights.has(requestedWeight)
+      ? requestedWeight : 'ALL';
   }
 
-  function mockSignees(state, teamIndex) {
-    return [0,1,2].map((offset) => {
-      const name = `${signeeFirst[(teamIndex * 2 + offset) % signeeFirst.length]} ${signeeLast[(teamIndex + offset * 3) % signeeLast.length]}`;
-      const weight = weights[(teamIndex + offset) % weights.length];
-      return { name, weight, state };
-    });
+  function scopeName() {
+    if (scopeFilter.value === 'REGION') return regionName(regionFilter.value);
+    if (scopeFilter.value === 'STATE') return stateFilter.value;
+    return 'National';
   }
 
-  function stateClasses(state) {
-    return teamNamesByState[state].map((team, index) => ({
-      team,
-      state,
-      score: 94 - index * 3,
-      signees: mockSignees(state, index)
-    }));
+  function scopedRows() {
+    return prospects.filter((row) => {
+      if (scopeFilter.value === 'REGION' && row.region_code !== regionFilter.value) return false;
+      if (scopeFilter.value === 'STATE' && row.state_code !== stateFilter.value) return false;
+      return weightFilter.value === 'ALL' || row.weight_class_code === weightFilter.value;
+    }).sort((a, b) => Number(b.total_recruiting_points) - Number(a.total_recruiting_points)
+      || Number(b.recruiting_program_qty) - Number(a.recruiting_program_qty)
+      || String(a.wrestler_name).localeCompare(String(b.wrestler_name))
+      || String(a.wrestler_guid).localeCompare(String(b.wrestler_guid)));
   }
 
-  function renderClasses() {
+  function preferredSchools(row) {
+    const schools = Array.isArray(row.preferred_schools) ? row.preferred_schools : [];
+    if (!schools.length) return '<p class="no-preferences">No preferred schools established</p>';
+    return `<ol>${schools.map((school) => `<li><a href="${SimSite.teamUrl(school.team_guid)}">${e(school.team_name)}</a></li>`).join('')}</ol>`;
+  }
+
+  function render() {
     const scope = scopeFilter.value;
     regionControl.hidden = scope !== 'REGION';
     stateControl.hidden = scope !== 'STATE';
-    let rows;
-    let label;
-    if (scope === 'STATE') {
-      rows = stateClasses(stateClassFilter.value);
-      label = stateClassFilter.value;
-    } else {
-      const all = Object.keys(teamNamesByState).flatMap((state) => stateClasses(state));
-      rows = all.sort((a, b) => b.score - a.score || a.team.localeCompare(b.team)).slice(0, 10);
-      label = scope === 'REGION' ? 'Mid-Atlantic Regional' : 'National';
+    const rows = scopedRows();
+    const visible = rows.slice(0, 25);
+    const geography = scopeName();
+    const weight = weightFilter.value === 'ALL' ? ''
+      : ` ${weightFilter.value === 'HWT' ? 'HWT' : `${weightFilter.value}-Pound`}`;
+
+    title.textContent = `${geography}${weight} Most-Recruited High-School Wrestlers`;
+    count.textContent = `Top ${visible.length} of ${rows.length} senior${rows.length === 1 ? '' : 's'}`;
+
+    SimSite.syncFilters({
+      scope,
+      region: scope === 'REGION' ? regionFilter.value : '',
+      state: scope === 'STATE' ? stateFilter.value : '',
+      weight: weightFilter.value
+    });
+
+    if (!visible.length) {
+      board.innerHTML = '<div class="state-card"><p>No seniors match the selected recruiting filters.</p></div>';
+      return;
     }
-    classTitle.textContent = `${label} Recruiting Class Rankings`;
-    classBoard.innerHTML = rows.slice(0, 10).map((row, index) => `<article class="class-row">
-      <span class="class-rank">${index + 1}</span>
-      <div class="class-team"><a href="${rankingSearch({ weight:'TEAM', state:row.state, q:row.team })}">${e(row.team)}</a><small>${e(row.state)} · Season 2 recruiting class</small></div>
-      <div class="class-score"><span>Class score</span><strong>${row.score}</strong></div>
-      <div class="signee-list"><span>Signed high-school seniors</span>${row.signees.map((signee) => `<a href="${rankingSearch({ level:'COLLEGE', state:signee.state, weight:signee.weight, q:signee.name })}">${e(signee.name)} <small>${e(signee.weight)} lb</small></a>`).join('')}</div>
-    </article>`).join('');
+
+    const maximumPoints = Math.max(...visible.map((row) => Number(row.total_recruiting_points || 0)), 1);
+    board.innerHTML = visible.map((row, index) => {
+      const points = Number(row.total_recruiting_points || 0);
+      const interest = Math.max(4, Math.round(points / maximumPoints * 100));
+      return `<article class="prospect-row">
+        <span class="prospect-rank">${index + 1}</span>
+        <div class="prospect-identity">
+          <a href="${SimSite.profileUrl(row.wrestler_guid)}">${e(row.wrestler_name)}</a>
+          <small>${e(row.hometown_city || 'Unknown')}, ${e(row.state_code || '')} · ${e(row.weight_class_code)}${row.weight_class_code === 'HWT' ? '' : ' lb'} · Senior</small>
+        </div>
+        <div class="school-preferences"><span>Preferred schools</span>${preferredSchools(row)}</div>
+        <div class="interest-meter">
+          <span>${points} recruiting point${points === 1 ? '' : 's'}</span>
+          <i style="--interest:${interest}%"></i>
+          <small>${Number(row.recruiting_program_qty || 0)} program${Number(row.recruiting_program_qty || 0) === 1 ? '' : 's'} have recruited him</small>
+        </div>
+      </article>`;
+    }).join('');
   }
 
-  stateFilter.addEventListener('change', renderProspects);
-  scopeFilter.addEventListener('change', renderClasses);
-  regionFilter.addEventListener('change', renderClasses);
-  stateClassFilter.addEventListener('change', renderClasses);
-  renderProspects();
-  renderClasses();
+  [scopeFilter,regionFilter,stateFilter,weightFilter].forEach((control) => {
+    control.addEventListener('change', render);
+  });
+
+  try {
+    prospects = await SimApi.recruitingSeniors();
+    rebuildFilters();
+    const season = prospects[0];
+    seasonLabel.textContent = season?.game_season_number
+      ? `Season ${season.game_season_number} recruiting center`
+      : 'Current season recruiting center';
+    render();
+  } catch (error) {
+    SimSite.showError(board, error.message);
+    count.textContent = 'Recruiting data unavailable';
+  }
 })();
