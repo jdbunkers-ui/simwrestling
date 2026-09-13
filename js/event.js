@@ -4,7 +4,6 @@
   if (!eventGuid) { SimSite.showError(root, 'No scheduled event was selected.'); return; }
   if (!SimSite.configuredOrMessage(root)) return;
   const e = SimSite.escape;
-  const resultTypes = (type) => String(type || '').includes('DUAL') || String(type || '').includes('QUAD');
   let event, sessions, divisions, placements, duals, standings;
   let selectedDivision = '';
 
@@ -166,6 +165,9 @@
     container.append(bracketState);
     try {
       const rows = await SimApi.tournamentBracketRows(division.tournament_guid);
+      const completedBoutQty = rows.filter((row) => row.match_guid).length;
+      const summary = container.querySelector('.division-summary p');
+      if (summary) summary.textContent = `${division.entrant_qty} entrants · ${completedBoutQty} completed bouts`;
       bracketState.innerHTML = renderLiveBracket(rows, division);
     } catch (error) {
       SimSite.showError(bracketState, error.message);
@@ -190,7 +192,8 @@
     document.title = `${event.event_name} | Sim Wrestling`;
     selectedDivision = divisions[0]?.scheduled_event_division_guid || '';
     const tournamentContent = divisions.length ? renderDivisionPicker() : '';
-    root.innerHTML = `${renderHeader()}<nav class="profile-actions event-back"><a class="quiet-link" href="results.html?week=${event.week_number}&level=${encodeURIComponent(event.competition_level)}">← Return to Week ${event.week_number} Results</a><a class="quiet-link" href="schedule.html?week=${event.week_number}&level=${encodeURIComponent(event.competition_level)}">View Schedule</a></nav>${renderSessions()}${resultTypes(event.event_type) ? renderDuals() : tournamentContent}${renderStandings()}`;
+    const eventResults = divisions.length ? tournamentContent : renderDuals();
+    root.innerHTML = `${renderHeader()}<nav class="profile-actions event-back"><a class="quiet-link" href="results.html?week=${event.week_number}&level=${encodeURIComponent(event.competition_level)}">← Return to Week ${event.week_number} Results</a><a class="quiet-link" href="schedule.html?week=${event.week_number}&level=${encodeURIComponent(event.competition_level)}">View Schedule</a></nav>${renderSessions()}${eventResults}${renderStandings()}`;
     if (divisions.length) wireDivisions();
   } catch (error) {
     SimSite.showError(root, error.message);

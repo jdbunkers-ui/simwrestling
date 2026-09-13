@@ -77,12 +77,22 @@
     return pieces.join(' · ');
   }
 
+  function eventTypeLabel(row) {
+    const type = String(row.event_type || '').toUpperCase();
+    const format = String(row.format_code || '').toUpperCase();
+    if (type.includes('INDIVIDUAL') || format.includes('DOUBLE_ELIMINATION')) return 'Individual Tournament';
+    if (type.includes('QUAD')) return 'College Quad';
+    if (type.includes('DUAL') && format.includes('TEAM_')) return 'Dual Meet Tournament';
+    if (type.includes('DUAL')) return 'Dual Meet';
+    return 'Tournament';
+  }
+
   function rowMarkup(row) {
     const eventUrl = SimSite.eventUrl(row.scheduled_event_guid);
     return `<tr>
       <td data-label="Week"><strong>Week ${row.week_number}</strong></td>
       <td data-label="Day"><span>${e(row.day_name)}</span><small>${e(SimSite.date(row.event_date, true))}</small></td>
-      <td data-label="Event" class="results-event-name"><a href="${eventUrl}">${e(row.display_event_name || row.event_name)}</a><span class="event-status ${statusClass(row.event_status)}">${e(statusText(row))}</span>${activityText(row) ? `<small>${e(activityText(row))}</small>` : ''}</td>
+      <td data-label="Event" class="results-event-name"><span class="schedule-type-badge results-type-badge">${e(eventTypeLabel(row))}</span><a href="${eventUrl}">${e(row.display_event_name || row.event_name)}</a><span class="event-status ${statusClass(row.event_status)}">${e(statusText(row))}</span>${activityText(row) ? `<small>${e(activityText(row))}</small>` : ''}</td>
       <td data-label="Details"><a class="results-detail-link" href="${eventUrl}">View Event <span aria-hidden="true">→</span></a></td>
     </tr>`;
   }
