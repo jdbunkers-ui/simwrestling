@@ -74,12 +74,8 @@
     `select=*&${guidColumn}=eq.${encoded(guid)}${order ? `&order=${order}` : ''}`
   );
 
-  async function wrestlerProfileFromViews(guid) {
+  async function coachAnalyticsFromViews(guid) {
     const requests = {
-      profile: filtered('v_wrestler_profile_header', 'wrestler_guid', guid),
-      directory: filtered('v_public_competitor_directory', 'wrestler_guid', guid),
-      attributes: filtered('v_wrestler_attribute_summary_public', 'wrestler_guid', guid, 'display_order.asc'),
-      media_statistics: filtered('v_public_competitor_statistics', 'wrestler_guid', guid),
       coach_overview: filtered('v_wrestler_coach_overview', 'wrestler_guid', guid),
       coach_neutral: filtered('v_wrestler_coach_neutral_analytics', 'wrestler_guid', guid),
       coach_mat: filtered('v_wrestler_coach_mat_analytics', 'wrestler_guid', guid),
@@ -87,9 +83,7 @@
       coach_moves: filtered('v_wrestler_coach_move_analytics', 'wrestler_guid', guid, 'offensive_uses.desc,move_name.asc'),
       coach_periods: filtered('v_wrestler_coach_period_analytics', 'wrestler_guid', guid, 'segment_number.asc'),
       coach_score_states: filtered('v_wrestler_coach_score_state_analytics', 'wrestler_guid', guid, 'score_state.asc'),
-      coach_fatigue: filtered('v_wrestler_coach_fatigue_analytics', 'wrestler_guid', guid, 'fatigue_band.asc'),
-      match_history: filtered('v_wrestler_match_history', 'wrestler_guid', guid, 'match_date.desc'),
-      tournament_achievements: filtered('v_wrestler_tournament_achievements', 'wrestler_guid', guid, 'tournament_date.desc')
+      coach_fatigue: filtered('v_wrestler_coach_fatigue_analytics', 'wrestler_guid', guid, 'fatigue_band.asc')
     };
     const names = Object.keys(requests);
     const settled = await Promise.allSettled(Object.values(requests));
@@ -101,22 +95,14 @@
         rows[name] = Array.isArray(result.value) ? result.value : [];
       } else {
         rows[name] = [];
-        console.warn(`Optional wrestler profile dataset failed: ${name}`, result.reason);
+        console.warn(`Coach Analytics dataset failed: ${name}`, result.reason);
       }
     });
 
-    const header = rows.profile[0];
-    const directory = rows.directory[0] || {};
-    if (!header) {
-      const profileFailure = settled[names.indexOf('profile')];
-      if (profileFailure?.status === 'rejected') throw profileFailure.reason;
-      throw new Error('The requested wrestler profile was not found.');
-    }
+    const failed = settled.filter((result) => result.status === 'rejected');
+    if (failed.length) throw new Error('Coach Analytics could not be loaded. Please try again.');
 
     return {
-      profile: { ...directory, ...header },
-      attributes: rows.attributes,
-      media_statistics: rows.media_statistics[0] || {},
       coach_overview: rows.coach_overview[0] || {},
       coach_neutral: rows.coach_neutral[0] || {},
       coach_mat: rows.coach_mat[0] || {},
@@ -124,9 +110,7 @@
       coach_moves: rows.coach_moves,
       coach_periods: rows.coach_periods,
       coach_score_states: rows.coach_score_states,
-      coach_fatigue: rows.coach_fatigue,
-      match_history: rows.match_history,
-      tournament_achievements: rows.tournament_achievements
+      coach_fatigue: rows.coach_fatigue
     };
   }
 
@@ -159,10 +143,10 @@
       'select=*&order=national_recruiting_rank.asc,wrestler_guid.asc'
     ),
     teamProfile: (guid) => rpc('get_team_profile', { p_team_guid: guid }),
-    // The legacy RPC combines every analytics view in one statement and can
-    // exceed PostgREST's statement timeout once the match ledger grows. Keep
-    // each view in its own request so optional analytics cannot blank the page.
-    profile: wrestlerProfileFromViews,
+    // Essential public data is one reliable payload. Heavy Coach Analytics is
+    // requested only after the visitor selects that tab.
+    profile: (guid) => rpc('get_public_wrestler_profile_v3_4_1', { p_wrestler_guid: guid }),
+    coachAnalytics: coachAnalyticsFromViews,
     matchFeed: (guid) => query(
       'v_customer_match_experience',
       `select=*&match_guid=eq.${encodeURIComponent(guid)}&order=event_sequence.asc`

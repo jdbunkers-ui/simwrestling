@@ -14,30 +14,46 @@
     return `<div><span>${e(label)}</span><strong>${e(value)}</strong>${detail ? `<small>${e(detail)}</small>` : ''}</div>`;
   }
 
+  async function loadCoachAnalytics(panel) {
+    panel.dataset.loaded = 'loading';
+    panel.innerHTML = '<div class="state-card page-state"><span class="spinner" aria-hidden="true"></span><p>Loading Coach Analytics…</p></div>';
+    try {
+      const payload = await SimApi.coachAnalytics(wrestlerGuid);
+      const coach = payload.coach_overview || {};
+      const neutral = payload.coach_neutral || {};
+      const mat = payload.coach_mat || {};
+      const scramble = payload.coach_scramble_discipline || {};
+      const moves = payload.coach_moves || [];
+      const periods = payload.coach_periods || [];
+      const scoreStates = payload.coach_score_states || [];
+      const fatigue = payload.coach_fatigue || [];
+      panel.innerHTML = `
+        <section class="coach-banner section-block"><div><p class="eyebrow">Coach view</p><h2>Development and Matchup Intelligence</h2></div><p>Every attempt, finish, defense, position and match state is derived from the event ledger.</p></section>
+        <section class="kpi-strip" data-collapse-label="Performance Snapshot" data-mobile-open="true"><article><span>TD conversion</span><strong>${pct(coach.takedown_conversion_rate)}</strong><small>${coach.takedowns || 0} of ${coach.takedown_attempts || 0}</small></article><article><span>TD defense</span><strong>${pct(coach.takedown_defense_rate)}</strong><small>${coach.takedowns_allowed || 0} allowed</small></article><article><span>Turn rate</span><strong>${pct(coach.turn_rate)}</strong><small>${coach.turns || 0} of ${coach.turn_attempts || 0}</small></article><article><span>Scramble rate</span><strong>${pct(coach.scramble_win_rate)}</strong><small>${coach.scramble_wins || 0} wins</small></article><article><span>Avg. margin</span><strong>${Number(coach.average_margin || 0) >= 0 ? '+' : ''}${num(coach.average_margin,1)}</strong><small>points per match</small></article></section>
+        <section class="coach-grid section-block" data-collapse-label="Neutral and Mat Wrestling"><article class="panel"><div class="panel-heading"><div><p class="eyebrow">Neutral phase</p><h2>Attack Profile</h2></div></div><div class="metric-list">${[
+          ['Open neutral',neutral.open_conversion_rate],['Clinch offense',neutral.clinch_conversion_rate],['Counters',neutral.counter_conversion_rate],['Throws',neutral.throw_conversion_rate],['Takedown defense',neutral.overall_defense_rate]
+        ].map(([label,value]) => `<div class="metric-row"><span>${e(label)}</span><div class="metric-bar"><i style="width:${Math.min(100,Number(value||0)*100)}%"></i></div><strong>${pct(value)}</strong></div>`).join('')}</div></article>
+          <article class="panel"><div class="panel-heading"><div><p class="eyebrow">Mat wrestling</p><h2>Top and Bottom</h2></div></div><div class="mini-grid">${mini('Breakdown rate',pct(mat.breakdown_rate),`${mat.breakdowns || 0} finishes`)}${mini('Turn rate',pct(mat.turn_rate),`${mat.back_points || 0} back points`)}${mini('Ride / match',`${num(mat.riding_time_per_match,0)} sec.`)}${mini('Escape rate',pct(mat.escape_rate),`${mat.escapes || 0} escapes`)}${mini('Reversal rate',pct(mat.reversal_rate),`${mat.reversals || 0} reversals`)}${mini('Danger time',`${mat.danger_seconds || 0} sec.`)}</div></article></section>
+        <section class="panel section-block" data-collapse-label="Move Intelligence"><div class="panel-heading"><div><p class="eyebrow">Move intelligence</p><h2>Offense and Defense by Move</h2></div><span class="record-pill">Top ${Math.min(12,moves.length)}</span></div>${moves.length ? `<div class="table-wrap"><table class="move-table"><thead><tr><th>Move</th><th>Uses</th><th>Success</th><th>Points</th><th>Faced</th><th>Stops</th><th>Stop %</th></tr></thead><tbody>${moves.slice(0,12).map((move) => { const resolved = !['SETUP','POSITION'].includes(String(move.action_type)); return `<tr><td><strong>${e(move.move_name)}</strong><span class="subtext">${e(move.action_type)}</span></td><td>${move.offensive_uses}</td><td>${resolved ? pct(move.offensive_success_rate) : 'N/A'}</td><td>${move.points_created}</td><td>${move.attempts_faced}</td><td>${resolved ? move.defensive_stops : 'N/A'}</td><td>${resolved ? pct(move.defensive_stop_rate) : 'N/A'}</td></tr>`; }).join('')}</tbody></table></div>` : '<p class="coach-empty">Move analytics will appear after completed matches.</p>'}</section>
+        <section class="split-grid section-block" data-collapse-label="Period and Situational Splits"><article class="panel"><div class="panel-heading"><div><p class="eyebrow">Period splits</p><h2>Scoring by Period</h2></div></div><div class="mini-grid">${periods.length ? periods.map((period) => mini(period.period_display,`${period.points_for}-${period.points_against}`,`${period.takedowns} TD · ${period.riding_time_seconds}s ride`)).join('') : mini('No data','—','Complete a match')}</div></article><article class="panel"><div class="panel-heading"><div><p class="eyebrow">Situational splits</p><h2>Match State and Fatigue</h2></div></div><div class="mini-grid">${scoreStates.map((state) => mini(String(state.score_state).toLowerCase(),`${state.points_for}-${state.points_against}`,`${state.takedowns} takedowns`)).join('')}${fatigue.slice(0,3).map((band) => mini(String(band.fatigue_band).replaceAll('_',' ').toLowerCase(),pct(band.scoring_action_rate),`${band.offensive_actions} actions`)).join('')}</div></article></section>
+        <section class="panel section-block" data-collapse-label="Control Under Pressure"><div class="panel-heading"><div><p class="eyebrow">Scramble and discipline</p><h2>Control Under Pressure</h2></div></div><div class="mini-grid">${mini('Scrambles entered',scramble.scrambles_entered || 0)}${mini('Scramble wins',scramble.scramble_wins || 0)}${mini('Neutral scrambles',scramble.neutral_scrambles || 0)}${mini('Stall warnings',scramble.stall_warnings || 0)}${mini('Warnings drawn',scramble.opponent_stall_warnings_drawn || 0)}${mini('Penalty points conceded',scramble.penalty_points_conceded || 0)}</div></section>`;
+      SimSite.mobileCollapsibles(panel);
+      panel.dataset.loaded = 'true';
+    } catch (error) {
+      panel.dataset.loaded = 'false';
+      panel.innerHTML = `<div class="state-card page-state"><strong>Coach Analytics could not be loaded.</strong><p>${e(error.message)}</p><button class="retry-button" type="button">Try again</button></div>`;
+      panel.querySelector('.retry-button').addEventListener('click', () => loadCoachAnalytics(panel));
+    }
+  }
+
   try {
-    const [payload, seasonHistory, careerSummary] = await Promise.all([
-      SimApi.profile(wrestlerGuid),
-      SimApi.wrestlerSeasonSummary(wrestlerGuid).catch((error) => {
-        console.warn('Optional wrestler season history failed to load.', error);
-        return [];
-      }),
-      SimApi.wrestlerCareerSummary(wrestlerGuid).catch((error) => {
-        console.warn('Optional wrestler career summary failed to load.', error);
-        return [];
-      })
-    ]);
+    const payload = await SimApi.profile(wrestlerGuid);
     if (!payload?.profile) throw new Error('The requested wrestler profile was not found.');
+    const seasonHistory = payload.season_history || [];
+    const careerSummary = payload.career_summary || [];
     const p = payload.profile;
     const a = payload.attributes || [];
     const m = payload.media_statistics || {};
-    const coach = payload.coach_overview || {};
-    const neutral = payload.coach_neutral || {};
-    const mat = payload.coach_mat || {};
-    const scramble = payload.coach_scramble_discipline || {};
-    const moves = payload.coach_moves || [];
-    const periods = payload.coach_periods || [];
-    const scoreStates = payload.coach_score_states || [];
-    const fatigue = payload.coach_fatigue || [];
     const seasonNumber = (item) => Number(item?.game_season_number || 0);
     const seasonText = (item) => seasonNumber(item) ? `Season ${seasonNumber(item)}` : 'Season unavailable';
     const chronology = (item, field) => new Date(item?.[field] || 0).getTime();
@@ -90,17 +106,7 @@
           <article class="panel"><div class="panel-heading"><div><p class="eyebrow">Recent results</p><h2>Latest Matches</h2></div></div>${history.length ? `<div class="history-list">${history.slice(0,5).map((match) => `<div class="history-row"><span>${e(seasonText(match))}</span><strong><a class="history-link" href="${SimSite.matchUrl(match.match_guid)}">${e(match.opponent_name)}</a><span>${e(match.match_context)}</span></strong><a class="history-result ${match.result_outcome === 'WIN' ? 'result-win' : 'result-loss'}" href="${SimSite.matchUrl(match.match_guid)}">${e(match.result_outcome === 'WIN' ? 'W' : 'L')} ${e(match.score_display)}</a><span>${e(String(match.result_type).replaceAll('_',' '))}</span></div>`).join('')}</div>` : '<p class="coach-empty">No completed matches yet.</p>'}</article>
         </section>
       </div>
-      <div class="tab-panel" id="coach-panel" hidden>
-        <section class="coach-banner section-block"><div><p class="eyebrow">Coach view</p><h2>Development and Matchup Intelligence</h2></div><p>Every attempt, finish, defense, position and match state is derived from the event ledger.</p></section>
-        <section class="kpi-strip" data-collapse-label="Performance Snapshot" data-mobile-open="true"><article><span>TD conversion</span><strong>${pct(coach.takedown_conversion_rate)}</strong><small>${coach.takedowns || 0} of ${coach.takedown_attempts || 0}</small></article><article><span>TD defense</span><strong>${pct(coach.takedown_defense_rate)}</strong><small>${coach.takedowns_allowed || 0} allowed</small></article><article><span>Turn rate</span><strong>${pct(coach.turn_rate)}</strong><small>${coach.turns || 0} of ${coach.turn_attempts || 0}</small></article><article><span>Scramble rate</span><strong>${pct(coach.scramble_win_rate)}</strong><small>${coach.scramble_wins || 0} wins</small></article><article><span>Avg. margin</span><strong>${Number(coach.average_margin || 0) >= 0 ? '+' : ''}${num(coach.average_margin,1)}</strong><small>points per match</small></article></section>
-        <section class="coach-grid section-block" data-collapse-label="Neutral and Mat Wrestling"><article class="panel"><div class="panel-heading"><div><p class="eyebrow">Neutral phase</p><h2>Attack Profile</h2></div></div><div class="metric-list">${[
-          ['Open neutral',neutral.open_conversion_rate],['Clinch offense',neutral.clinch_conversion_rate],['Counters',neutral.counter_conversion_rate],['Throws',neutral.throw_conversion_rate],['Takedown defense',neutral.overall_defense_rate]
-        ].map(([label,value]) => `<div class="metric-row"><span>${e(label)}</span><div class="metric-bar"><i style="width:${Math.min(100,Number(value||0)*100)}%"></i></div><strong>${pct(value)}</strong></div>`).join('')}</div></article>
-          <article class="panel"><div class="panel-heading"><div><p class="eyebrow">Mat wrestling</p><h2>Top and Bottom</h2></div></div><div class="mini-grid">${mini('Breakdown rate',pct(mat.breakdown_rate),`${mat.breakdowns || 0} finishes`)}${mini('Turn rate',pct(mat.turn_rate),`${mat.back_points || 0} back points`)}${mini('Ride / match',`${num(mat.riding_time_per_match,0)} sec.`)}${mini('Escape rate',pct(mat.escape_rate),`${mat.escapes || 0} escapes`)}${mini('Reversal rate',pct(mat.reversal_rate),`${mat.reversals || 0} reversals`)}${mini('Danger time',`${mat.danger_seconds || 0} sec.`)}</div></article></section>
-        <section class="panel section-block" data-collapse-label="Move Intelligence"><div class="panel-heading"><div><p class="eyebrow">Move intelligence</p><h2>Offense and Defense by Move</h2></div><span class="record-pill">Top ${Math.min(12,moves.length)}</span></div>${moves.length ? `<div class="table-wrap"><table class="move-table"><thead><tr><th>Move</th><th>Uses</th><th>Success</th><th>Points</th><th>Faced</th><th>Stops</th><th>Stop %</th></tr></thead><tbody>${moves.slice(0,12).map((move) => { const resolved = !['SETUP','POSITION'].includes(String(move.action_type)); return `<tr><td><strong>${e(move.move_name)}</strong><span class="subtext">${e(move.action_type)}</span></td><td>${move.offensive_uses}</td><td>${resolved ? pct(move.offensive_success_rate) : 'N/A'}</td><td>${move.points_created}</td><td>${move.attempts_faced}</td><td>${resolved ? move.defensive_stops : 'N/A'}</td><td>${resolved ? pct(move.defensive_stop_rate) : 'N/A'}</td></tr>`; }).join('')}</tbody></table></div>` : '<p class="coach-empty">Move analytics will appear after completed matches.</p>'}</section>
-        <section class="split-grid section-block" data-collapse-label="Period and Situational Splits"><article class="panel"><div class="panel-heading"><div><p class="eyebrow">Period splits</p><h2>Scoring by Period</h2></div></div><div class="mini-grid">${periods.length ? periods.map((period) => mini(period.period_display,`${period.points_for}-${period.points_against}`,`${period.takedowns} TD · ${period.riding_time_seconds}s ride`)).join('') : mini('No data','—','Complete a match')}</div></article><article class="panel"><div class="panel-heading"><div><p class="eyebrow">Situational splits</p><h2>Match State and Fatigue</h2></div></div><div class="mini-grid">${scoreStates.map((state) => mini(String(state.score_state).toLowerCase(),`${state.points_for}-${state.points_against}`,`${state.takedowns} takedowns`)).join('')}${fatigue.slice(0,3).map((band) => mini(String(band.fatigue_band).replaceAll('_',' ').toLowerCase(),pct(band.scoring_action_rate),`${band.offensive_actions} actions`)).join('')}</div></article></section>
-        <section class="panel section-block" data-collapse-label="Control Under Pressure"><div class="panel-heading"><div><p class="eyebrow">Scramble and discipline</p><h2>Control Under Pressure</h2></div></div><div class="mini-grid">${mini('Scrambles entered',scramble.scrambles_entered || 0)}${mini('Scramble wins',scramble.scramble_wins || 0)}${mini('Neutral scrambles',scramble.neutral_scrambles || 0)}${mini('Stall warnings',scramble.stall_warnings || 0)}${mini('Warnings drawn',scramble.opponent_stall_warnings_drawn || 0)}${mini('Penalty points conceded',scramble.penalty_points_conceded || 0)}</div></section>
-      </div>
+      <div class="tab-panel" id="coach-panel" hidden data-loaded="false"><div class="state-card page-state"><p>Select Coach Analytics to load the detailed coaching data.</p></div></div>
       <div class="tab-panel" id="history-panel" hidden><section class="panel section-block" data-collapse-label="Complete Match History" data-mobile-open="true"><div class="panel-heading"><div><p class="eyebrow">Complete ledger</p><h2>Match History</h2></div><span class="record-pill">${history.length} matches</span></div>${history.length ? `<div class="table-wrap"><table><thead><tr><th>Season</th><th>Opponent</th><th>Context</th><th>Result</th><th>Method</th><th>Team pts.</th></tr></thead><tbody>${history.map((match) => `<tr><td>${e(seasonText(match))}</td><td><a class="history-link" href="${SimSite.matchUrl(match.match_guid)}">${e(match.opponent_name)}</a></td><td>${e(match.match_context)}</td><td><a class="history-result ${match.result_outcome === 'WIN' ? 'result-win' : 'result-loss'}" href="${SimSite.matchUrl(match.match_guid)}">${e(match.result_outcome)} ${e(match.score_display)}</a></td><td>${e(String(match.result_type).replaceAll('_',' '))}</td><td>${num(match.team_points_earned,1)}</td></tr>`).join('')}</tbody></table></div>` : '<p class="coach-empty">No historical matches yet.</p>'}</section></div>`;
 
     const tabButtons = [...document.querySelectorAll('.tab')];
@@ -108,6 +114,9 @@
     tabButtons.forEach((button) => button.addEventListener('click', () => {
       tabButtons.forEach((item) => item.classList.toggle('active',item===button));
       Object.entries(panels).forEach(([name,panel]) => { panel.hidden = name !== button.dataset.tab; });
+      if (button.dataset.tab === 'coach' && panels.coach.dataset.loaded === 'false') {
+        loadCoachAnalytics(panels.coach);
+      }
     }));
     SimSite.mobileCollapsibles(root);
   } catch (error) {
