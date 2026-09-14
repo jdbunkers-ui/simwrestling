@@ -3,28 +3,30 @@
   const clockPanel=document.getElementById('league-clock');
   const rail=document.getElementById('week-rail');
   const levelFilter=document.getElementById('schedule-level');
-  const stateFilter=document.getElementById('schedule-state');
+  const regionFilter=document.getElementById('schedule-region');
   const seasonLabel=document.getElementById('schedule-season');
   if (!SimSite.configuredOrMessage(root)) return;
   const e=SimSite.escape;
   const statusClass=(value)=>`status-${String(value||'SCHEDULED').toLocaleLowerCase().replaceAll('_','-')}`;
   let rows=[];
   let geography=[];
+  let regionStates=new Map();
   let clock=null;
   let selectedWeek=Number(SimSite.query('week'))||0;
 
-  function stateApplies(row) {
-    if (stateFilter.value==='ALL') return true;
+  function regionApplies(row) {
+    if (regionFilter.value==='ALL') return true;
+    if (String(row.region_code||'').trim()===regionFilter.value) return true;
     return Array.isArray(row.applicable_state_codes)
-      ? row.applicable_state_codes.map((value)=>String(value).trim()).includes(stateFilter.value)
+      ? row.applicable_state_codes.some((value)=>regionStates.get(regionFilter.value)?.has(String(value).trim().toUpperCase()))
       : true;
   }
   function matches(row) {
-    return (levelFilter.value==='ALL'||row.competition_level===levelFilter.value) && stateApplies(row);
+    return (levelFilter.value==='ALL'||row.competition_level===levelFilter.value) && regionApplies(row);
   }
   function renderClock() {
     if (!clock) { clockPanel.innerHTML='<div class="clock-copy"><div><span>Season status</span><strong>Schedule available</strong></div></div>'; return; }
-    clockPanel.innerHTML=`<div class="clock-copy"><div><span>${e(SimSite.seasonLabel(clock))}</span><strong>Week ${clock.current_week_number} · ${e(clock.current_day_name)}</strong></div><p>League date <b>${e(SimSite.date(clock.current_league_date,true))}</b></p></div><div class="season-progress" aria-label="Week ${clock.current_week_number} of 8"><i style="width:${Math.min(100,Number(clock.current_week_number||1)*12.5)}%"></i></div>`;
+    clockPanel.innerHTML=`<div class="clock-copy"><div><span>${e(SimSite.seasonLabel(clock))}</span><strong>Week ${clock.current_week_number} · ${e(clock.current_day_name)}</strong></div></div><div class="season-progress" aria-label="Week ${clock.current_week_number} of 8"><i style="width:${Math.min(100,Number(clock.current_week_number||1)*12.5)}%"></i></div>`;
   }
   function renderRail() {
     rail.innerHTML=Array.from({length:8},(_,index)=>index+1).map((week)=>{
@@ -33,18 +35,25 @@
     }).join('');
     rail.querySelectorAll('button').forEach((button)=>button.addEventListener('click',()=>{selectedWeek=Number(button.dataset.week);renderRail();render();}));
   }
+  function tournamentType(row) {
+    const code=String(row.public_group_code||row.event_type||'').trim().toUpperCase();
+    if (code.endsWith('_INDIVIDUAL')||code==='COLLEGE_HOLIDAY_INVITATIONAL') return 'Individual Tournament';
+    if (code.endsWith('_DUAL')) return 'Dual Tournament';
+    const label=String(row.tournament_type_label||'').trim();
+    if (/individual/i.test(label)) return 'Individual Tournament';
+    if (/dual/i.test(label)&&/tournament/i.test(label)) return 'Dual Tournament';
+    return label;
+  }
   function card(row) {
     const status=`<span class="event-status ${statusClass(row.event_status)}">${e(SimSite.resultLabel(row.event_status))}</span>`;
-    const type=row.tournament_type_label?`<span class="schedule-type-badge">${e(row.tournament_type_label)}</span>`:'';
-    const body=`${status}${type}<strong>${e(row.event_name)}</strong><i aria-hidden="true">${row.scheduled_event_guid?'→':''}</i>`;
-    return row.scheduled_event_guid
-      ? `<a class="calendar-event summary-event" href="${SimSite.eventUrl(row.scheduled_event_guid)}">${body}</a>`
-      : `<article class="calendar-event summary-event nonlink-event">${body}</article>`;
+    const typeLabel=tournamentType(row);
+    const type=typeLabel?`<span class="schedule-type-badge">${e(typeLabel)}</span>`:'';
+    return `<article class="calendar-event summary-event nonlink-event">${status}${type}<strong>${e(row.event_name)}</strong></article>`;
   }
   function render() {
-    SimSite.syncFilters({week:selectedWeek,level:levelFilter.value,state:stateFilter.value});
+    SimSite.syncFilters({week:selectedWeek,level:levelFilter.value,region:regionFilter.value});
     const visible=rows.filter((row)=>Number(row.week_number)===selectedWeek&&matches(row));
-    if (!visible.length) { root.innerHTML='<div class="state-card"><strong>No schedule listings match these filters.</strong><p>Choose another week, level, or state.</p></div>'; return; }
+    if (!visible.length) { root.innerHTML='<div class="state-card"><strong>No schedule listings match these filters.</strong><p>Choose another week, level, or region.</p></div>'; return; }
     const dates=[...new Set(visible.map((row)=>row.scheduled_date))].sort();
     root.innerHTML=dates.map((date)=>{
       const dayRows=visible.filter((row)=>row.scheduled_date===date);
@@ -58,15 +67,19 @@
     if (!rows.length) throw new Error('No public schedule has been published for the open season.');
     const requestedLevel=String(SimSite.query('level')||'ALL').toUpperCase();
     levelFilter.value=['ALL','HIGH_SCHOOL','COLLEGE'].includes(requestedLevel)?requestedLevel:'ALL';
-    const states=[...new Set(geography.map((row)=>String(row.state_code||'').trim()).filter(Boolean))].sort();
-    stateFilter.innerHTML='<option value="ALL">All states</option>'+states.map((state)=>`<option value="${e(state)}">${e(state)}</option>`).join('');
-    const requestedState=String(SimSite.query('state')||'ALL').toUpperCase();
-    stateFilter.value=states.includes(requestedState)?requestedState:'ALL';
+    const regions=SimSite.inventoryRegions(geography);
+    regionStates=new Map(regions.map((region)=>[
+      region.code,
+      new Set(geography.filter((row)=>String(row.region_code||'').trim()===region.code).map((row)=>String(row.state_code||'').trim().toUpperCase()).filter(Boolean))
+    ]));
+    regionFilter.innerHTML='<option value="ALL">All regions</option>'+regions.map((region)=>`<option value="${e(region.code)}">${e(region.name)}</option>`).join('');
+    const requestedRegion=String(SimSite.query('region')||'ALL').toUpperCase();
+    regionFilter.value=regions.some((region)=>region.code===requestedRegion)?requestedRegion:'ALL';
     selectedWeek=selectedWeek>=1&&selectedWeek<=8?selectedWeek:Number(clock?.current_week_number||1);
     seasonLabel.textContent=`Season ${rows[0].game_season_number}`;
     renderClock();renderRail();render();
     levelFilter.addEventListener('change',()=>{renderRail();render();});
-    stateFilter.addEventListener('change',()=>{renderRail();render();});
+    regionFilter.addEventListener('change',()=>{renderRail();render();});
   } catch (error) {
     SimSite.showError(root,error.message);clockPanel.hidden=true;rail.hidden=true;
   }
