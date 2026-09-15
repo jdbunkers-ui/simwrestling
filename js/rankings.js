@@ -36,11 +36,12 @@
 
   function rebuildWeights(preferred = '') {
     const level = levelFilter.value;
-    const choices = [option('PBP','Pound-for-Pound'), ...weights[level].map((value) => option(value, value === 'HWT' ? 'HWT' : `${value} lb`))];
-    if (level === 'COLLEGE') choices.push(option('TEAM','Team Rankings'));
+    const choices = level === 'COLLEGE'
+      ? [option('TEAM','Team Rankings'), option('PBP','Pound-for-Pound'), ...weights[level].map((value) => option(value, value === 'HWT' ? 'HWT' : `${value} lb`))]
+      : [option('PBP','Pound-for-Pound'), ...weights[level].map((value) => option(value, value === 'HWT' ? 'HWT' : `${value} lb`))];
     weightFilter.innerHTML = choices.join('');
     const values = [...weightFilter.options].map((item) => item.value);
-    const fallback = level === 'COLLEGE' ? '125' : '106';
+    const fallback = level === 'COLLEGE' ? 'TEAM' : '106';
     weightFilter.value = values.includes(preferred) ? preferred : fallback;
   }
 

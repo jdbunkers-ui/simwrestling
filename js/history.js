@@ -82,10 +82,10 @@
     region.innerHTML = option('ALL','All regions · National') + regions.map((item)=>option(item.code,item.name)).join('');
     const requestedRegion = String(SimSite.query('region') || SimSite.defaultRegionCode(geography)).toUpperCase();
     region.value = regions.some((item)=>item.code===requestedRegion) ? requestedRegion : SimSite.defaultRegionCode(geography);
-    rebuildStates(String(SimSite.query('state') || 'NJ').toUpperCase());
+    rebuildStates(String(SimSite.query('state') || 'ALL').toUpperCase());
     weight.innerHTML = option('TEAM','Team Champions') + SimSite.collegeWeightOrder.map((code)=>option(code,code==='HWT'?'HWT':`${code} lb`)).join('');
-    const requestedWeight = String(SimSite.query('weight') || '125').toUpperCase();
-    weight.value = ['TEAM',...SimSite.collegeWeightOrder].includes(requestedWeight) ? requestedWeight : '125';
+    const requestedWeight = String(SimSite.query('weight') || 'TEAM').toUpperCase();
+    weight.value = ['TEAM',...SimSite.collegeWeightOrder].includes(requestedWeight) ? requestedWeight : 'TEAM';
     search.value = SimSite.query('q') || '';
     const seasons = [...individual,...dual].map((row)=>Number(row.game_season_number)).filter(Boolean);
     latest.textContent = seasons.length ? `Season ${Math.max(...seasons)}` : 'No completed season yet';

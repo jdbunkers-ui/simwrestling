@@ -137,6 +137,16 @@
       'select=*&order=region_code.asc,state_code.asc'
     ),
     mediaStatistics: () => queryAll('v_public_competitor_statistics_v2', 'select=*&order=competition_level.asc,wrestler_rank.asc,wrestler_guid.asc'),
+    mediaStatisticsFiltered: (filters = {}) => rpc('get_public_statistics_v3_9_0', {
+      p_competition_level: filters.level || 'COLLEGE',
+      p_weight: filters.weight || '125',
+      p_region_code: filters.region || null,
+      p_state_code: filters.state || null,
+      p_county_guid: filters.county || null,
+      p_locality_guid: filters.locality || null,
+      p_search: filters.search || null,
+      p_limit: filters.limit || 1000
+    }),
     teamRankings: () => queryAll('v_team_rankings_v2', 'select=*&order=region_code.asc,state_code.asc,state_team_rank.asc,team_guid.asc'),
     recruitingSeniors: () => queryAll(
       'v_public_recruiting_seniors',
@@ -151,7 +161,7 @@
     // requested only after the visitor selects that tab.
     profile: (guid) => rpc('get_public_wrestler_profile_v3_4_1', { p_wrestler_guid: guid }),
     archivedProfile: (guid) => rpc('get_archived_college_wrestler_profile', { p_wrestler_guid: guid }),
-    coachAnalytics: coachAnalyticsFromViews,
+    coachAnalytics: (guid) => rpc('get_wrestler_coach_analytics_v3_9_0', { p_wrestler_guid: guid }),
     matchFeed: (guid) => query(
       'v_customer_match_experience',
       `select=*&match_guid=eq.${encodeURIComponent(guid)}&order=event_sequence.asc`
@@ -194,5 +204,6 @@
     ,collegeDualHistory: () => queryAll('v_college_dual_championship_history', 'select=*&order=game_season_number.desc,placement.asc')
     ,collegeTeamHistory: (guid) => filtered('v_college_team_season_history', 'team_guid', guid, 'game_season_number.desc')
     ,collegeTeamAccomplishments: (guid) => filtered('v_college_team_accomplishment_crosstab', 'team_guid', guid, 'achievement_level.asc')
+    ,teamRoster: (guid) => filtered('v_college_team_roster_v3_9_0', 'team_guid', guid, 'weight_class_display_order.asc,depth_order.asc,wrestler_name.asc')
   };
 })();

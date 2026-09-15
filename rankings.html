@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="Current college and high-school Sim Wrestling rankings.">
     <title>Rankings | Sim Wrestling</title>
-    <link rel="stylesheet" href="assets/styles.css?v=3.7.0">
+    <link rel="stylesheet" href="assets/styles.css?v=3.9.0">
   </head>
   <body data-page="rankings">
     <div data-site-header></div>
@@ -17,7 +17,7 @@
             <select id="competition-level-filter" disabled><option value="COLLEGE">College</option><option value="HIGH_SCHOOL">High School</option></select>
           </label>
           <label class="filter-control">View
-            <select id="weight-filter" disabled><option value="125">125 lb</option></select>
+            <select id="weight-filter" disabled><option value="TEAM">Team Rankings</option></select>
           </label>
           <label class="filter-control" id="region-filter-control">Region
             <select id="region-filter" disabled><option value="ALL">All regions · National</option></select>
@@ -36,9 +36,6 @@
           </label>
         </div>
       </section>
-      <nav class="event-actions schedule-only" aria-label="League schedule">
-        <a class="event-action" href="schedule.html"><span>Eight-week season</span><strong>View League Schedule</strong><i aria-hidden="true">→</i></a>
-      </nav>
       <section class="panel table-panel" aria-labelledby="rankings-title">
         <div class="panel-heading"><div><p class="eyebrow">Current standings</p><h2 id="rankings-title">Overall Rankings</h2></div><span class="record-pill" id="ranking-count">Loading…</span></div>
         <div id="rankings-content" aria-live="polite">
@@ -47,6 +44,6 @@
       </section>
     </main>
     <div data-site-footer></div>
-    <script src="js/config.js"></script><script src="js/api.js?v=3.7.0"></script><script src="js/site.js?v=3.7.0"></script><script src="js/rankings.js?v=3.7.0"></script>
+    <script src="js/config.js"></script><script src="js/api.js?v=3.9.0"></script><script src="js/site.js?v=3.7.0"></script><script src="js/rankings.js?v=3.9.0"></script>
   </body>
 </html>

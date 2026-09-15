@@ -47,14 +47,18 @@
   }
 
   try {
-    const [currentResult,archiveResult] = await Promise.allSettled([
-      SimApi.profile(wrestlerGuid),SimApi.archivedProfile(wrestlerGuid)
-    ]);
-    let payload = currentResult.status === 'fulfilled' ? currentResult.value : null;
-    const archivedPayload = archiveResult.status === 'fulfilled' ? archiveResult.value : null;
-    if (archivedPayload?.profile && (!payload?.profile || payload.profile.roster_status === 'GRADUATED')) {
-      payload = archivedPayload;
+    let payload = null;
+    let currentProfileError = null;
+    try { payload = await SimApi.profile(wrestlerGuid); } catch (error) { currentProfileError = error; }
+    if (!payload?.profile || payload.profile.roster_status === 'GRADUATED') {
+      try {
+        const archivedPayload = await SimApi.archivedProfile(wrestlerGuid);
+        if (archivedPayload?.profile) payload = archivedPayload;
+      } catch (_) {
+        // An active wrestler does not require an archived-profile lookup.
+      }
     }
+    if (!payload?.profile && currentProfileError) throw currentProfileError;
     if (!payload?.profile) throw new Error('The requested wrestler profile was not found.');
     const seasonHistory = payload.season_history || [];
     const careerSummary = payload.career_summary || [];
