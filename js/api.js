@@ -155,6 +155,7 @@
     dual: (guid) => rpc('get_dual_payload', { p_dual_guid: guid }),
     tournament: (guid) => rpc('get_tournament_payload', { p_tournament_guid: guid })
     ,leagueClock: async () => (await query('v_current_league_clock', 'select=*'))?.[0] || null
+    ,resultsContext: async () => (await query('v_public_results_context', 'select=*'))?.[0] || null
     ,leagueCalendar: (seasonGuid = '') => queryAll(
       'v_league_calendar',
       `select=*${seasonGuid ? `&season_guid=eq.${encoded(seasonGuid)}` : ''}&order=week_number.asc,starts_on.asc,event_name.asc,scheduled_event_guid.asc`
