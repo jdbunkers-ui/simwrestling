@@ -137,6 +137,7 @@
 
 /* Live public recruiting board v3.3.1 */
 .recruiting-panel-heading{gap:24px}.recruiting-panel-heading>div:first-child{min-width:260px}.recruiting-filters{flex-wrap:wrap;justify-content:flex-end}.school-preferences .no-preferences{margin:0;color:var(--muted);font-size:.74rem}.prospect-board>.state-card{margin:18px 22px 22px}.interest-meter i{margin-bottom:4px}.interest-meter span{font-variant-numeric:tabular-nums}
+.recruiting-tabs{display:flex;gap:6px;padding:14px 22px 0;border-bottom:1px solid var(--line);background:#f7f8fa}.recruiting-tab{appearance:none;margin-bottom:-1px;padding:11px 16px;border:1px solid transparent;border-bottom-color:var(--line);border-radius:7px 7px 0 0;background:transparent;color:var(--muted);font-weight:850;cursor:pointer}.recruiting-tab:hover{color:var(--ink)}.recruiting-tab.active{border-color:var(--line);border-bottom-color:#fff;background:#fff;color:var(--ink);box-shadow:inset 0 3px var(--gold)}.class-board>.state-card{margin:18px 22px 22px}.class-score{text-align:center}.signee-list>a{display:inline-flex;align-items:center;gap:5px}.signee-list>a small{font-size:.64rem;font-weight:750;white-space:nowrap}
 @media(max-width:980px){.recruiting-filters{justify-content:flex-start}.prospect-row{grid-template-columns:42px minmax(170px,.8fr) minmax(280px,1.4fr)}.interest-meter{grid-column:2/4}}
 @media(max-width:760px){.prospect-row{grid-template-columns:36px 1fr}.school-preferences,.interest-meter{grid-column:2}.prospect-board>.state-card{margin:14px}}
 

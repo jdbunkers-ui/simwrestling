@@ -142,6 +142,10 @@
       'v_public_recruiting_seniors',
       'select=*&order=national_recruiting_rank.asc,wrestler_guid.asc'
     ),
+    recruitingClasses: () => queryAll(
+      'v_college_recruiting_class_rankings',
+      'select=*&order=game_season_number.desc,national_class_rank.asc,team_name.asc'
+    ),
     teamProfile: (guid) => rpc('get_team_profile', { p_team_guid: guid }),
     // Essential public data is one reliable payload. Heavy Coach Analytics is
     // requested only after the visitor selects that tab.
