@@ -151,12 +151,7 @@
   }
 
   try {
-    const recentPromise = SimApi.resultsFiltered({ limit: 5000 });
-    let recentRows;
-    [clock, geography, recentRows] = await Promise.all([SimApi.leagueClock(), SimApi.regionStateInventory(), recentPromise]);
-    const completedWeeks = recentRows.filter((row) => row.event_status === 'COMPLETED' || Number(row.completed_session_qty) > 0)
-      .map((row) => Number(row.week_number)).filter((value) => value >= 1 && value <= 8);
-    if (clock && completedWeeks.length) clock.latest_completed_week_number = Math.max(...completedWeeks);
+    [clock, geography] = await Promise.all([SimApi.leagueClock(), SimApi.regionStateInventory()]);
     season.textContent = SimSite.seasonLabel(clock || {});
     restoreFilters();
     level.addEventListener('change', () => { renderWeights(); loadResults(); });
