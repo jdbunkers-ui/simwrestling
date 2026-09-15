@@ -80,11 +80,21 @@
     const honorEvent = (item) => item.tournament_name || item.event_name || 'Tournament';
     const honorWeight = (item) => item.weight_class_code ? `${item.weight_class_code} lb` : '';
     const honorPlacement = (item) => Number(item.final_placement || item.placement || 0);
+    const yearOnly = (value) => String(value || '—')
+      .replace(/^(?:College|High School)\s*(?:[·•|\-]\s*)?/i,'');
+    const accomplishmentsForSeason = (item, level) => {
+      const rows = achievements.filter((achievement) => seasonNumber(achievement) === seasonNumber(item)
+        && (achievement.competition_level || (p.archived_ind ? 'COLLEGE' : '')) === level
+        && honorPlacement(achievement) >= 1 && honorPlacement(achievement) <= 8);
+      return rows.length
+        ? rows.map((achievement) => `${honorLabel(achievement)} at ${honorEvent(achievement)}`).join(' | ')
+        : (item.accomplishments || '—');
+    };
     const careerTable = (level, heading) => {
       const rows = historyByLevel(level);
       const total = careerFor(level);
       if (!rows.length && !total) return `<section class="career-level-group"><div class="career-level-heading"><h3>${e(heading)}</h3></div><p class="coach-empty">No ${e(heading.toLocaleLowerCase())} history is available.</p></section>`;
-      return `<section class="career-level-group"><div class="career-level-heading"><h3>${e(heading)}</h3><span>${rows.length} season${rows.length===1?'':'s'}</span></div><div class="table-wrap"><table class="season-summary-table"><thead><tr><th>Season</th><th>Level / Team</th><th>Weight</th><th>Record</th><th>Win %</th><th>Bonus %</th><th>State rank</th><th>Accomplishments</th></tr></thead><tbody>${rows.map((item) => `<tr><td><strong>${e(item.game_season_display || item.season_name)}</strong></td><td>${e(item.competition_level_display)} · ${e(item.academic_stage_display)}${item.team_name?`<span class="subtext">${e(item.team_name)}</span>`:''}</td><td>${e(item.weight_class_code)}</td><td>${e(item.record_display)}</td><td>${pct(item.win_percentage)}</td><td>${pct(item.bonus_point_rate)}</td><td>${item.final_state_rank?`#${item.final_state_rank}<span class="subtext">${e(SimSite.resultLabel(item.rank_status))}</span>`:'—'}</td><td>${e(item.accomplishments||'—')}</td></tr>`).join('')}${total?`<tr class="career-total-row"><td><strong>Career Total</strong></td><td>${e(heading)}</td><td aria-label="Weight not applicable">—</td><td><strong>${e(total.record_display)}</strong><span class="subtext">${total.win_qty} wins · ${total.loss_qty} losses</span></td><td><strong>${pct(total.career_win_percentage)}</strong></td><td><strong>${pct(total.career_bonus_percentage)}</strong></td><td>—</td><td>${total.match_qty} matches</td></tr>`:''}</tbody></table></div></section>`;
+      return `<section class="career-level-group"><div class="career-level-heading"><h3>${e(heading)}</h3><span>${rows.length} season${rows.length===1?'':'s'}</span></div><div class="table-wrap"><table class="season-summary-table"><thead><tr><th>Season</th><th>Year / Team</th><th>Weight</th><th>Record</th><th>Win %</th><th>Bonus %</th><th>State rank</th><th>Accomplishments</th></tr></thead><tbody>${rows.map((item) => `<tr><td><strong>${e(item.game_season_display || item.season_name)}</strong></td><td>${e(yearOnly(item.academic_stage_display))}${item.team_name?`<span class="subtext">${e(item.team_name)}</span>`:''}</td><td>${e(item.weight_class_code)}</td><td>${e(item.record_display)}</td><td>${pct(item.win_percentage)}</td><td>${pct(item.bonus_point_rate)}</td><td>${item.final_state_rank?`#${item.final_state_rank}<span class="subtext">${e(SimSite.resultLabel(item.rank_status))}</span>`:'—'}</td><td>${e(accomplishmentsForSeason(item,level))}</td></tr>`).join('')}${total?`<tr class="career-total-row"><td><strong>Career Total</strong></td><td>—</td><td aria-label="Weight not applicable">—</td><td><strong>${e(total.record_display)}</strong><span class="subtext">${total.win_qty} wins · ${total.loss_qty} losses</span></td><td><strong>${pct(total.career_win_percentage)}</strong></td><td><strong>${pct(total.career_bonus_percentage)}</strong></td><td>—</td><td>${total.match_qty} matches</td></tr>`:''}</tbody></table></div></section>`;
     };
     const initials = `${p.first_name?.[0] || ''}${p.last_name?.[0] || ''}` || String(p.wrestler_name || '').split(/\s+/).map((word)=>word[0]).join('').slice(0,2);
     const matchQty = Number(m.match_qty || 0);

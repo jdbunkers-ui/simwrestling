@@ -5,10 +5,10 @@
   const regionFilter = document.getElementById('region-filter');
   const stateFilter = document.getElementById('state-filter');
   const countyFilter = document.getElementById('county-filter');
-  const localityFilter = document.getElementById('locality-filter');
   const regionControl = document.getElementById('region-filter-control');
   const countyControl = document.getElementById('county-filter-control');
-  const localityControl = document.getElementById('locality-filter-control');
+  const yearFilter = document.getElementById('year-filter');
+  const yearControl = document.getElementById('year-filter-control');
   const search = document.getElementById('ranking-search');
   const count = document.getElementById('ranking-count');
   const title = document.getElementById('rankings-title');
@@ -83,29 +83,35 @@
     countyFilter.disabled = weightFilter.value === 'PBP' || !unique.length;
   }
 
-  function rebuildLocalities(preferred = '') {
-    const values = countyFilter.value === 'ALL' ? [] : (geography || []).filter((row) => String(row.state_code || '').trim() === stateFilter.value && row.county_guid === countyFilter.value && row.locality_guid)
-      .map((row) => ({ guid:row.locality_guid,name:row.locality_name || 'Unnamed locality' }));
-    const unique = [...new Map(values.map((row) => [row.guid,row])).values()].sort((a,b) => a.name.localeCompare(b.name));
-    localityFilter.innerHTML = option('ALL','All towns and cities') + unique.map((row) => option(row.guid,row.name)).join('');
-    localityFilter.value = unique.some((row) => row.guid === preferred) ? preferred : 'ALL';
-    localityFilter.disabled = weightFilter.value === 'PBP' || countyFilter.value === 'ALL' || !unique.length;
+  function rebuildYears(preferred = '') {
+    const prefix = collegeMode() ? 'COLLEGE' : 'HIGH_SCHOOL';
+    const values = [
+      ['ALL','All years'],
+      [`${prefix}_SENIOR`,'Senior'],
+      [`${prefix}_JUNIOR`,'Junior'],
+      [`${prefix}_SOPHOMORE`,'Sophomore'],
+      [`${prefix}_FRESHMAN`,'Freshman']
+    ];
+    yearFilter.innerHTML = values.map(([value,label]) => option(value,label)).join('');
+    yearFilter.value = values.some(([value]) => value === preferred) ? preferred : 'ALL';
+    yearFilter.disabled = false;
   }
 
   function configureGeography(preferred = {}) {
     regionControl.hidden = !collegeMode();
     countyControl.hidden = collegeMode() || weightFilter.value === 'PBP';
-    localityControl.hidden = collegeMode() || weightFilter.value === 'PBP';
+    yearControl.hidden = teamMode();
     if (collegeMode()) {
       rebuildRegions(preferred.region || '');
       rebuildStates(preferred.state || '');
       countyFilter.value = 'ALL';
-      localityFilter.value = 'ALL';
+      if (!teamMode()) rebuildYears(preferred.year || '');
+      else yearFilter.value = 'ALL';
     } else {
       regionFilter.value = 'ALL';
       rebuildStates(preferred.state || '');
       rebuildCounties(preferred.county || '');
-      rebuildLocalities(preferred.locality || '');
+      rebuildYears(preferred.year || '');
     }
   }
 
@@ -116,7 +122,6 @@
       if (regionFilter.value !== 'ALL') return regionName(regionFilter.value);
       return 'National';
     }
-    if (weightFilter.value !== 'PBP' && localityFilter.value !== 'ALL') return selectedLabel(localityFilter);
     if (weightFilter.value !== 'PBP' && countyFilter.value !== 'ALL') return selectedLabel(countyFilter);
     return stateFilter.value;
   }
@@ -128,14 +133,14 @@
       region:collegeMode() && regionFilter.value !== 'ALL' ? regionFilter.value : null,
       state:stateFilter.value !== 'ALL' ? stateFilter.value : null,
       county:!collegeMode() && weightFilter.value !== 'PBP' && countyFilter.value !== 'ALL' ? countyFilter.value : null,
-      locality:!collegeMode() && weightFilter.value !== 'PBP' && localityFilter.value !== 'ALL' ? localityFilter.value : null,
+      year:!teamMode() && yearFilter.value !== 'ALL' ? yearFilter.value : null,
       search:search.value.trim() || null,
       limit:25
     };
   }
 
   function syncUrl() {
-    SimSite.syncFilters({ level:levelFilter.value,weight:weightFilter.value,region:collegeMode()?regionFilter.value:'',state:stateFilter.value,county:!collegeMode()&&weightFilter.value!=='PBP'?countyFilter.value:'',locality:!collegeMode()&&weightFilter.value!=='PBP'?localityFilter.value:'',q:search.value.trim() });
+    SimSite.syncFilters({ level:levelFilter.value,weight:weightFilter.value,region:collegeMode()?regionFilter.value:'',state:stateFilter.value,county:!collegeMode()&&weightFilter.value!=='PBP'?countyFilter.value:'',locality:'',year:!teamMode()?yearFilter.value:'',q:search.value.trim() });
   }
 
   function teamComparator(a,b) {
@@ -181,11 +186,11 @@
       const division = weightFilter.value === 'PBP' ? 'Pound-for-Pound' : `${weightFilter.value}-Pound`;
       title.textContent = `${scopeLabel()} ${SimSite.levelLabel(levelFilter.value)} ${division} Rankings`;
       pageTitle.textContent = `${SimSite.levelLabel(levelFilter.value)} Wrestler Rankings`;
-      pageCopy.textContent = collegeMode() ? 'Current college wrestlers ranked nationally, regionally or by state.' : 'Current high-school wrestlers ranked within a state, county or hometown.';
+      pageCopy.textContent = collegeMode() ? 'Current college wrestlers ranked nationally, regionally or by state.' : 'Current high-school wrestlers ordered by total wins within a state or county.';
       search.placeholder = collegeMode() ? 'Start typing a wrestler or college' : 'Start typing a wrestler or hometown';
       if (!rows.length) { content.innerHTML = '<div class="state-card"><p>No wrestlers match the selected filters.</p></div>'; return; }
       const college = collegeMode();
-      content.innerHTML = `<div class="table-wrap"><table><thead><tr><th>Rank</th><th>Weight</th><th>Wrestler</th><th>${college?'College team':'Hometown'}</th>${college?'':'<th>Year</th>'}<th>Wins</th><th>Losses</th><th>Bonus %</th></tr></thead><tbody>${rows.map((row) => `<tr><td class="rank-number">${row.display_rank}</td><td><strong>${e(row.weight_class_code)}</strong></td><td><a class="wrestler-link" href="${SimSite.profileUrl(row.wrestler_guid)}">${e(row.wrestler_name)}</a>${row.roster_status==='BACKUP'?'<span class="subtext">Backup</span>':''}</td><td>${college?(row.team_name?`<a class="table-link" href="${SimSite.teamUrl(row.team_guid)}">${e(row.team_name)}</a>`:'—'):e(row.hometown_display||row.state_code)}</td>${college?'':`<td>${e(row.eligibility_year_display)}</td>`}<td>${row.win_qty}</td><td>${row.loss_qty}</td><td><span class="bonus-pill">${e(row.bonus_point_percentage_display||'0.0%')}</span></td></tr>`).join('')}</tbody></table></div>`;
+      content.innerHTML = `<div class="table-wrap"><table><thead><tr><th>Rank</th><th>Weight</th>${college?'<th>Year</th>':''}<th>Wrestler</th><th>${college?'College team':'Hometown'}</th>${college?'':'<th>Year</th>'}<th>Wins</th><th>Losses</th><th>Bonus %</th></tr></thead><tbody>${rows.map((row) => `<tr><td class="rank-number">${row.display_rank}</td><td><strong>${e(row.weight_class_code)}</strong></td>${college?`<td>${e(row.eligibility_year_display)}</td>`:''}<td><a class="wrestler-link" href="${SimSite.profileUrl(row.wrestler_guid)}">${e(row.wrestler_name)}</a>${row.roster_status==='BACKUP'?'<span class="subtext">Backup</span>':''}</td><td>${college?(row.team_name?`<a class="table-link" href="${SimSite.teamUrl(row.team_guid)}">${e(row.team_name)}</a>`:'—'):e(row.hometown_display||row.state_code)}</td>${college?'':`<td>${e(row.eligibility_year_display)}</td>`}<td>${row.win_qty}</td><td>${row.loss_qty}</td><td><span class="bonus-pill">${e(row.bonus_point_percentage_display||'0.0%')}</span></td></tr>`).join('')}</tbody></table></div>`;
     } catch (error) {
       if (sequence === renderSequence) SimSite.showError(content,error.message);
     } finally {
@@ -223,17 +228,17 @@
     levelFilter.value = SimSite.selectedLevel();
     rebuildWeights(String(SimSite.query('weight')||'').toUpperCase());
     await ensureModeData();
-    configureGeography({ region:String(SimSite.query('region')||SimSite.defaultRegionCode(scopeInventory)).toUpperCase(),state:String(SimSite.query('state')||'NJ').toUpperCase(),county:SimSite.query('county')||'',locality:SimSite.query('locality')||'' });
+    configureGeography({ region:String(SimSite.query('region')||SimSite.defaultRegionCode(scopeInventory)).toUpperCase(),state:String(SimSite.query('state')||'NJ').toUpperCase(),county:SimSite.query('county')||'',year:String(SimSite.query('year')||'ALL').toUpperCase() });
     search.value = SimSite.query('q') || '';
     levelFilter.disabled = false;
     weightFilter.disabled = false;
 
     levelFilter.addEventListener('change', async () => { rebuildWeights(); await changeMode({ state:levelFilter.value==='HIGH_SCHOOL'?'NJ':'' }); });
-    weightFilter.addEventListener('change', async () => { await ensureModeData(); if (!collegeMode()) configureGeography({ state:stateFilter.value }); render(); });
+    weightFilter.addEventListener('change', async () => { await ensureModeData(); configureGeography({ region:regionFilter.value,state:stateFilter.value,county:countyFilter.value,year:yearFilter.value }); render(); });
     regionFilter.addEventListener('change', () => { rebuildStates(); render(); });
-    stateFilter.addEventListener('change', () => { if (!collegeMode()) { rebuildCounties(); rebuildLocalities(); } render(); });
-    countyFilter.addEventListener('change', () => { rebuildLocalities(); render(); });
-    localityFilter.addEventListener('change',render);
+    stateFilter.addEventListener('change', () => { if (!collegeMode()) rebuildCounties(); render(); });
+    countyFilter.addEventListener('change',render);
+    yearFilter.addEventListener('change',render);
     search.addEventListener('input', () => { clearTimeout(searchTimer); searchTimer=setTimeout(render,250); });
     render();
   } catch (error) {

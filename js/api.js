@@ -118,13 +118,13 @@
     isConfigured,
     season: () => query('v_public_season_context', 'select=*'),
     rankings: () => queryAll('v_public_competitor_directory_v2', 'select=*&order=competition_level.asc,wrestler_rank.asc,wrestler_guid.asc'),
-    rankingsFiltered: (filters = {}) => rpc('get_public_rankings_v3_4_0', {
+    rankingsFiltered: (filters = {}) => rpc('get_public_rankings_v3_9_1', {
       p_competition_level: filters.level || 'COLLEGE',
       p_weight: filters.weight || '125',
       p_region_code: filters.region || null,
       p_state_code: filters.state || null,
       p_county_guid: filters.county || null,
-      p_locality_guid: filters.locality || null,
+      p_academic_stage: filters.year || null,
       p_search: filters.search || null,
       p_limit: filters.limit || 25
     }),
