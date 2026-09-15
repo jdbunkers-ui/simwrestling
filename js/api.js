@@ -157,9 +157,11 @@
       'select=*&order=game_season_number.desc,national_class_rank.asc,team_name.asc'
     ),
     teamProfile: (guid) => rpc('get_team_profile', { p_team_guid: guid }),
-    // Essential public data is one reliable payload. Heavy Coach Analytics is
-    // requested only after the visitor selects that tab.
-    profile: (guid) => rpc('get_public_wrestler_profile_v3_4_1', { p_wrestler_guid: guid }),
+    // The visible profile shell and historical ledger are deliberately split.
+    // This prevents league-wide history work from blocking the initial page.
+    profile: (guid) => rpc('get_public_wrestler_profile_core_v3_9_4', { p_wrestler_guid: guid }),
+    profileCore: (guid) => rpc('get_public_wrestler_profile_core_v3_9_4', { p_wrestler_guid: guid }),
+    profileHistory: (guid) => rpc('get_public_wrestler_profile_history_v3_9_4', { p_wrestler_guid: guid }),
     archivedProfile: (guid) => rpc('get_archived_college_wrestler_profile', { p_wrestler_guid: guid }),
     coachAnalytics: (guid) => rpc('get_wrestler_coach_analytics_v3_9_0', { p_wrestler_guid: guid }),
     matchFeed: (guid) => query(
