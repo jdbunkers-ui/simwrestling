@@ -51,7 +51,7 @@
     return `<article class="calendar-event summary-event nonlink-event">${status}${type}<strong>${e(row.event_name)}</strong></article>`;
   }
   function render() {
-    SimSite.syncFilters({week:selectedWeek,level:levelFilter.value,region:regionFilter.value});
+    SimSite.syncFilters({week:selectedWeek,level:levelFilter.value,region:regionFilter.value,state:SimSite.query('state')||'NJ'});
     const visible=rows.filter((row)=>Number(row.week_number)===selectedWeek&&matches(row));
     if (!visible.length) { root.innerHTML='<div class="state-card"><strong>No schedule listings match these filters.</strong><p>Choose another week, level, or region.</p></div>'; return; }
     const dates=[...new Set(visible.map((row)=>row.scheduled_date))].sort();
@@ -73,8 +73,8 @@
       new Set(geography.filter((row)=>String(row.region_code||'').trim()===region.code).map((row)=>String(row.state_code||'').trim().toUpperCase()).filter(Boolean))
     ]));
     regionFilter.innerHTML='<option value="ALL">All regions</option>'+regions.map((region)=>`<option value="${e(region.code)}">${e(region.name)}</option>`).join('');
-    const requestedRegion=String(SimSite.query('region')||'ALL').toUpperCase();
-    regionFilter.value=regions.some((region)=>region.code===requestedRegion)?requestedRegion:'ALL';
+    const requestedRegion=String(SimSite.query('region')||SimSite.defaultRegionCode(geography)).toUpperCase();
+    regionFilter.value=regions.some((region)=>region.code===requestedRegion)?requestedRegion:SimSite.defaultRegionCode(geography);
     selectedWeek=selectedWeek>=1&&selectedWeek<=8?selectedWeek:Number(clock?.current_week_number||1);
     seasonLabel.textContent=`Season ${rows[0].game_season_number}`;
     renderClock();renderRail();render();

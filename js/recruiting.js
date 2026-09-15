@@ -3,7 +3,6 @@
   const title = document.getElementById('prospect-title');
   const count = document.getElementById('recruiting-count');
   const seasonLabel = document.getElementById('recruiting-season');
-  const scopeFilter = document.getElementById('recruiting-scope');
   const regionFilter = document.getElementById('recruiting-region');
   const stateFilter = document.getElementById('recruiting-state');
   const weightFilter = document.getElementById('recruiting-weight');
@@ -28,9 +27,8 @@
     const states = SimSite.inventoryStates(prospects);
     const availableWeights = new Set(prospects.map((row) => String(row.weight_class_code)));
 
-    regionFilter.innerHTML = regions.map((region) => option(region.code, region.name)).join('');
-    stateFilter.innerHTML = states.map((state) => option(state, state)).join('');
-    if (states.includes('NJ')) stateFilter.value = 'NJ';
+    regionFilter.innerHTML = option('ALL','All regions · National') + regions.map((region) => option(region.code, region.name)).join('');
+    stateFilter.innerHTML = option('ALL','All states') + states.map((state) => option(state, state)).join('');
 
     weightFilter.innerHTML = option('ALL', 'All weights')
       + SimSite.highSchoolWeightOrder
@@ -38,33 +36,29 @@
         .map((weight) => option(weight, weight === 'HWT' ? 'HWT' : `${weight} lb`))
         .join('');
 
-    const requestedScope = String(SimSite.query('scope') || 'NATIONAL').toUpperCase();
-    scopeFilter.value = ['NATIONAL','REGION','STATE'].includes(requestedScope)
-      ? requestedScope : 'NATIONAL';
-
-    const requestedRegion = String(SimSite.query('region') || '');
+    const requestedRegion = String(SimSite.query('region') || SimSite.defaultRegionCode(prospects));
     if (regions.some((region) => region.code === requestedRegion)) {
       regionFilter.value = requestedRegion;
     }
 
-    const requestedState = String(SimSite.query('state') || '');
+    const requestedState = String(SimSite.query('state') || 'NJ');
     if (states.includes(requestedState)) stateFilter.value = requestedState;
 
-    const requestedWeight = String(SimSite.query('weight') || 'ALL').toUpperCase();
+    const requestedWeight = String(SimSite.query('recruiting_weight') || 'ALL').toUpperCase();
     weightFilter.value = requestedWeight === 'ALL' || availableWeights.has(requestedWeight)
       ? requestedWeight : 'ALL';
   }
 
   function scopeName() {
-    if (scopeFilter.value === 'REGION') return regionName(regionFilter.value);
-    if (scopeFilter.value === 'STATE') return stateFilter.value;
+    if (stateFilter.value !== 'ALL') return stateFilter.value;
+    if (regionFilter.value !== 'ALL') return regionName(regionFilter.value);
     return 'National';
   }
 
   function scopedRows() {
     return prospects.filter((row) => {
-      if (scopeFilter.value === 'REGION' && row.region_code !== regionFilter.value) return false;
-      if (scopeFilter.value === 'STATE' && row.state_code !== stateFilter.value) return false;
+      if (regionFilter.value !== 'ALL' && row.region_code !== regionFilter.value) return false;
+      if (stateFilter.value !== 'ALL' && row.state_code !== stateFilter.value) return false;
       return weightFilter.value === 'ALL' || row.weight_class_code === weightFilter.value;
     }).sort((a, b) => Number(b.total_recruiting_points) - Number(a.total_recruiting_points)
       || Number(b.recruiting_program_qty) - Number(a.recruiting_program_qty)
@@ -79,9 +73,6 @@
   }
 
   function render() {
-    const scope = scopeFilter.value;
-    regionControl.hidden = scope !== 'REGION';
-    stateControl.hidden = scope !== 'STATE';
     const rows = scopedRows();
     const visible = rows.slice(0, 25);
     const geography = scopeName();
@@ -92,10 +83,9 @@
     count.textContent = `Top ${visible.length} of ${rows.length} senior${rows.length === 1 ? '' : 's'}`;
 
     SimSite.syncFilters({
-      scope,
-      region: scope === 'REGION' ? regionFilter.value : '',
-      state: scope === 'STATE' ? stateFilter.value : '',
-      weight: weightFilter.value
+      region: regionFilter.value,
+      state: stateFilter.value,
+      recruiting_weight: weightFilter.value
     });
 
     if (!visible.length) {
@@ -123,7 +113,7 @@
     }).join('');
   }
 
-  [scopeFilter,regionFilter,stateFilter,weightFilter].forEach((control) => {
+  [regionFilter,stateFilter,weightFilter].forEach((control) => {
     control.addEventListener('change', render);
   });
 

@@ -4,10 +4,12 @@
 
   const e = SimSite.escape;
   const level = document.getElementById('results-level');
+  const weight = document.getElementById('results-weight');
   const region = document.getElementById('results-region');
   const state = document.getElementById('results-state');
   const week = document.getElementById('results-week');
   const day = document.getElementById('results-day');
+  const search = document.getElementById('results-search');
   const count = document.getElementById('results-count');
   const title = document.getElementById('results-title');
   const season = document.getElementById('results-season');
@@ -17,6 +19,13 @@
 
   const normalized = (value) => value === 'ALL' ? null : value;
   const statusClass = (value) => `status-${String(value || 'IN_PROGRESS').toLowerCase().replaceAll('_', '-')}`;
+
+  function renderWeights() {
+    const order = SimSite.weightOrderFor(level.value);
+    weight.innerHTML = order.map((code) => `<option value="${e(code)}">${e(code === 'HWT' ? 'HWT' : `${code} lb`)}</option>`).join('');
+    const requested = String(SimSite.query('weight') || (level.value === 'HIGH_SCHOOL' ? '106' : '125')).toUpperCase();
+    weight.value = order.includes(requested) ? requested : order[0];
+  }
 
   function statesForRegion() {
     const selectedRegion = normalized(region.value);
@@ -36,18 +45,19 @@
   }
 
   function restoreFilters() {
-    const requestedLevel = String(SimSite.query('level') || 'ALL').toUpperCase();
-    level.value = ['ALL', 'HIGH_SCHOOL', 'COLLEGE'].includes(requestedLevel) ? requestedLevel : 'ALL';
+    const requestedLevel = String(SimSite.query('level') || 'COLLEGE').toUpperCase();
+    level.value = ['HIGH_SCHOOL', 'COLLEGE'].includes(requestedLevel) ? requestedLevel : 'COLLEGE';
+    renderWeights();
 
     const regions = SimSite.inventoryRegions(geography);
     region.innerHTML = '<option value="ALL">All regions · National</option>' +
       regions.map((item) => `<option value="${e(item.code)}">${e(item.name)}</option>`).join('');
-    const requestedRegion = String(SimSite.query('region') || 'ALL');
-    region.value = regions.some((item) => item.code === requestedRegion) ? requestedRegion : 'ALL';
+    const requestedRegion = String(SimSite.query('region') || SimSite.defaultRegionCode(geography));
+    region.value = regions.some((item) => item.code === requestedRegion) ? requestedRegion : SimSite.defaultRegionCode(geography);
 
     renderStates(false);
     const availableStates = statesForRegion();
-    const requestedState = String(SimSite.query('state') || 'ALL').toUpperCase();
+    const requestedState = String(SimSite.query('state') || 'NJ').toUpperCase();
     state.value = availableStates.includes(requestedState) ? requestedState : 'ALL';
 
     week.innerHTML = '<option value="ALL">All weeks</option>' +
@@ -55,12 +65,13 @@
     const requestedWeek = Number(SimSite.query('week'));
     week.value = requestedWeek >= 1 && requestedWeek <= 8
       ? String(requestedWeek)
-      : String(clock?.current_week_number || 'ALL');
+      : String(clock?.latest_completed_week_number || clock?.current_week_number || 'ALL');
 
     const requestedDay = String(SimSite.query('day') || 'ALL');
     day.value = [...day.options].some((option) => option.value.toUpperCase() === requestedDay.toUpperCase())
       ? [...day.options].find((option) => option.value.toUpperCase() === requestedDay.toUpperCase()).value
       : 'ALL';
+    search.value = SimSite.query('q') || '';
   }
 
   function statusText(row) {
@@ -88,7 +99,7 @@
   }
 
   function rowMarkup(row) {
-    const eventUrl = SimSite.eventUrl(row.scheduled_event_guid);
+    const eventUrl = `${SimSite.eventUrl(row.scheduled_event_guid)}&weight=${encodeURIComponent(weight.value)}&region=${encodeURIComponent(region.value)}&state=${encodeURIComponent(state.value)}`;
     return `<tr>
       <td data-label="Week"><strong>Week ${row.week_number}</strong></td>
       <td data-label="Day"><span>${e(row.day_name)}</span><small>${e(SimSite.date(row.event_date, true))}</small></td>
@@ -100,10 +111,12 @@
   function syncUrl() {
     SimSite.syncFilters({
       level: level.value === 'ALL' ? '' : level.value,
+      weight: weight.value,
       region: region.value,
       state: state.value,
       week: week.value === 'ALL' ? '' : week.value,
-      day: day.value === 'ALL' ? '' : day.value
+      day: day.value === 'ALL' ? '' : day.value,
+      q: search.value.trim()
     });
   }
 
@@ -113,7 +126,7 @@
     root.innerHTML = '<div class="state-card page-state"><span class="spinner" aria-hidden="true"></span><p>Loading results…</p></div>';
     count.textContent = 'Loading';
     try {
-      const rows = await SimApi.resultsFiltered({
+      const resultRows = await SimApi.resultsFiltered({
         level: normalized(level.value),
         region: normalized(region.value),
         state: normalized(state.value),
@@ -122,7 +135,9 @@
         limit: 5000
       });
       if (thisRequest !== requestNumber) return;
-      const levelLabel = level.value === 'ALL' ? 'All' : SimSite.levelLabel(level.value);
+      const phrase = search.value.trim().toLowerCase();
+      const rows = resultRows.filter((row) => !phrase || `${row.display_event_name || row.event_name} ${row.event_type || ''}`.toLowerCase().includes(phrase));
+      const levelLabel = SimSite.levelLabel(level.value);
       title.textContent = `${levelLabel} Event Results`;
       count.textContent = `${rows.length} event${rows.length === 1 ? '' : 's'}`;
       if (!rows.length) {
@@ -136,14 +151,21 @@
   }
 
   try {
-    [clock, geography] = await Promise.all([SimApi.leagueClock(), SimApi.regionStateInventory()]);
+    const recentPromise = SimApi.resultsFiltered({ limit: 5000 });
+    let recentRows;
+    [clock, geography, recentRows] = await Promise.all([SimApi.leagueClock(), SimApi.regionStateInventory(), recentPromise]);
+    const completedWeeks = recentRows.filter((row) => row.event_status === 'COMPLETED' || Number(row.completed_session_qty) > 0)
+      .map((row) => Number(row.week_number)).filter((value) => value >= 1 && value <= 8);
+    if (clock && completedWeeks.length) clock.latest_completed_week_number = Math.max(...completedWeeks);
     season.textContent = SimSite.seasonLabel(clock || {});
     restoreFilters();
-    level.addEventListener('change', loadResults);
+    level.addEventListener('change', () => { renderWeights(); loadResults(); });
+    weight.addEventListener('change', loadResults);
     region.addEventListener('change', () => { renderStates(false); loadResults(); });
     state.addEventListener('change', loadResults);
     week.addEventListener('change', loadResults);
     day.addEventListener('change', loadResults);
+    search.addEventListener('input', loadResults);
     await loadResults();
   } catch (error) {
     SimSite.showError(root, error.message);

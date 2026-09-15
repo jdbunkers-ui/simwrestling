@@ -233,8 +233,8 @@
     view = SimSite.query('stats') === 'performance' ? 'performance' : 'results';
     rebuildWeights(String(SimSite.query('weight') || '').toUpperCase());
     configureGeography({
-      region: String(SimSite.query('region') || '').toUpperCase(),
-      state: String(SimSite.query('state') || '').toUpperCase(),
+      region: String(SimSite.query('region') || SimSite.defaultRegionCode(rows)).toUpperCase(),
+      state: String(SimSite.query('state') || 'NJ').toUpperCase(),
       county: SimSite.query('county') || '',
       locality: SimSite.query('locality') || ''
     });

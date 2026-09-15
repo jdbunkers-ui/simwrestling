@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="Current-season Sim Wrestling dual-meet and tournament results.">
     <title>Results | Sim Wrestling</title>
-    <link rel="stylesheet" href="assets/styles.css?v=3.5.1">
+    <link rel="stylesheet" href="assets/styles.css?v=3.7.0">
   </head>
   <body data-page="results">
     <div data-site-header></div>
@@ -22,10 +22,12 @@
         <div class="results-filters">
           <label class="filter-control">Level
             <select id="results-level">
-              <option value="ALL">All levels</option>
-              <option value="HIGH_SCHOOL">High School</option>
               <option value="COLLEGE">College</option>
+              <option value="HIGH_SCHOOL">High School</option>
             </select>
+          </label>
+          <label class="filter-control">View
+            <select id="results-weight"><option value="125">125 lb</option></select>
           </label>
           <label class="filter-control">Region
             <select id="results-region"><option value="ALL">All regions · National</option></select>
@@ -48,6 +50,9 @@
               <option value="Sunday">Sunday</option>
             </select>
           </label>
+          <label class="filter-control search-control">Search wrestler, college or event
+            <input id="results-search" type="search" placeholder="Start typing a wrestler, college or event" autocomplete="off">
+          </label>
         </div>
       </section>
 
@@ -62,6 +67,6 @@
       </section>
     </main>
     <div data-site-footer></div>
-    <script src="js/config.js"></script><script src="js/api.js?v=3.5.0"></script><script src="js/site.js?v=3.5.0"></script><script src="js/results.js?v=3.5.1"></script>
+    <script src="js/config.js"></script><script src="js/api.js?v=3.7.0"></script><script src="js/site.js?v=3.7.0"></script><script src="js/results.js?v=3.7.0"></script>
   </body>
 </html>

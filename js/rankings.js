@@ -222,7 +222,7 @@
     levelFilter.value = SimSite.selectedLevel();
     rebuildWeights(String(SimSite.query('weight')||'').toUpperCase());
     await ensureModeData();
-    configureGeography({ region:String(SimSite.query('region')||'').toUpperCase(),state:String(SimSite.query('state')||'').toUpperCase(),county:SimSite.query('county')||'',locality:SimSite.query('locality')||'' });
+    configureGeography({ region:String(SimSite.query('region')||SimSite.defaultRegionCode(scopeInventory)).toUpperCase(),state:String(SimSite.query('state')||'NJ').toUpperCase(),county:SimSite.query('county')||'',locality:SimSite.query('locality')||'' });
     search.value = SimSite.query('q') || '';
     levelFilter.disabled = false;
     weightFilter.disabled = false;

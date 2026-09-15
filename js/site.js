@@ -3,12 +3,35 @@
   const links = [
     ['coaching', 'index.html', 'Coaching'],
     ['rankings', 'rankings.html', 'Rankings'],
-    ['statistics', 'statistics.html', 'Statistics'],
-    ['results', 'results.html', 'Results'],
-    ['recruiting', 'recruiting.html', 'Recruiting'],
     ['schedule', 'schedule.html', 'Schedule'],
+    ['results', 'results.html', 'Results'],
+    ['statistics', 'statistics.html', 'Statistics'],
+    ['recruiting', 'recruiting.html', 'Recruiting'],
+    ['history', 'history.html', 'History'],
     ['about', 'about.html', 'About']
   ];
+  const sharedFilterNames = ['level','weight','region','state','county','locality','q','week','day'];
+  const storedFilters = (() => {
+    try { return JSON.parse(sessionStorage.getItem('sim-wrestling-filters') || '{}'); }
+    catch (_) { return {}; }
+  })();
+  let currentParameters = new URLSearchParams(window.location.search);
+  sharedFilterNames.forEach((name) => {
+    const value = currentParameters.get(name);
+    if (value) storedFilters[name] = value;
+  });
+  if (!storedFilters.level) storedFilters.level = 'COLLEGE';
+  if (!storedFilters.state) storedFilters.state = 'NJ';
+  try { sessionStorage.setItem('sim-wrestling-filters', JSON.stringify(storedFilters)); } catch (_) {}
+
+  function navigationUrl(href) {
+    const url = new URL(href, window.location.href);
+    sharedFilterNames.forEach((name) => {
+      const value = currentParameters.get(name) || storedFilters[name];
+      if (value) url.searchParams.set(name, value);
+    });
+    return `${url.pathname.split('/').pop()}${url.search}`;
+  }
 
   const header = document.querySelector('[data-site-header]');
   if (header) {
@@ -21,7 +44,7 @@
           </a>
           <nav class="main-nav" aria-label="Main navigation">
             ${links.map(([id, href, label]) => `
-              <a href="${href}" ${page === id ? 'aria-current="page"' : ''}>${label}</a>
+              <a href="${navigationUrl(href)}" ${page === id ? 'aria-current="page"' : ''}>${label}</a>
             `).join('')}
           </nav>
         </div>
@@ -47,7 +70,7 @@
       })[character]);
     },
     query(name) {
-      return new URLSearchParams(window.location.search).get(name);
+      return new URLSearchParams(window.location.search).get(name) || storedFilters[name] || null;
     },
     profileUrl(guid) {
       return `wrestler.html?wrestler=${encodeURIComponent(guid)}`;
@@ -110,6 +133,12 @@
       return [...regions].map(([code, name]) => ({ code, name }))
         .sort((a, b) => a.name.localeCompare(b.name));
     },
+    defaultRegionCode(rows) {
+      const regions = this.inventoryRegions(rows);
+      return regions.find((row) => row.name.toUpperCase().replace(/[^A-Z]/g,'') === 'MIDATLANTIC')?.code
+        || regions.find((row) => row.code.toUpperCase().replace(/[^A-Z]/g,'') === 'MIDATLANTIC')?.code
+        || regions[0]?.code || 'ALL';
+    },
     syncFilters(filters) {
       const url = new URL(window.location.href);
       Object.entries(filters).forEach(([name, value]) => {
@@ -117,8 +146,18 @@
         const allGeography = ['region','state','county','locality'].includes(name) && text === 'ALL';
         if (!text || allGeography || (name === 'level' && text === 'COLLEGE')) url.searchParams.delete(name);
         else url.searchParams.set(name, text);
+        if (sharedFilterNames.includes(name)) {
+          if (text) storedFilters[name] = allGeography ? 'ALL' : text;
+          else delete storedFilters[name];
+        }
       });
+      try { sessionStorage.setItem('sim-wrestling-filters', JSON.stringify(storedFilters)); } catch (_) {}
       window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
+      currentParameters = new URLSearchParams(url.search);
+      document.querySelectorAll('.main-nav a').forEach((link) => {
+        const base = link.getAttribute('href').split('?')[0];
+        link.setAttribute('href', navigationUrl(base));
+      });
     },
     duration(seconds) {
       const total = Math.max(0, Math.round(Number(seconds || 0)));

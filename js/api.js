@@ -146,6 +146,7 @@
     // Essential public data is one reliable payload. Heavy Coach Analytics is
     // requested only after the visitor selects that tab.
     profile: (guid) => rpc('get_public_wrestler_profile_v3_4_1', { p_wrestler_guid: guid }),
+    archivedProfile: (guid) => rpc('get_archived_college_wrestler_profile', { p_wrestler_guid: guid }),
     coachAnalytics: coachAnalyticsFromViews,
     matchFeed: (guid) => query(
       'v_customer_match_experience',
@@ -184,5 +185,9 @@
     ,teamSeasonSummary: (guid) => filtered('v_team_season_summary', 'team_guid', guid, 'game_season_number.desc')
     ,teamFullSchedule: (guid) => filtered('v_team_full_schedule', 'team_guid', guid, 'week_number.asc,scheduled_date.asc,dual_order.asc')
     ,tournamentBracketRows: (guid) => filtered('v_tournament_bracket', 'tournament_guid', guid, 'bout_order.asc')
+    ,collegeIndividualHistory: () => queryAll('v_college_individual_championship_history', 'select=*&order=game_season_number.desc,placement.asc')
+    ,collegeDualHistory: () => queryAll('v_college_dual_championship_history', 'select=*&order=game_season_number.desc,placement.asc')
+    ,collegeTeamHistory: (guid) => filtered('v_college_team_season_history', 'team_guid', guid, 'game_season_number.desc')
+    ,collegeTeamAccomplishments: (guid) => filtered('v_college_team_accomplishment_crosstab', 'team_guid', guid, 'achievement_level.asc')
   };
 })();

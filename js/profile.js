@@ -47,7 +47,14 @@
   }
 
   try {
-    const payload = await SimApi.profile(wrestlerGuid);
+    const [currentResult,archiveResult] = await Promise.allSettled([
+      SimApi.profile(wrestlerGuid),SimApi.archivedProfile(wrestlerGuid)
+    ]);
+    let payload = currentResult.status === 'fulfilled' ? currentResult.value : null;
+    const archivedPayload = archiveResult.status === 'fulfilled' ? archiveResult.value : null;
+    if (archivedPayload?.profile && (!payload?.profile || payload.profile.roster_status === 'GRADUATED')) {
+      payload = archivedPayload;
+    }
     if (!payload?.profile) throw new Error('The requested wrestler profile was not found.');
     const seasonHistory = payload.season_history || [];
     const careerSummary = payload.career_summary || [];
@@ -75,7 +82,7 @@
       if (!rows.length && !total) return `<section class="career-level-group"><div class="career-level-heading"><h3>${e(heading)}</h3></div><p class="coach-empty">No ${e(heading.toLocaleLowerCase())} history is available.</p></section>`;
       return `<section class="career-level-group"><div class="career-level-heading"><h3>${e(heading)}</h3><span>${rows.length} season${rows.length===1?'':'s'}</span></div><div class="table-wrap"><table class="season-summary-table"><thead><tr><th>Season</th><th>Level / Team</th><th>Weight</th><th>Record</th><th>Win %</th><th>Bonus %</th><th>State rank</th><th>Accomplishments</th></tr></thead><tbody>${rows.map((item) => `<tr><td><strong>${e(item.game_season_display || item.season_name)}</strong></td><td>${e(item.competition_level_display)} · ${e(item.academic_stage_display)}${item.team_name?`<span class="subtext">${e(item.team_name)}</span>`:''}</td><td>${e(item.weight_class_code)}</td><td>${e(item.record_display)}</td><td>${pct(item.win_percentage)}</td><td>${pct(item.bonus_point_rate)}</td><td>${item.final_state_rank?`#${item.final_state_rank}<span class="subtext">${e(SimSite.resultLabel(item.rank_status))}</span>`:'—'}</td><td>${e(item.accomplishments||'—')}</td></tr>`).join('')}${total?`<tr class="career-total-row"><td><strong>Career Total</strong></td><td>${e(heading)}</td><td aria-label="Weight not applicable">—</td><td><strong>${e(total.record_display)}</strong><span class="subtext">${total.win_qty} wins · ${total.loss_qty} losses</span></td><td><strong>${pct(total.career_win_percentage)}</strong></td><td><strong>${pct(total.career_bonus_percentage)}</strong></td><td>—</td><td>${total.match_qty} matches</td></tr>`:''}</tbody></table></div></section>`;
     };
-    const initials = `${p.first_name?.[0] || ''}${p.last_name?.[0] || ''}`;
+    const initials = `${p.first_name?.[0] || ''}${p.last_name?.[0] || ''}` || String(p.wrestler_name || '').split(/\s+/).map((word)=>word[0]).join('').slice(0,2);
     const matchQty = Number(m.match_qty || 0);
     const perMatch = (value) => matchQty ? Number(value || 0) / matchQty : 0;
     const bonusWins = Number(m.major_decision_win_qty || 0) + Number(m.technical_fall_win_qty || 0) + Number(m.fall_win_qty || 0);
@@ -114,7 +121,10 @@
     tabButtons.forEach((button) => button.addEventListener('click', () => {
       tabButtons.forEach((item) => item.classList.toggle('active',item===button));
       Object.entries(panels).forEach(([name,panel]) => { panel.hidden = name !== button.dataset.tab; });
-      if (button.dataset.tab === 'coach' && panels.coach.dataset.loaded === 'false') {
+      if (button.dataset.tab === 'coach' && p.archived_ind) {
+        panels.coach.innerHTML = '<div class="state-card page-state"><strong>Archived career</strong><p>Live coaching analytics are unavailable after a wrestler graduates.</p></div>';
+        panels.coach.dataset.loaded = 'true';
+      } else if (button.dataset.tab === 'coach' && panels.coach.dataset.loaded === 'false') {
         loadCoachAnalytics(panels.coach);
       }
     }));
