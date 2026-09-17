@@ -5,7 +5,6 @@
     ['rankings', 'rankings.html', 'Rankings'],
     ['schedule', 'schedule.html', 'Schedule'],
     ['results', 'results.html', 'Results'],
-    ['statistics', 'statistics.html', 'Statistics'],
     ['recruiting', 'recruiting.html', 'Recruiting'],
     ['history', 'history.html', 'History'],
     ['about', 'about.html', 'About']
