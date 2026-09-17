@@ -74,46 +74,6 @@
     `select=*&${guidColumn}=eq.${encoded(guid)}${order ? `&order=${order}` : ''}`
   );
 
-  async function coachAnalyticsFromViews(guid) {
-    const requests = {
-      coach_overview: filtered('v_wrestler_coach_overview', 'wrestler_guid', guid),
-      coach_neutral: filtered('v_wrestler_coach_neutral_analytics', 'wrestler_guid', guid),
-      coach_mat: filtered('v_wrestler_coach_mat_analytics', 'wrestler_guid', guid),
-      coach_scramble_discipline: filtered('v_wrestler_coach_scramble_discipline', 'wrestler_guid', guid),
-      coach_moves: filtered('v_wrestler_coach_move_analytics', 'wrestler_guid', guid, 'offensive_uses.desc,move_name.asc'),
-      coach_periods: filtered('v_wrestler_coach_period_analytics', 'wrestler_guid', guid, 'segment_number.asc'),
-      coach_score_states: filtered('v_wrestler_coach_score_state_analytics', 'wrestler_guid', guid, 'score_state.asc'),
-      coach_fatigue: filtered('v_wrestler_coach_fatigue_analytics', 'wrestler_guid', guid, 'fatigue_band.asc')
-    };
-    const names = Object.keys(requests);
-    const settled = await Promise.allSettled(Object.values(requests));
-    const rows = {};
-
-    settled.forEach((result, index) => {
-      const name = names[index];
-      if (result.status === 'fulfilled') {
-        rows[name] = Array.isArray(result.value) ? result.value : [];
-      } else {
-        rows[name] = [];
-        console.warn(`Coach Analytics dataset failed: ${name}`, result.reason);
-      }
-    });
-
-    const failed = settled.filter((result) => result.status === 'rejected');
-    if (failed.length) throw new Error('Coach Analytics could not be loaded. Please try again.');
-
-    return {
-      coach_overview: rows.coach_overview[0] || {},
-      coach_neutral: rows.coach_neutral[0] || {},
-      coach_mat: rows.coach_mat[0] || {},
-      coach_scramble_discipline: rows.coach_scramble_discipline[0] || {},
-      coach_moves: rows.coach_moves,
-      coach_periods: rows.coach_periods,
-      coach_score_states: rows.coach_score_states,
-      coach_fatigue: rows.coach_fatigue
-    };
-  }
-
   window.SimApi = {
     isConfigured,
     season: () => query('v_public_season_context', 'select=*'),
@@ -136,17 +96,6 @@
       'v_public_region_state_inventory',
       'select=*&order=region_code.asc,state_code.asc'
     ),
-    mediaStatistics: () => queryAll('v_public_competitor_statistics_v2', 'select=*&order=competition_level.asc,wrestler_rank.asc,wrestler_guid.asc'),
-    mediaStatisticsFiltered: (filters = {}) => rpc('get_public_statistics_v3_9_0', {
-      p_competition_level: filters.level || 'COLLEGE',
-      p_weight: filters.weight || '125',
-      p_region_code: filters.region || null,
-      p_state_code: filters.state || null,
-      p_county_guid: filters.county || null,
-      p_locality_guid: filters.locality || null,
-      p_search: filters.search || null,
-      p_limit: filters.limit || 1000
-    }),
     teamRankings: () => queryAll('v_team_rankings_v2', 'select=*&order=region_code.asc,state_code.asc,state_team_rank.asc,team_guid.asc'),
     recruitingSeniors: () => queryAll(
       'v_public_recruiting_seniors',
@@ -163,7 +112,6 @@
     profileCore: (guid) => rpc('get_public_wrestler_profile_core_v3_9_5', { p_wrestler_guid: guid }),
     profileHistory: (guid) => rpc('get_public_wrestler_profile_history_v3_9_5', { p_wrestler_guid: guid }),
     archivedProfile: (guid) => rpc('get_archived_college_wrestler_profile', { p_wrestler_guid: guid }),
-    coachAnalytics: (guid) => rpc('get_wrestler_coach_analytics_v3_9_0', { p_wrestler_guid: guid }),
     matchFeed: (guid) => query(
       'v_customer_match_experience',
       `select=*&match_guid=eq.${encodeURIComponent(guid)}&order=event_sequence.asc`
