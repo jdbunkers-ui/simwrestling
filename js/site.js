@@ -1,7 +1,7 @@
 (function () {
   const page = document.body.dataset.page || '';
   const links = [
-    ['coaching', 'index.html', 'Coaching'],
+    ['coach', 'coach.html', 'Coaching'],
     ['rankings', 'rankings.html', 'Rankings'],
     ['schedule', 'schedule.html', 'Schedule'],
     ['results', 'results.html', 'Results'],
@@ -58,7 +58,7 @@
     accountLink.href = 'login.html';
     accountLink.textContent = 'Sign In';
     mainNav.appendChild(accountLink);
-    const authPage = ['login', 'register', 'forgot-password', 'reset-password', 'account'].includes(page);
+    const authPage = ['login', 'register', 'forgot-password', 'reset-password', 'account', 'coach', 'coach-wrestler'].includes(page);
     if (!authPage) {
       const loadAuth = document.createElement('script');
       loadAuth.src = 'js/auth.js?v=4.0.0';

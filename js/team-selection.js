@@ -75,7 +75,7 @@
       requestPending=true;claimButton.disabled=true;claimButton.textContent='Claiming college…';
       message(claimStatus,'Saving your college selection…');
       try{
-        const {data,error:claimError}=await client.rpc('claim_college_test_v4_1_0',{p_team_guid:selected});
+        const {data,error:claimError}=await client.rpc('claim_college_v4_1_0',{p_team_guid:selected});
         if(claimError)throw claimError;
         if(!data?.assignment_guid)throw new Error('Claim response was incomplete. Refresh My Account before trying again.');
         message(claimStatus,`${data.team_name||team.team_name} claimed successfully.`);
