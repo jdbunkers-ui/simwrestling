@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Sim Wrestling customer accounts">
+<title>My Account | Sim Wrestling</title><link rel="stylesheet" href="assets/styles.css?v=4.1.0"></head>
+<body data-page="account"><div data-site-header></div>
+<main class="page-shell auth-layout account-with-colleges"><section class="panel auth-panel">
+<p class="eyebrow">SIM WRESTLING · CUSTOMER ACCOUNTS</p><h1>My Account</h1><p class="auth-intro">Your customer profile and authentication status.</p>
+<div data-account-signed-out hidden><p>Please sign in to view your account.</p><a href="login.html">Sign In</a></div>
+<div data-account-signed-in hidden><p><strong>Email:</strong> <span data-account-email></span></p>
+<p class="auth-small">Manage your profile and explore available colleges below.</p>
+<form data-account-form><label class="auth-field">Display name<input data-account-display name="display_name" autocomplete="nickname" required minlength="3" maxlength="30" pattern="[A-Za-z0-9 _-]{3,30}"></label>
+<button class="auth-button" type="submit" data-label="Save Display Name">Save Display Name</button></form>
+<button type="button" class="auth-button auth-button-secondary" data-sign-out>Sign Out</button></div><div class="auth-links"><a href="coach.html">Open My Coaching Portal</a></div>
+<p class="auth-status" role="status" aria-live="polite" data-auth-status hidden></p>
+</section>
+<section class="panel college-selector" data-college-section hidden>
+<p class="eyebrow">SIM WRESTLING · COLLEGE MANAGEMENT</p>
+<h2>Choose Your College</h2>
+<p class="auth-intro">Select an available college to manage. Your selection is locked through your current entitled season. Your introductory offer covers the rest of this season and the following full season.</p>
+<p data-college-status class="auth-small" role="status" aria-live="polite">Loading colleges…</p>
+<div data-active-coach hidden class="college-coach-summary">
+<h3 data-coach-team></h3>
+<p data-coach-entitlements class="auth-small"></p>
+<label class="college-assist-toggle"><input type="checkbox" data-assist-checkbox> Computer-Assisted Recruiting</label>
+<p class="auth-small">ON: the computer fills eligible recruiting actions after yours, using remaining points. OFF: no automatic recruiting; unused points stay available under existing rules.</p>
+<button type="button" class="auth-button" data-assist-save>Save Recruiting Preference</button>
+<p class="auth-small" data-assist-status role="status" aria-live="polite"></p>
+</div>
+<div data-college-browser hidden>
+<div class="college-filters">
+<label for="college-region">Region<select id="college-region" data-region-filter><option value="">All active regions</option></select></label>
+<label for="college-state">State<select id="college-state" data-state-filter><option value="">All available states</option></select></label>
+</div>
+<p class="auth-small" data-college-count></p>
+<div class="college-grid" data-college-list></div>
+<div class="college-selection-summary" data-college-selection hidden>
+<strong data-selected-team></strong>
+<p class="auth-small">A confirmed claim is permanent history and starts your one-time introductory offer. You cannot switch colleges during the entitled season.</p>
+<button type="button" class="auth-button" data-claim-button>Claim This College</button>
+<p data-claim-status class="auth-small" role="status" aria-live="polite"></p>
+</div>
+</div>
+</section></main><div data-site-footer></div>
+<script src="js/site.js?v=4.0.0"></script><script src="js/auth.js?v=4.0.0"></script><script src="js/auth-pages.js?v=4.0.0"></script><script src="js/team-selection.js?v=4.1.0-live"></script>
+</body></html>
