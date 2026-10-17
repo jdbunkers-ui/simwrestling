@@ -50,6 +50,22 @@
       </header>`;
   }
 
+  // v4.0.0: Account navigation is intentionally independent of public data APIs.
+  const mainNav = document.querySelector('.main-nav');
+  if (mainNav) {
+    const accountLink = document.createElement('a');
+    accountLink.className = 'account-nav-link';
+    accountLink.href = 'login.html';
+    accountLink.textContent = 'Sign In';
+    mainNav.appendChild(accountLink);
+    const authPage = ['login', 'register', 'forgot-password', 'reset-password', 'account'].includes(page);
+    if (!authPage) {
+      const loadAuth = document.createElement('script');
+      loadAuth.src = 'js/auth.js?v=4.0.0';
+      document.head.appendChild(loadAuth);
+    }
+  }
+
   const footer = document.querySelector('[data-site-footer]');
   if (footer) {
     footer.innerHTML = `

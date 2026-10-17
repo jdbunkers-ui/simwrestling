@@ -159,3 +159,23 @@
 .results-type-badge{display:block;width:max-content;margin:0 0 7px}.results-event-name>a+.event-status{margin-left:10px}
 /* v3.7.0 college history */
 .history-table-wrap{overflow-x:auto}.history-placement-table{min-width:1180px;table-layout:fixed}.history-placement-table th:first-child{width:72px}.history-placement-table td{min-width:130px;vertical-align:top;white-space:normal}.history-wrestler,.history-college{display:block}.history-college{margin-top:.3rem;color:var(--muted,#64748b);font-size:.78rem;line-height:1.25}.history-empty{color:var(--muted,#64748b)}.history-team-table{min-width:760px}.accomplishment-table th,.accomplishment-table td{text-align:center}.accomplishment-table th:first-child{text-align:left}.history-page .directory-filters{align-self:end}
+
+/* v4.0.0 — account forms, scoped independently from public simulation layouts */
+.main-nav .account-nav-link{font-weight:750;white-space:nowrap}
+.auth-layout{display:flex;justify-content:center;min-height:65vh;padding-top:clamp(2rem,6vw,5rem);padding-bottom:4rem}
+.auth-panel{width:100%;max-width:500px;padding:clamp(1.25rem,4vw,2.5rem);align-self:flex-start}
+.auth-panel h1{margin:.3rem 0 1rem;font-size:clamp(1.75rem,4vw,2.4rem)}
+.auth-intro{line-height:1.55;color:var(--muted,#55616e);margin-bottom:1.6rem}
+.auth-field{display:flex;flex-direction:column;gap:.45rem;margin:1rem 0;font-weight:650}
+.auth-field input{display:block;width:100%;box-sizing:border-box;border:1px solid #95a1af;border-radius:9px;padding:.8rem .9rem;background:#fff;color:#182433;font:inherit}
+.auth-field input:focus{outline:3px solid #a7c7f0;outline-offset:1px}
+.auth-button{display:block;cursor:pointer;background:#12345b;color:white;border:0;border-radius:9px;font:inherit;font-weight:700;padding:.8rem 1.1rem;margin-top:1.25rem;min-height:45px}
+.auth-button:disabled{cursor:wait;opacity:.6}
+.auth-button-secondary{background:#e7ecf1;color:#182433}
+.auth-links{display:flex;flex-wrap:wrap;gap:.8rem 1.5rem;margin-top:1.6rem}
+.auth-links a{font-weight:600;text-decoration:underline}
+.auth-status{padding:.9rem;border-radius:8px;margin-top:1rem;overflow-wrap:anywhere}
+.auth-status-error{background:#fff1f0;color:#8b2015}
+.auth-status-success{background:#e9f6ee;color:#155c33}
+.auth-small{font-size:.9rem;color:#59677a}
+[hidden]{display:none!important}
