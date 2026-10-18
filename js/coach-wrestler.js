@@ -69,7 +69,7 @@
         </div></div>
         <dl class="hero-record"><div><dt>Record</dt><dd>${m.win_qty || 0}–${m.loss_qty || 0}</dd></div><div><dt>Win rate</dt><dd>${pct(m.win_pct)}</dd></div><div><dt>Bonus wins</dt><dd>${bonusWins}</dd></div><div><dt>Avg. points</dt><dd>${num(m.average_match_points,1)}</dd></div></dl>
       </section>
-      <nav class="tabs" aria-label="Wrestler profile sections"><button class="tab active" data-tab="public" type="button">Profile</button><button class="tab" data-tab="history" type="button">Match history</button><button class="tab" data-tab="stats" type="button">Detailed statistics</button></nav>
+      <nav class="tabs" aria-label="Wrestler profile sections"><button class="tab active" data-tab="public" type="button">Profile</button><button class="tab" data-tab="history" type="button">Match history</button><button class="tab" data-tab="stats" type="button">Detailed statistics</button><button class="tab" data-tab="pbp" type="button">Play-by-play</button></nav>
       <div class="tab-panel" id="public-panel">
         <section class="section-block" data-collapse-label="Private Attribute Summary" data-mobile-open="true"><div class="section-heading"><div><p class="eyebrow">Coach-only scouting</p><h2>Attribute Summary <span class="coach-soon">Private</span></h2></div></div><div class="attribute-grid">${a.length?a.map(item=>`<article class="attribute-card"><div><h3>${e(item.category_name)}</h3><p>${e(item.category_description)}</p></div><span class="rating">${e(item.rating_label)}</span></article>`).join(''):'<p>No attribute summary available.</p>'}</div></section>
         ${honors.length ? `<section class="award-board section-block" data-collapse-label="Podium Finishes"><div class="section-heading"><div><p class="eyebrow">Tournament honors</p><h2>Podium Finishes</h2></div><span class="record-pill">${honors.length} finish${honors.length===1?'':'es'}</span></div><div class="season-award-groups">${honorSeasons.map((number) => `<section class="season-award-group"><header><h3>Season ${number}</h3><span>${honors.filter((item)=>seasonNumber(item)===number).length} honor${honors.filter((item)=>seasonNumber(item)===number).length===1?'':'s'}</span></header><div class="award-grid">${honors.filter((item)=>seasonNumber(item)===number).map((item) => { const place=honorPlacement(item); const body=`<span class="placement-medal place-${Math.min(3,place||4)}">${place||'—'}</span><div><strong>${e(honorLabel(item))}</strong><small>${e([honorEvent(item),honorWeight(item),item.seed_number?`No. ${item.seed_number} seed`:null].filter(Boolean).join(' · '))}</small></div>${item.tournament_guid?'<i aria-hidden="true">→</i>':''}`; return item.tournament_guid?`<a class="award-card-link" href="${SimSite.tournamentUrl(item.tournament_guid)}">${body}</a>`:`<article>${body}</article>`; }).join('')}</div></section>`).join('')}</div></section>` : ''}
@@ -80,10 +80,11 @@
         </section>
       </div>
       <div class="tab-panel" id="history-panel" hidden><section class="panel section-block" data-collapse-label="Complete Match History" data-mobile-open="true"><div class="panel-heading"><div><p class="eyebrow">Complete ledger</p><h2>Match History</h2></div><span class="record-pill">${detailsPending?'Loading…':`${history.length} matches`}</span></div>${detailsPending?'<div class="state-card page-state"><span class="spinner" aria-hidden="true"></span><p>Loading match history…</p></div>':detailsError?`<div class="state-card page-state"><strong>Match history could not be loaded.</strong><p>${e(detailsError)}</p></div>`:history.length ? `<div class="table-wrap"><table><thead><tr><th>Season</th><th>Opponent</th><th>Context</th><th>Result</th><th>Method</th><th>Team pts.</th></tr></thead><tbody>${history.map((match) => `<tr><td>${e(seasonText(match))}</td><td><a class="history-link" href="${SimSite.matchUrl(match.match_guid)}">${e(match.opponent_name)}</a></td><td>${e(match.match_context)}</td><td><a class="history-result ${match.result_outcome === 'WIN' ? 'result-win' : 'result-loss'}" href="${SimSite.matchUrl(match.match_guid)}">${e(match.result_outcome)} ${e(match.score_display)}</a></td><td>${e(String(match.result_type).replaceAll('_',' '))}</td><td>${num(match.team_points_earned,1)}</td></tr>`).join('')}</tbody></table></div>` : '<p class="coach-empty">No historical matches yet.</p>'}</section></div>
+      <div class="tab-panel" id="pbp-panel" hidden><section class="panel section-block"><div class="panel-heading"><div><p class="eyebrow">Match review</p><h2>Play-by-Play</h2></div></div><p class="coach-detail-note">Choose a completed match to watch its play-by-play. Match reviews open in the dedicated match viewer.</p>${detailsPending?'<p>Loading matches…</p>':detailsError?`<p>${e(detailsError)}</p>`:history.length?`<div class="coach-pbp-list">${history.map(match=>`<a class="coach-pbp-link" href="${e(SimSite.matchUrl(match.match_guid))}"><span><strong>${e(match.opponent_name||'Opponent')}</strong><small>${e(seasonText(match))} · ${e(match.match_context||'Match')}</small></span><span>${e(match.result_outcome||'')} ${e(match.score_display||'')} <span aria-hidden="true">→</span></span></a>`).join('')}</div>`:'<p>No completed matches available.</p>'}</section></div>
       <div class="tab-panel" id="stats-panel" hidden><section class="panel section-block"><div class="panel-heading"><div><p class="eyebrow">Restricted to your college</p><h2>Detailed Coaching Statistics</h2></div></div><p class="coach-detail-note">View move efficiency, neutral and mat performance, situations, and fatigue. These records are private to your authorized college.</p><div id="private-stat-controls" class="coach-stat-controls"></div><div id="private-stat-results" aria-live="polite"></div></section></div>`;
 
     const tabButtons = [...document.querySelectorAll('.tab')];
-    const panels = { public:document.getElementById('public-panel'), history:document.getElementById('history-panel'), stats:document.getElementById('stats-panel') };
+    const panels = { public:document.getElementById('public-panel'), history:document.getElementById('history-panel'), stats:document.getElementById('stats-panel'), pbp:document.getElementById('pbp-panel') };
     tabButtons.forEach((button) => button.classList.toggle('active',button.dataset.tab===activeTab));
     Object.entries(panels).forEach(([name,panel]) => { panel.hidden = name !== activeTab; });
     tabButtons.forEach((button) => button.addEventListener('click', () => {
@@ -95,31 +96,66 @@
     SimSite.mobileCollapsibles(root);
   }
 
+  // Keep the legacy coach-details RPC solely for private attribute authorization.
+  // All eight analytics sections use the server-authorized current-season cache RPCs.
   async function loadPrivateSection(section){
-    if(analyticsCache[section]) return analyticsCache[section];
-    const {data,error}=await coachClient.rpc('get_my_wrestler_coach_details_v4_2_2',{p_wrestler_guid:wrestlerGuid,p_section:section});
+    if(section==='attributes'){
+      const {data,error}=await coachClient.rpc('get_my_wrestler_coach_details_v4_2_2',{p_wrestler_guid:wrestlerGuid,p_section:'attributes'});
+      if(error)throw error;
+      return Array.isArray(data?.rows)?data.rows:[];
+    }
+    if(analyticsCache[section])return analyticsCache[section];
+    const rpc=section==='moves'?'get_my_current_season_moves_cached_v423':'get_my_current_season_analytics_cached_v423';
+    const params={p_wrestler_guid:wrestlerGuid};
+    if(section!=='moves')params.p_section_code=section;
+    const {data,error}=await coachClient.rpc(rpc,params);
     if(error)throw error;
-    analyticsCache[section]=Array.isArray(data?.rows)?data.rows:[];
-    return analyticsCache[section];
+    if(!data?.cache_ready)return {ready:false,rows:[]};
+    const value={ready:true,rows:Array.isArray(data.rows)?data.rows:[],refreshed:data.refreshed_at};
+    analyticsCache[section]=value;
+    return value;
   }
-  const headings={overview:'Career Performance',moves:'Individual Moves',neutral:'Neutral Wrestling',mat:'Mat Wrestling',scramble:'Scrambling and Discipline',period:'Period Splits',score:'Score Situations',fatigue:'Fatigue and Conditioning'};
+  const headings={overview:'Current Season Performance',moves:'Individual Moves',neutral:'Neutral Wrestling',mat:'Mat Wrestling',scramble:'Scrambling and Discipline',period:'Period Splits',score:'Score Situations',fatigue:'Fatigue and Conditioning'};
   const keyName=k=>String(k).replace(/_/g,' ').replace(/\b\w/g,x=>x.toUpperCase());
+  const ignored=new Set(['wrestler_guid','wrestler_name','move_guid','move_code','action_type','move_family','move_name']);
+  function formatStat(v,k){
+    if(v===null||v===undefined)return '—';
+    if(typeof v==='number')return /rate|percentage|probability/.test(k)?`${(v*100).toFixed(1)}%`:Number.isInteger(v)?v.toLocaleString():v.toFixed(2);
+    return String(v);
+  }
+  function statCards(row,fields){
+    return `<div class="coach-metric-grid">${fields.filter(k=>row[k]!==undefined).map(k=>`<dl class="coach-metric-card"><dt>${e(keyName(k))}</dt><dd>${e(formatStat(row[k],k))}</dd></dl>`).join('')}</div>`;
+  }
+  function renderMetrics(section,rows){
+    if(section==='moves'){
+      const fieldNames=['offensive_uses','offensive_successes','offensive_failures','takedowns','points_created','attempts_faced','defensive_stops','points_allowed'];
+      const cards=rows.map(r=>`<article class="coach-move-card"><header><strong>${e(r.move_name||r.move_code||'Move')}</strong><small>${e(r.move_family||'')}</small></header>${statCards(r,fieldNames)}</article>`).join('');
+      return `<div class="coach-move-list">${cards}</div>`;
+    }
+    const groupKey={period:'period_display',score:'score_state',fatigue:'fatigue_band'}[section];
+    return rows.map((r,i)=>{
+      const label=groupKey?String(r[groupKey]||`Group ${i+1}`).replaceAll('_',' '):null;
+      const keys=Object.keys(r).filter(k=>!ignored.has(k)&&k!==groupKey&&k!=='segment_code'&&k!=='segment_number'&&k!=='period_display');
+      return `<section class="coach-metric-group">${label?`<h4>${e(label)}</h4>`:''}${statCards(r,keys)}</section>`;
+    }).join('');
+  }
   function setupPrivateStats(){
     const controls=document.getElementById('private-stat-controls'),results=document.getElementById('private-stat-results');
     if(!controls||controls.dataset.ready)return;controls.dataset.ready='true';
     controls.innerHTML=Object.entries(headings).map(([k,title],i)=>`<button type="button" class="coach-stat-tab ${i===0?'active':''}" data-section="${k}">${title}</button>`).join('');
+    let request=0;
     async function display(section){
+      const selected=++request;
       controls.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.section===section));
-      results.innerHTML='<p>Loading private analytics…</p>';
+      results.innerHTML='<p>Loading current-season analytics…</p>';
       try{
-        const rows=await loadPrivateSection(section);
-        if(!rows.length){results.innerHTML='<p>No completed-match analytics are available for this section.</p>';return;}
-        const omit=new Set(['wrestler_guid','wrestler_name','move_guid']);
-        const columns=section==='moves'?['move_name','move_family','offensive_uses','offensive_successes','offensive_success_rate','points_created','attempts_faced','defensive_stops','defensive_stop_rate']:Object.keys(rows[0]).filter(k=>!omit.has(k));
-        const rate=k=>/rate|percentage|probability/.test(k);
-        const fmt=(v,k)=>v===null||v===undefined?'—':typeof v==='number'?(rate(k)?`${(v*100).toFixed(1)}%`:Number.isInteger(v)?v.toLocaleString():v.toFixed(2)):String(v);
-        results.innerHTML=`<h3>${headings[section]}</h3><div class="table-wrap"><table class="coach-live-table"><thead><tr>${columns.map(k=>`<th>${SimSite.escape(keyName(k))}</th>`).join('')}</tr></thead><tbody>${rows.map(row=>`<tr>${columns.map(k=>`<td>${SimSite.escape(fmt(row[k],k))}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
-      }catch(err){results.innerHTML=`<p class="coach-lineup-feedback">Could not load this analytics section: ${SimSite.escape(err.message||'Unknown error')}</p>`;}
+        const data=await loadPrivateSection(section);
+        if(selected!==request)return;
+        if(!data.ready){results.innerHTML='<p class="coach-empty">This season’s statistics are being prepared. Please check back shortly.</p>';return;}
+        if(!data.rows.length){results.innerHTML='<p class="coach-empty">No completed current-season statistics are available in this category.</p>';return;}
+        const updated=data.refreshed?`<p class="coach-detail-note">Last refreshed: ${e(new Date(data.refreshed).toLocaleString())}</p>`:'';
+        results.innerHTML=`<h3>${e(headings[section])}</h3><p class="coach-detail-note">Current college season only</p>${updated}${renderMetrics(section,data.rows)}`;
+      }catch(err){if(selected===request)results.innerHTML=`<p class="coach-lineup-feedback">Could not load this analytics section: ${e(err.message||'Unknown error')}</p>`;}
     }
     controls.addEventListener('click',ev=>{const b=ev.target.closest('button[data-section]');if(b)display(b.dataset.section);});
     display('overview');
