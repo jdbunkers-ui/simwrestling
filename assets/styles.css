@@ -215,3 +215,25 @@
 .coach-pbp-link span:first-child{display:grid;gap:.2rem}
 .coach-pbp-link small{color:#586a81}
 @media(max-width:530px){#private-stat-results .coach-move-card .coach-metric-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* v4.2.4 coaching experience */
+.coach-roster-state{font-size:.72rem;font-weight:650;color:#66788f;white-space:nowrap}
+.coach-back-link{display:inline-block;margin:0 0 14px;color:#164575;font-size:.9rem;font-weight:750;text-decoration:none}
+.coach-back-link:hover{text-decoration:underline}
+.coach-profile-nav{margin-top:0}
+.coach-mock-hero{background:linear-gradient(115deg,#0f1b30,#254673);color:#fff;border-radius:12px;padding:36px 40px;margin-bottom:14px}
+.coach-mock-hero .eyebrow{color:#eeb92f;margin:22px 0 8px}.coach-mock-hero h2{font-size:clamp(1.8rem,4vw,2.75rem);margin:0 0 10px}.coach-mock-hero>p:last-child{max-width:700px;color:#d5e1f0;font-size:1.05rem}
+.coach-mock-banner{display:inline-block;background:#f4c04a;color:#15243b;border:2px solid #fff;border-radius:5px;padding:8px 14px;font-size:.82rem;font-weight:950;letter-spacing:.09em}
+.coach-mock-note{border-left:4px solid #daa323;background:#fff8e7;color:#57431b;padding:13px 17px;margin:14px 0 20px;border-radius:5px}
+.coach-mock-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-bottom:36px}
+.coach-mock-card{background:#fff;border:1px solid #d0d9e7;border-radius:11px;padding:24px;box-shadow:0 5px 15px #14243a0a}
+.coach-mock-card h3{font-size:1.3rem;margin:12px 0 8px}.coach-mock-card p{color:#52657c;line-height:1.6;min-height:52px}.coach-mock-number{color:#aa7712;font-size:1rem;font-weight:900;letter-spacing:.12em}
+.coach-metric-group{margin:18px 0 24px}.coach-metric-group h4{border-bottom:1px solid #d9e1ed;padding-bottom:10px;margin-bottom:14px}
+.coach-metric-featured{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:12px 0 18px}
+.coach-metric-featured .coach-metric-card{background:linear-gradient(135deg,#122c4f,#254f7d);border-color:#244467;color:#fff;padding:18px}
+.coach-metric-featured .coach-metric-card dt{color:#d6e5f4}.coach-metric-featured .coach-metric-card dd{color:#fff;font-size:1.55rem}
+.coach-metric-secondary .coach-metric-grid{grid-template-columns:repeat(auto-fit,minmax(155px,1fr))}
+.coach-move-card{padding:18px}.coach-move-card header strong{text-transform:capitalize;font-size:1.1rem}.coach-move-card header small{text-transform:capitalize}
+.coach-move-highlight{display:flex;gap:8px;margin:15px 0;flex-wrap:wrap}.coach-move-highlight span{display:flex;flex:1;min-width:75px;flex-direction:column;background:#eff4fa;border-radius:7px;padding:9px;color:#47617d;font-size:.75rem}.coach-move-highlight b{font-size:1.15rem;color:#112949}
+.coach-move-card details{border-top:1px solid #d5deeb;padding-top:12px}.coach-move-card summary{color:#174675;font-size:.82rem;font-weight:750;cursor:pointer}.coach-move-card details .coach-metric-grid{margin-top:12px}
+@media(max-width:650px){.coach-mock-grid{grid-template-columns:1fr}.coach-mock-hero{padding:25px 20px}.coach-metric-featured{grid-template-columns:repeat(2,minmax(0,1fr))}}

@@ -17,22 +17,22 @@
     const roster=Array.isArray(data.roster)?data.roster:[];
     const schedule=Array.isArray(data.upcoming_schedule)?data.upcoming_schedule:[];
     const starters=roster.filter(r=>r.starter_ind).length;
-    let rosterMode='full';
+    let rosterMode='starters';
     let saving=false;
     const today=data.current_league_date;
     document.title=`${data.team_name} — Coaching | Sim Wrestling`;
     root.innerHTML=`
       <section class="coach-live-hero"><div><p class="eyebrow">YOUR COLLEGE · CURRENT SEASON</p><h1>${escape(data.team_name)}</h1><p>${escape(data.hometown_city||'')}${data.state_code?', '+escape(data.state_code):''} · ${escape(data.season_code||'Current season')}</p></div><div class="coach-hero-seal" aria-hidden="true">SW</div></section>
-      <nav class="coach-subnav" aria-label="Private coaching pages"><a class="active" aria-current="page" href="coach.html">Coaching</a><a href="coach-recruiting.html">Recruiting</a><a href="coach-history.html">Program History</a><a href="coach-forum.html">Coaches Forum</a><a href="account.html">My Account</a></nav>
+      <nav class="coach-subnav" aria-label="Private coaching pages"><a class="active" aria-current="page" href="coach.html">Coaching</a><a href="coach-recruiting.html">Recruiting</a><a href="coach-history.html">Program History</a></nav>
       <div class="coach-summary-grid"><article><span>Roster</span><strong>${roster.length}</strong><small>Current listed wrestlers</small></article><article><span>Starters</span><strong>${starters}</strong><small>Current starting lineup</small></article><article><span>Upcoming events</span><strong>${schedule.length}</strong><small>Published future schedule entries</small></article><article><span>League date</span><strong class="coach-date">${escape(dateText(today))}</strong><small>Simulated season date</small></article></div>
-      <section class="panel coach-live-panel"><div class="panel-heading coach-roster-heading"><div><p class="eyebrow">CURRENT COLLEGE</p><h2>Roster and starting lineup</h2></div><div class="coach-roster-switch" role="group" aria-label="Roster view"><button type="button" id="roster-full" class="active" aria-pressed="true">Full Roster</button><button type="button" id="roster-starters" aria-pressed="false">Starters</button></div></div>
+      <section class="panel coach-live-panel"><div class="panel-heading coach-roster-heading"><div><p class="eyebrow">CURRENT COLLEGE</p><h2>Roster and starting lineup</h2></div><div class="coach-roster-switch" role="group" aria-label="Roster view"><button type="button" id="roster-full" aria-pressed="false">Full Roster</button><button type="button" id="roster-starters" class="active" aria-pressed="true">Starters</button></div></div>
       <p id="lineup-feedback" class="coach-lineup-feedback" role="status" aria-live="polite"></p>
       <div id="coaching-roster-table"></div>
-      <p class="coach-detail-note">Select a starter in the Full Roster view, then confirm the change. Changes affect future competitions, not completed matches. Wrestler names open private profile placeholders.</p></section>
+      <p class="coach-detail-note">Select a starter in the Full Roster view, then confirm the change. Changes affect future competitions, not completed matches. Wrestler names open their private scouting profiles.</p></section>
       <section class="panel coach-live-panel"><div class="panel-heading"><div><p class="eyebrow">UP NEXT</p><h2>Upcoming college schedule</h2></div><span class="record-pill">${schedule.length} entries</span></div>
       ${schedule.length?`<div class="table-wrap"><table class="coach-live-table"><thead><tr><th>Date</th><th>Week</th><th>Event</th><th>Opponent / field</th><th>Result</th></tr></thead><tbody>${schedule.slice(0,40).map(s=>`<tr><td>${escape(dateText(s.scheduled_date))}</td><td>${escape(s.week_number??'—')}</td><td>${escape(s.event_name||s.schedule_type||'Event')}</td><td>${escape(s.opponent_or_field||'—')}</td><td>${escape(s.result_display||'Pending')}</td></tr>`).join('')}</tbody></table></div>`:empty('No future events remain on the published schedule.')}</section>
       <section class="coach-future-grid"><article class="panel coach-future"><p class="eyebrow">FUTURE COACHING TOOL</p><h2>Wrestle Off</h2><p>Schedule an internal practice match between two wrestlers from your roster.</p><span class="coach-soon">Under Construction</span></article><article class="panel coach-future"><p class="eyebrow">FUTURE COACHING TOOL</p><h2>Off-Season Training Program</h2><p>Plan individual development and training activities between seasons.</p><span class="coach-soon">Under Construction</span></article></section>
-      <p class="coach-detail-note">Wrestle-offs, off-season training and private wrestler details will follow in later releases.</p>`;
+      <p class="coach-detail-note">Wrestle-offs and off-season training will follow in later releases.</p>`;
 
     const rosterPanel=document.getElementById('coaching-roster-table');
     const feedback=document.getElementById('lineup-feedback');
@@ -44,7 +44,7 @@
         const group=roster.filter(w=>w.weight_class_code===r.weight_class_code);
         const current=group.find(w=>w.starter_ind);
         const changeable=!!id&&!!current&&!r.starter_ind;
-        return `<tr><td>${escape(r.weight_class_code||'—')}</td><td>${id?`<a class="wrestler-link" href="coach-wrestler.html?wrestler=${encodeURIComponent(id)}">${escape(r.wrestler_name||'Unknown')}</a>`:escape(r.wrestler_name||'Unknown')}</td><td>${escape(r.eligibility_year_display||'—')}</td><td>${formatStatus(r)}</td><td>${Number(r.win_qty||0)}–${Number(r.loss_qty||0)}</td><td>${r.state_weight_rank?'#'+escape(r.state_weight_rank):'—'}</td>${rosterMode==='full'?`<td>${r.starter_ind?'<span class="coach-current-pick">Selected</span>':changeable?`<button class="coach-select-starter" type="button" data-wrestler="${id}" ${saving?'disabled':''}>Make Starter</button>`:'—'}</td>`:''}</tr>`;
+        return `<tr><td>${escape(r.weight_class_code||'—')}</td><td>${id?`<a class="wrestler-link" href="coach-wrestler.html?wrestler=${encodeURIComponent(id)}">${escape(r.wrestler_name||'Unknown')}</a>`:escape(r.wrestler_name||'Unknown')}<small class="coach-roster-state"> · ${escape(r.hometown_state_code||String(r.hometown_display||'').split(',').pop().trim().toUpperCase().match(/^[A-Z]{2}$/)?.[0]||'—')}</small></td><td>${escape(r.eligibility_year_display||'—')}</td><td>${formatStatus(r)}</td><td>${Number(r.win_qty||0)}–${Number(r.loss_qty||0)}</td><td>${r.state_weight_rank?'#'+escape(r.state_weight_rank):'—'}</td>${rosterMode==='full'?`<td>${r.starter_ind?'<span class="coach-current-pick">Selected</span>':changeable?`<button class="coach-select-starter" type="button" data-wrestler="${id}" ${saving?'disabled':''}>Make Starter</button>`:'—'}</td>`:''}</tr>`;
       }).join('')}</tbody></table></div>`:empty('No roster records were returned.');
       document.getElementById('roster-full').classList.toggle('active',rosterMode==='full');
       document.getElementById('roster-starters').classList.toggle('active',rosterMode==='starters');
