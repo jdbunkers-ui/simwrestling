@@ -9,6 +9,12 @@
   const number = value => Number.isFinite(Number(value)) ? Number(value) : 0;
   const label = value => String(value || '').replaceAll('_', ' ').toLowerCase().replace(/\b\w/g, letter => letter.toUpperCase());
   const stageLabel = rank => ({1:'Freshmen+',2:'Sophomores+',3:'Juniors+',4:'Seniors only'})[number(rank)] || 'Unavailable';
+  const gradeLabel = stage => ({
+    HIGH_SCHOOL_FRESHMAN:'Freshman',
+    HIGH_SCHOOL_SOPHOMORE:'Sophomore',
+    HIGH_SCHOOL_JUNIOR:'Junior',
+    HIGH_SCHOOL_SENIOR:'Senior'
+  })[String(stage || '').toUpperCase()] || 'High School';
   const prospectName = row => text(row.wrestler_name, row.display_name, row.name, 'Unknown recruit');
   const empty = message => `<div class="recruit-empty">${esc(message)}</div>`;
   const fail = message => {
@@ -25,6 +31,8 @@
   let boardWeight = 'ALL';
   let activeTab = ['overview','search','board'].includes(String(SimSite.query('recruiting_tab') || ''))
     ? String(SimSite.query('recruiting_tab')) : 'overview';
+  const requestedPackage = String(SimSite.query('package') || '').trim() || null;
+  if (requestedPackage) activeTab = 'search';
   let working = false;
   let openPackage = null;
 
@@ -293,6 +301,17 @@
     const events = Array.isArray(data?.events) ? data.events : [];
     const duals = Array.isArray(data?.duals) ? data.duals : [];
     const tournaments = Array.isArray(data?.tournaments) ? data.tournaments : [];
+    const participants = new Map((Array.isArray(data?.participants) ? data.participants : [])
+      .map(row => [String(row.wrestler_guid), row]));
+    const wrestlerLink = (guid, name) => {
+      const participant = participants.get(String(guid || '')) || {};
+      const display = text(name, participant.wrestler_name, 'TBD');
+      const suffix = guid ? ` (${gradeLabel(participant.academic_stage)})` : '';
+      return guid
+        ? `<a class="recruit-result-wrestler" href="${esc(SimSite.prospectUrl(guid))}">${esc(display + suffix)}</a>`
+        : esc(display);
+    };
+    const pbpUrl = matchGuid => `coach-scouted-match.html?match=${encodeURIComponent(matchGuid)}&package=${encodeURIComponent(packageGuid)}`;
     host.hidden = false;
     host.innerHTML = `<div class="panel-heading"><div><p class="eyebrow">UNLOCKED RESULTS</p><h2>${esc(data?.package?.package_name || 'Scouting results')}</h2></div><button type="button" class="recruit-close" data-close-results>Close</button></div>
       <div class="recruit-result-events">${events.map(event => `<span>${esc(text(event.display_event_name,event.event_name,'Event'))}</span>`).join('')}</div>
@@ -304,8 +323,8 @@
         const payload = row.payload || {};
         const entries = Array.isArray(payload.entries) ? payload.entries : [];
         const bracket = Array.isArray(payload.bracket) ? payload.bracket : [];
-        return `<details><summary><strong>${esc(text(row.tournament_name,row.event_name,'Tournament'))}</strong><span>${esc(text(row.weight_class_code,'—'))} · ${bracket.length} bouts</span></summary><div class="recruit-entry-chips">${entries.filter(entry => entry.wrestler_guid).map(entry => `<button type="button" data-flag-recruit="${esc(entry.wrestler_guid)}" data-package="${esc(packageGuid)}">${esc(text(entry.wrestler_name,entry.display_name,'Recruit'))} · Flag</button>`).join('')}</div><div class="table-wrap"><table class="coach-live-table recruit-bracket-table"><thead><tr><th>Round</th><th>Matchup</th><th>Score</th><th>Result</th><th></th></tr></thead><tbody>${bracket.map(bout => `<tr><td>${esc(text(bout.round_name,bout.round_code,'—'))}</td><td>${esc(text(bout.wrestler_1_name,'TBD'))} vs. ${esc(text(bout.wrestler_2_name,'TBD'))}</td><td>${score(bout.wrestler_1_match_score,bout.wrestler_2_match_score)}</td><td>${esc(label(bout.result_type || 'Pending'))}</td><td>${bout.match_guid ? `<button type="button" class="recruit-pbp-button" data-view-pbp="${esc(bout.match_guid)}">PBP</button>` : ''}</td></tr>`).join('')}</tbody></table></div></details>`;
-      }).join('')}</div>` : ''}<div id="recruit-pbp"></div>`;
+        return `<details><summary><strong>${esc(text(row.tournament_name,row.event_name,'Tournament'))}</strong><span>${esc(text(row.weight_class_code,'—'))} · ${bracket.length} bouts</span></summary><div class="recruit-entry-chips">${entries.filter(entry => entry.wrestler_guid).map(entry => `<span>${wrestlerLink(entry.wrestler_guid,text(entry.wrestler_name,entry.display_name,'Recruit'))}<button type="button" data-flag-recruit="${esc(entry.wrestler_guid)}" data-package="${esc(packageGuid)}">Flag</button></span>`).join('')}</div><div class="table-wrap"><table class="coach-live-table recruit-bracket-table"><thead><tr><th>Round</th><th>Matchup</th><th>Score</th><th>Result</th><th></th></tr></thead><tbody>${bracket.map(bout => `<tr><td>${esc(text(bout.round_name,bout.round_code,'—'))}</td><td>${wrestlerLink(bout.wrestler_1_guid,bout.wrestler_1_name)} <span class="recruit-versus">vs.</span> ${wrestlerLink(bout.wrestler_2_guid,bout.wrestler_2_name)}</td><td>${score(bout.wrestler_1_match_score,bout.wrestler_2_match_score)}</td><td>${esc(label(bout.result_type || 'Pending'))}</td><td>${bout.match_guid ? `<a class="recruit-pbp-button" href="${esc(pbpUrl(bout.match_guid))}">PBP</a>` : ''}</td></tr>`).join('')}</tbody></table></div></details>`;
+      }).join('')}</div>` : ''}`;
     host.scrollIntoView({behavior:'smooth',block:'start'});
   }
 
@@ -313,22 +332,10 @@
     if (working) return;
     working = true; openPackage = packageGuid; setFeedback('Loading purchased results…');
     try {
-      const data = await rpc('get_my_scouting_package_results_v4_3_0', {p_scouting_package_guid:packageGuid});
+      const data = await rpc('get_my_scouting_package_results_v4_4_1', {p_scouting_package_guid:packageGuid});
       renderPackageResults(data, packageGuid);
       setFeedback('Purchased scouting results loaded.', 'success');
     } catch (error) { setFeedback(error.message || 'The scouting results could not be loaded.', 'error'); }
-    finally { working = false; }
-  }
-
-  async function viewPbp(matchGuid) {
-    const host = document.getElementById('recruit-pbp');
-    if (!host || working) return;
-    working = true; host.innerHTML = empty('Loading play-by-play…');
-    try {
-      const rows = await rpc('get_my_scouted_match_pbp_v4_3_0', {p_match_guid:matchGuid});
-      host.innerHTML = `<div class="recruit-pbp"><h3>Match play-by-play</h3>${Array.isArray(rows) && rows.length ? rows.map(row => `<p><span>${esc(row.segment_code || '')} ${row.clock_after_seconds != null ? esc(window.SimSite.duration(row.clock_after_seconds)) : ''}</span>${esc(text(row.pbp_text,row.move_name,row.event_type,'Event'))}</p>`).join('') : empty('No play-by-play events were returned.')}</div>`;
-      host.scrollIntoView({behavior:'smooth',block:'nearest'});
-    } catch (error) { host.innerHTML = empty(error.message || 'Play-by-play could not be loaded.'); }
     finally { working = false; }
   }
 
@@ -363,8 +370,6 @@
     if (view) { viewPackage(view.dataset.viewPackage); return; }
     const close = event.target.closest('[data-close-results]');
     if (close) { const host=document.getElementById('scouting-results'); if(host)host.hidden=true; openPackage=null; return; }
-    const pbp = event.target.closest('[data-view-pbp]');
-    if (pbp) { viewPbp(pbp.dataset.viewPbp); return; }
     const clearFilters = event.target.closest('[data-clear-board-filters]');
     if (clearFilters) { boardClass = 'ALL'; boardWeight = 'ALL'; renderPanel(); return; }
     const submit = event.target.closest('[data-submit-action]');
@@ -379,6 +384,7 @@
     if (error || !user) { fail('Please sign in to access your recruiting headquarters.'); return; }
     await loadCore();
     shell();
+    if (requestedPackage) await viewPackage(requestedPackage);
   } catch (error) {
     fail(`The recruiting headquarters could not be loaded: ${error?.message || 'Unexpected error'}`);
   }
