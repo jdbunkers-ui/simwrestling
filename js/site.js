@@ -90,6 +90,9 @@
     profileUrl(guid) {
       return `wrestler.html?wrestler=${encodeURIComponent(guid)}`;
     },
+    prospectUrl(guid) {
+      return `coach-prospect.html?wrestler=${encodeURIComponent(guid)}`;
+    },
     teamUrl(guid) {
       return `team.html?team=${encodeURIComponent(guid)}`;
     },
