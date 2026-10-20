@@ -29,8 +29,11 @@
   let searchRows = [];
   let boardClass = 'ALL';
   let boardWeight = 'ALL';
-  let activeTab = ['overview','search','board'].includes(String(SimSite.query('recruiting_tab') || ''))
-    ? String(SimSite.query('recruiting_tab')) : 'overview';
+  let activeTab = ['search','board','overview'].includes(String(SimSite.query('recruiting_tab') || ''))
+    ? String(SimSite.query('recruiting_tab')) : 'board';
+  let boardMode = 'top';
+  let topOverrides = {};
+  const expandedWeights = new Set();
   const requestedPackage = String(SimSite.query('package') || '').trim() || null;
   if (requestedPackage) activeTab = 'search';
   let working = false;
@@ -53,6 +56,8 @@
     catalog = Array.isArray(catalogData?.packages) ? catalogData.packages : [];
     board = Array.isArray(boardData?.recruits) ? boardData.recruits : [];
     pipeline = pipelineData || {};
+    const selections = await rpc('get_my_top_prospects_v4_4_4');
+    topOverrides = Object.fromEntries((Array.isArray(selections) ? selections : []).map(x => [String(x.weight_class_code), String(x.wrestler_guid)]));
   }
 
   function shell() {
@@ -71,9 +76,9 @@
       </div>
       <div class="recruit-workspace">
         <nav class="recruit-tabs" role="tablist" aria-label="Recruiting workspace">
-          <button type="button" data-tab="overview" class="${activeTab === 'overview' ? 'active' : ''}" aria-selected="${activeTab === 'overview'}">Overview</button>
-          <button type="button" data-tab="search" class="${activeTab === 'search' ? 'active' : ''}" aria-selected="${activeTab === 'search'}">Search &amp; Scout</button>
           <button type="button" data-tab="board" class="${activeTab === 'board' ? 'active' : ''}" aria-selected="${activeTab === 'board'}">Big Board <span>${board.length}</span></button>
+          <button type="button" data-tab="search" class="${activeTab === 'search' ? 'active' : ''}" aria-selected="${activeTab === 'search'}">Search &amp; Scout</button>
+          <button type="button" data-tab="overview" class="${activeTab === 'overview' ? 'active' : ''}" aria-selected="${activeTab === 'overview'}">Overview</button>
         </nav>
         <p class="recruit-feedback" id="recruit-feedback" role="status" aria-live="polite"></p>
         <section id="recruit-panel"></section>
@@ -161,7 +166,7 @@
   }
 
   function renderSearch() {
-    return `<section class="panel recruit-section"><div class="panel-heading"><div><p class="eyebrow">FREE INVENTORY</p><h2>Search prospects</h2><p class="recruit-heading-note">Names and geography are free. Results require a scouting package.</p></div></div>${searchForm()}<div id="prospect-results">${prospectRows()}</div></section>
+    return `${renderPipelineDashboard()}<section class="panel recruit-section"><div class="panel-heading"><div><p class="eyebrow">FREE INVENTORY</p><h2>Search prospects</h2><p class="recruit-heading-note">Names and geography are free. Results require a scouting package.</p></div></div>${searchForm()}<div id="prospect-results">${prospectRows()}</div></section>
       <section class="panel recruit-section"><div class="panel-heading"><div><p class="eyebrow">SCOUTING MARKET</p><h2>Purchase result packages</h2><p class="recruit-heading-note">A purchase updates as sessions finish and remains available under its season retention rule.</p></div></div>${packageList()}</section>
       <section class="panel recruit-results" id="scouting-results" hidden></section>`;
   }
@@ -190,57 +195,89 @@
     if (!senior) return '';
     const schools = Array.isArray(senior.considered_schools) ? senior.considered_schools : [];
     const status = label(senior.recruiting_status || 'No Longer Serious Contender');
-    return `<div class="recruit-senior-outlook"><div class="recruit-senior-metrics"><dl><dt>Your standing</dt><dd>${esc(status)}</dd></dl><dl><dt>Estimated signing chance</dt><dd>${number(senior.estimated_signing_probability_percent, 1).toFixed(1)}%</dd></dl><dl><dt>Pipeline bonus</dt><dd>+${number(senior.pipeline_bonus_percent, 1).toFixed(1)}%</dd></dl><dl><dt>Signing weight</dt><dd>${number(senior.adjusted_signing_weight, 3).toFixed(3)}</dd></dl></div><div class="recruit-pipeline-breakdown"><span>${number(senior.region_roster_qty)} region</span><span>${number(senior.state_roster_qty)} state</span><span>${number(senior.county_roster_qty)} county</span></div><div class="recruit-considered"><strong>Schools being considered</strong>${schools.length ? `<ul>${schools.map(school => `<li class="${school.is_my_team ? 'is-my-team' : ''}"><span>${esc(school.team_name)}${school.is_my_team ? ' · Your college' : ''}</span><b>${number(school.estimated_signing_probability_percent, 1).toFixed(1)}%</b></li>`).join('')}</ul>` : '<p>No frozen senior contenders.</p>'}</div></div>`;
+    return `<div class="recruit-senior-outlook"><div class="recruit-senior-metrics"><dl><dt>Team standing</dt><dd>${esc(status)}</dd></dl><dl><dt>Estimated signing chance</dt><dd>${number(senior.estimated_signing_probability_percent, 1).toFixed(1)}%</dd></dl><dl><dt>Pipeline bonus</dt><dd>+${number(senior.pipeline_bonus_percent, 1).toFixed(1)}%</dd></dl><dl><dt>Signing weight</dt><dd>${number(senior.adjusted_signing_weight, 3).toFixed(3)}</dd></dl></div><div class="recruit-pipeline-breakdown"><span>${number(senior.region_roster_qty)} region</span><span>${number(senior.state_roster_qty)} state</span><span>${number(senior.county_roster_qty)} county</span></div><div class="recruit-considered"><strong>Schools being considered</strong>${schools.length ? `<ul>${schools.map(school => `<li class="${school.is_my_team ? 'is-my-team' : ''}"><span>${esc(school.team_name)}${school.is_my_team ? ' · Your college' : ''}</span><b>${number(school.estimated_signing_probability_percent, 1).toFixed(1)}%</b></li>`).join('')}</ul>` : '<p>No frozen senior contenders.</p>'}</div></div>`;
   }
 
-  function boardRows() {
-    const rows = filteredBoard();
-    if (!board.length) return empty('Your Big Board is empty. Search the prospect inventory or flag a wrestler from purchased results.');
-    if (!rows.length) return empty('No Big Board prospects match the selected class and weight.');
+  const highSchoolWeights = ['106','113','120','126','132','138','144','150','157','165','175','190','215','HWT'];
+  function weightRows(weight) {
+    return filteredBoard().filter(item => String(item.prospect?.weight_class_code || '') === weight);
+  }
+  function chosenTop(weight, rows) {
+    return rows.find(item => String(item.prospect?.wrestler_guid) === topOverrides[weight]) || rows[0] || null;
+  }
+  function recordFor(item) {
+    const p = item.prospect || {};
+    const wins = p.win_qty ?? p.wins ?? p.win_count ?? p.season_wins;
+    const losses = p.loss_qty ?? p.losses ?? p.loss_count ?? p.season_losses;
+    return wins == null || losses == null ? '—' : `${number(wins)}–${number(losses)}`;
+  }
+  function standingFor(item) {
+    const sr = item.senior_outlook || {};
+    return sr.recruiting_status ? label(sr.recruiting_status) : '—';
+  }
+  function chanceFor(item) {
+    const prob = item.senior_outlook?.estimated_signing_probability_percent;
+    return prob == null ? '—' : `${number(prob).toFixed(1)}%`;
+  }
+  function prospectCells(item, weight, selectable) {
+    const p = item.prospect || {};
+    return `<td><a href="${esc(SimSite.prospectUrl(p.wrestler_guid))}">${esc(prospectName(p))}</a></td><td>${esc(gradeLabel(p.academic_stage))}</td><td>${esc(text(p.state_code,'—'))}</td><td>${esc(text(p.county_name,'—'))}</td><td>${esc(recordFor(item))}</td><td>${number(item.recruiting_points)}</td><td>${esc(standingFor(item))}</td><td>${esc(chanceFor(item))}</td><td>${selectable ? `<input type="radio" name="top-${esc(weight)}" data-set-top="${esc(p.wrestler_guid)}" data-weight="${esc(weight)}" ${chosenTop(weight,weightRows(weight))?.prospect?.wrestler_guid === p.wrestler_guid ? 'checked' : ''} aria-label="Make ${esc(prospectName(p))} top prospect at ${esc(weight)}" />` : '<span class="recruit-top-mark">Top</span>'}</td>`;
+  }
+  function actionDetails(item) {
+    const p = item.prospect || {};
     const types = Array.isArray(overview.action_types) ? overview.action_types : [];
-    return `<div class="recruit-board-list">${rows.map(item => {
-      const p = item.prospect || {};
-      const used = new Set(Array.isArray(item.used_stage_action_codes) ? item.used_stage_action_codes : []);
-      const remaining = Math.max(0, 3 - number(item.current_week_action_qty));
-      const isSenior = p.academic_stage === 'HIGH_SCHOOL_SENIOR';
-      const eligible = types.filter(action => number(action.minimum_stage_rank) <= number(item.stage_rank)
-        && (!action.once_per_stage_ind || !used.has(action.action_code))
-        && (!isSenior || item.senior_outlook?.is_contender));
-      const actionDisabled = remaining === 0 || !eligible.length;
-      return `<article class="recruit-board-row" data-board-row="${esc(p.wrestler_guid)}"><div class="recruit-board-main"><div class="recruit-board-person"><a class="recruit-prospect-link" href="${esc(SimSite.prospectUrl(p.wrestler_guid))}">${esc(prospectName(p))}</a><small>${esc(text(p.county_name, p.hometown_display, p.hometown_city, 'Location unavailable'))}</small></div><dl class="recruit-board-facts"><div><dt>State</dt><dd>${esc(text(p.state_code, '—'))}</dd></div><div><dt>Weight</dt><dd>${esc(text(p.weight_class_code, '—'))}${p.weight_class_code && p.weight_class_code !== 'HWT' ? ' lb' : ''}</dd></div><div><dt>Class</dt><dd>${esc(label(String(p.academic_stage || '').replace('HIGH_SCHOOL_', '')))}</dd></div><div class="recruit-points"><dt>Recruiting points</dt><dd>${number(item.recruiting_points)}</dd></div></dl><div class="recruit-board-actions"><label>Eligible action<select data-action ${actionDisabled ? 'disabled' : ''}><option value="">${remaining ? 'Choose action' : 'Weekly limit reached'}</option>${eligible.map(action => `<option value="${esc(action.action_code)}">${esc(text(action.action_name, label(action.action_code)))} · ${number(action.point_cost)} pts</option>`).join('')}</select></label><button type="button" class="recruit-primary" data-submit-action="${esc(p.wrestler_guid)}" ${actionDisabled ? 'disabled' : ''}>Submit action</button><span class="recruit-slots">${remaining} of 3 weekly actions remaining</span><button type="button" class="recruit-remove" data-remove-board="${esc(p.wrestler_guid)}">Remove</button></div></div>${seniorOutlook(item)}</article>`;
-    }).join('')}</div>`;
+    const used = new Set(Array.isArray(item.used_stage_action_codes) ? item.used_stage_action_codes : []);
+    const remaining = Math.max(0,3-number(item.current_week_action_qty));
+    const senior = p.academic_stage === 'HIGH_SCHOOL_SENIOR';
+    const eligible = types.filter(action => number(action.minimum_stage_rank) <= number(item.stage_rank) && (!action.once_per_stage_ind || !used.has(action.action_code)) && (!senior || item.senior_outlook?.is_contender));
+    return `<details class="recruit-board-detail"><summary>Recruiting actions and prospect details</summary><div class="recruit-board-actions" data-board-row="${esc(p.wrestler_guid)}"><label>Eligible action<select data-action ${!remaining || !eligible.length ? 'disabled' : ''}><option value="">${remaining ? 'Choose action' : 'Weekly limit reached'}</option>${eligible.map(action=>`<option value="${esc(action.action_code)}">${esc(text(action.action_name,label(action.action_code)))} · ${number(action.point_cost)} pts</option>`).join('')}</select></label><button class="recruit-primary" data-submit-action="${esc(p.wrestler_guid)}" ${!remaining || !eligible.length ? 'disabled' : ''}>Submit action</button><span class="recruit-slots">${remaining} of 3 weekly actions remaining</span><button class="recruit-remove" data-remove-board="${esc(p.wrestler_guid)}">Remove</button></div>${seniorOutlook(item)}</details>`;
   }
-
+  function boardRows() {
+    if (!board.length) return empty('Your Big Board is empty. Add prospects through Search & Scout.');
+    const visible = filteredBoard();
+    const widths = boardWeight === 'ALL' ? highSchoolWeights : [boardWeight];
+    const head = '<thead><tr><th>Weight</th><th>Prospect</th><th>Year</th><th>State</th><th>County</th><th>W–L</th><th>Recruiting points</th><th>Team standing</th><th>Signing chance</th><th>Top prospect</th></tr></thead>';
+    const sections = widths.map(weight => {
+      const rows = weightRows(weight);
+      const chosen = chosenTop(weight, rows);
+      const showAll = boardMode === 'all' || expandedWeights.has(weight);
+      const other = rows.filter(item => item !== chosen);
+      const main = chosen ? `<tr class="recruit-weight-top"><th scope="row"><button type="button" class="recruit-weight-expand" data-expand-weight="${esc(weight)}" aria-expanded="${showAll}">${showAll ? '▾' : '▸'} ${esc(weight)}</button></th>${prospectCells(chosen,weight,false)}</tr><tr class="recruit-details-row"><td colspan="10">${actionDetails(chosen)}</td></tr>` : `<tr class="recruit-weight-empty"><th scope="row">${esc(weight)}</th><td colspan="9">No prospects on your Big Board</td></tr>`;
+      const extra = showAll ? other.map(item => `<tr class="recruit-weight-backup"><td></td>${prospectCells(item,weight,true)}</tr><tr class="recruit-details-row"><td colspan="10">${actionDetails(item)}</td></tr>`).join('') : '';
+      return main + extra;
+    }).join('');
+    return `<div class="table-wrap recruit-weight-table-wrap"><table class="coach-live-table recruit-weight-table">${head}<tbody>${sections}</tbody></table></div>`;
+  }
   function renderBoard() {
-    const visible = filteredBoard().length;
-    return `${renderPipelineDashboard()}<section class="panel recruit-section"><div class="panel-heading"><div><p class="eyebrow">YOUR TARGETS</p><h2>Big Board</h2><p class="recruit-heading-note">Sorted by recruiting points. Filter by class and projected roster need.</p></div><span class="record-pill">${visible} of ${board.length}</span></div><div class="recruit-board-tools"><label>High school class<select id="board-class"><option value="ALL">All classes</option><option value="HIGH_SCHOOL_SENIOR">Seniors</option><option value="HIGH_SCHOOL_JUNIOR">Juniors</option><option value="HIGH_SCHOOL_SOPHOMORE">Sophomores</option><option value="HIGH_SCHOOL_FRESHMAN">Freshmen</option></select></label><label>Weight class<select id="board-weight"><option value="ALL">All weights</option>${(window.SimSite?.highSchoolWeightOrder || []).map(weight => `<option value="${esc(weight)}">${esc(weight === 'HWT' ? 'HWT' : `${weight} lb`)}</option>`).join('')}</select></label><button type="button" class="recruit-secondary" data-clear-board-filters>Clear filters</button></div><div id="big-board-list">${boardRows()}</div></section>`;
+    return `<section class="panel recruit-section"><div class="panel-heading"><div><p class="eyebrow">YOUR TARGETS</p><h2>Big Board</h2><p class="recruit-heading-note">High school weights 106 through HWT. Expand any weight to see all your recruits; choose one Top Prospect per weight.</p></div><div class="coach-roster-switch" role="group" aria-label="Prospect view"><button type="button" data-board-mode="top" class="${boardMode === 'top' ? 'active' : ''}">Top Prospects</button><button type="button" data-board-mode="all" class="${boardMode === 'all' ? 'active' : ''}">All Prospects</button></div></div><div class="recruit-board-tools"><label>High school class<select id="board-class"><option value="ALL">All classes</option><option value="HIGH_SCHOOL_SENIOR">Seniors</option><option value="HIGH_SCHOOL_JUNIOR">Juniors</option><option value="HIGH_SCHOOL_SOPHOMORE">Sophomores</option><option value="HIGH_SCHOOL_FRESHMAN">Freshmen</option></select></label><label>Weight class<select id="board-weight"><option value="ALL">All weights</option>${highSchoolWeights.map(w=>`<option value="${w}">${w}</option>`).join('')}</select></label><button type="button" class="recruit-secondary" data-clear-board-filters>Clear filters</button></div><div id="big-board-list">${boardRows()}</div></section>`;
   }
-
   function refreshBoardResults() {
     const host = document.getElementById('big-board-list');
     if (host) host.innerHTML = boardRows();
-    const count = root.querySelector('.recruit-section .record-pill');
-    if (count) count.textContent = `${filteredBoard().length} of ${board.length}`;
   }
-
   function renderPanel() {
     const panel = document.getElementById('recruit-panel');
     if (!panel) return;
-    panel.innerHTML = activeTab === 'search' ? renderSearch() : activeTab === 'board' ? renderBoard() : renderOverview();
-    panel.querySelectorAll('[data-open-tab]').forEach(button => button.addEventListener('click', () => {
-      activeTab = button.dataset.openTab;
-      root.querySelector(`[data-tab="${activeTab}"]`)?.click();
-    }));
+    panel.innerHTML = activeTab === 'search' ? renderSearch() : activeTab === 'overview' ? renderOverview() : renderBoard();
     if (activeTab === 'search') {
       document.getElementById('prospect-search-form')?.addEventListener('submit', runSearch);
       ['package-week','package-query','package-owned'].forEach(id => document.getElementById(id)?.addEventListener(id === 'package-query' ? 'input' : 'change', renderPackages));
       renderPackages();
     } else if (activeTab === 'board') {
-      const classFilter = document.getElementById('board-class');
-      const weightFilter = document.getElementById('board-weight');
-      if (classFilter) { classFilter.value = boardClass; classFilter.addEventListener('change', () => { boardClass = classFilter.value; refreshBoardResults(); }); }
-      if (weightFilter) { weightFilter.value = boardWeight; weightFilter.addEventListener('change', () => { boardWeight = weightFilter.value; refreshBoardResults(); }); }
+      const c = document.getElementById('board-class'); const w = document.getElementById('board-weight');
+      if (c) {c.value=boardClass;c.addEventListener('change',()=>{boardClass=c.value;refreshBoardResults();});}
+      if (w) {w.value=boardWeight;w.addEventListener('change',()=>{boardWeight=w.value;refreshBoardResults();});}
     }
+  }
+  async function setTopProspect(weight, wrestlerGuid) {
+    if (working) return;
+    working = true; setFeedback('Saving your Top Prospect selection…');
+    try {
+      await rpc('set_my_top_prospect_v4_4_4',{p_weight_class_code:weight,p_wrestler_guid:wrestlerGuid});
+      topOverrides[weight] = wrestlerGuid;
+      refreshBoardResults(); setFeedback('Top Prospect saved to your coaching account.','success');
+    } catch(error) { refreshBoardResults(); setFeedback(error.message || 'Could not save Top Prospect.','error'); }
+    finally {working=false;}
   }
 
   async function refresh() {
@@ -361,7 +398,22 @@
     finally { working = false; }
   }
 
+  root.addEventListener('change', event => {
+    const radio=event.target.closest('[data-set-top]');
+    if(radio) setTopProspect(radio.dataset.weight,radio.dataset.setTop);
+  });
   root.addEventListener('click', event => {
+    const openTab = event.target.closest('[data-open-tab]');
+    if (openTab && !working) {
+      activeTab = openTab.dataset.openTab;
+      root.querySelectorAll('[data-tab]').forEach(item => {
+        const selected = item.dataset.tab === activeTab;
+        item.classList.toggle('active', selected);
+        item.setAttribute('aria-selected', String(selected));
+      });
+      renderPanel();
+      return;
+    }
     const flag = event.target.closest('[data-flag-recruit]');
     if (flag && !flag.disabled) { flagRecruit(flag.dataset.flagRecruit, flag.dataset.package || null); return; }
     const buy = event.target.closest('[data-buy-package]');
@@ -370,6 +422,10 @@
     if (view) { viewPackage(view.dataset.viewPackage); return; }
     const close = event.target.closest('[data-close-results]');
     if (close) { const host=document.getElementById('scouting-results'); if(host)host.hidden=true; openPackage=null; return; }
+    const mode = event.target.closest('[data-board-mode]');
+    if (mode) {boardMode=mode.dataset.boardMode;renderPanel();return;}
+    const expand = event.target.closest('[data-expand-weight]');
+    if (expand) {const weight=expand.dataset.expandWeight;expandedWeights.has(weight)?expandedWeights.delete(weight):expandedWeights.add(weight);refreshBoardResults();return;}
     const clearFilters = event.target.closest('[data-clear-board-filters]');
     if (clearFilters) { boardClass = 'ALL'; boardWeight = 'ALL'; renderPanel(); return; }
     const submit = event.target.closest('[data-submit-action]');
