@@ -15,7 +15,7 @@
     const v = n(value);
     return v === null ? '—' : Number.isInteger(v) ? String(v) : v.toFixed(1);
   };
-  const nav = `<nav class="coach-subnav" aria-label="Private coaching pages"><a href="coach.html">Coach</a><a class="active" aria-current="page" href="coach-matches.html">Matches</a><a href="coach-recruiting.html">Recruit</a><a href="coach-history.html">Program History</a></nav>`;
+  const nav = `<nav class="coach-subnav" aria-label="Private coaching pages"><a href="coach.html">Team</a><a href="coach-recruiting.html">Recruits</a><a href="coach-matches.html" class="active" aria-current="page">Schedule</a><a href="coach-history.html">Wall of Fame</a></nav>`;
   const fail = message => {root.innerHTML = `<section class="panel coach-gate"><h1>Matches unavailable</h1><p>${esc(message)}</p><p><a href="coach.html">Back to Coach</a> · <a href="login.html">Sign in</a></p></section>`;};
   try {
     const auth = await window.SimAuth.ready;

@@ -15,7 +15,20 @@
     if(rpcError)throw rpcError;
     if(!data?.team_guid)throw new Error('No active college was returned. Visit My Account to select a college.');
     const roster=Array.isArray(data.roster)?data.roster:[];
-    const schedule=Array.isArray(data.upcoming_schedule)?data.upcoming_schedule:[];
+    // Public team profile supplies the current-season state rank and dual record.
+    // Failure to retrieve it must not block authenticated roster management.
+    let profile=null;
+    try {
+      const res=await auth.client.rpc('get_team_profile',{p_team_guid:data.team_guid});
+      if(!res.error)profile=res.data?.profile||null;
+      else console.warn('Team header details unavailable:',res.error.message);
+    } catch(e) {console.warn('Team header details unavailable:',e.message);}
+    const schoolName=String(data.team_name||'');
+    const schoolAbbr=schoolName.split(/\s+/).filter(w=>w&&!/^(of|the|and|at|for)$/i.test(w)).map(w=>w[0]).join('').slice(0,4).toUpperCase()||'SW';
+    const rankValue=Number(profile?.state_team_rank);
+    const rankPrefix=Number.isInteger(rankValue)&&rankValue>0?'#'+rankValue+' - ':'';
+    const record=String(profile?.dual_record_display||'').trim();
+    const headerText=rankPrefix+schoolName+(record?' ('+record+')':'');
     let decisions=new Map();
     let wrestleOffs=[];
     const loadDecisions=async()=>{const {data:rows,error:e}=await auth.client.rpc('get_my_roster_decisions_v4_4_2');if(e)throw e;decisions=new Map((Array.isArray(rows)?rows:[]).map(x=>[x.wrestler_guid,x.action_code]));};
@@ -26,16 +39,14 @@
     const today=data.current_league_date;
     document.title=`${data.team_name} — Coaching | Sim Wrestling`;
     root.innerHTML=`
-      <section class="coach-live-hero"><div><p class="eyebrow">YOUR COLLEGE · CURRENT SEASON</p><h1>${escape(data.team_name)}</h1></div><div class="coach-hero-seal" aria-hidden="true">SW</div></section>
-      <nav class="coach-subnav" aria-label="Private coaching pages"><a href="coach.html" class="active" aria-current="page">Coach</a><a href="coach-matches.html">Matches</a><a href="coach-recruiting.html">Recruit</a><a href="coach-history.html">Program History</a></nav>
+      <section class="coach-live-hero"><div><p class="eyebrow">YOUR COLLEGE · CURRENT SEASON</p><h1>${escape(headerText)}</h1></div><div class="coach-hero-seal" aria-hidden="true">${escape(schoolAbbr)}</div></section>
+      <nav class="coach-subnav" aria-label="Private coaching pages"><a href="coach.html" class="active" aria-current="page">Team</a><a href="coach-recruiting.html">Recruits</a><a href="coach-matches.html">Schedule</a><a href="coach-history.html">Wall of Fame</a></nav>
       <section class="panel coach-live-panel"><div class="panel-heading coach-roster-heading"><div><p class="eyebrow">CURRENT COLLEGE</p><h2>Roster and starting lineup</h2></div><div class="coach-roster-switch" role="group" aria-label="Roster view"><button type="button" id="roster-full" aria-pressed="false">Full Roster</button><button type="button" id="roster-starters" class="active" aria-pressed="true">Starters</button></div></div>
       <p id="lineup-feedback" class="coach-lineup-feedback" role="status" aria-live="polite"></p>
       <div id="coaching-roster-table"></div>
       <p class="coach-detail-note">Select a starter in the Full Roster view, then confirm the change. Changes affect future competitions, not completed matches. Wrestler names open their private scouting profiles.</p></section>
-      <section class="panel coach-live-panel"><div class="panel-heading"><div><p class="eyebrow">UP NEXT</p><h2>Upcoming college schedule</h2></div><span class="record-pill">${schedule.length} entries</span></div>
-      ${schedule.length?`<div class="table-wrap"><table class="coach-live-table"><thead><tr><th>Date</th><th>Week</th><th>Event</th><th>Opponent / field</th><th>Result</th></tr></thead><tbody>${schedule.slice(0,40).map(s=>`<tr><td>${escape(dateText(s.scheduled_date))}</td><td>${escape(s.week_number??'—')}</td><td>${escape(s.event_name||s.schedule_type||'Event')}</td><td>${escape(s.opponent_or_field||'—')}</td><td>${escape(s.result_display||'Pending')}</td></tr>`).join('')}</tbody></table></div>`:empty('No future events remain on the published schedule.')}</section>
       <section class="panel coach-live-panel"><div class="panel-heading"><div><p class="eyebrow">CURRENT SEASON · PRIVATE</p><h2>Wrestle-Offs</h2></div></div><p id="wrestle-feedback" class="coach-lineup-feedback" role="status"></p><div id="wrestle-history"></div><div id="wrestle-pbp" hidden></div></section>
-      <section class="coach-future-grid"><article class="panel coach-future"><p class="eyebrow">FUTURE COACHING TOOL</p><h2>Off-Season Training Program</h2><p>Plan individual development and training activities between seasons.</p><span class="coach-soon">Under Construction</span></article></section>`;
+      `;
 
     const rosterPanel=document.getElementById('coaching-roster-table');
     const feedback=document.getElementById('lineup-feedback');
