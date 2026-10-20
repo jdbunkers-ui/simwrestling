@@ -292,3 +292,6 @@
 .recruit-board-actions button{grid-column:auto!important}.recruit-board-actions .recruit-remove{grid-column:auto!important}
 @media(max-width:760px){.recruit-board-actions .recruit-remove{grid-column:2!important}}
 @media(max-width:480px){.recruit-board-actions .recruit-remove{grid-column:1!important}}
+
+/* v4.4.2 Coaching controls and private wrestle-off PBP */
+.coach-decision{width:18px;height:18px;accent-color:#163a67;cursor:pointer}.coach-wrestle-action,.coach-pbp-action,.coach-pbp-close{border:1px solid #1b5b9a;background:#eff5fc;color:#163d67;border-radius:6px;padding:7px 10px;font-weight:750;cursor:pointer}.coach-wrestle-action:disabled{opacity:.45;cursor:default}.coach-pbp-head{display:flex;align-items:center;justify-content:space-between;gap:12px}.coach-pbp-feed{list-style:none;padding:0}.coach-pbp-feed li{padding:12px;border-bottom:1px solid #dfe5ed}.coach-pbp-feed li span{display:inline-block;min-width:110px;font-size:.75rem;color:#526782}.coach-pbp-feed li strong{margin-right:10px}.coach-future-grid{grid-template-columns:1fr}.coach-live-table input:focus-visible,.coach-live-table button:focus-visible{outline:3px solid #e7ac24;outline-offset:2px}#wrestle-pbp{padding:16px;border-top:1px solid #dfe5ed}#wrestle-pbp[hidden]{display:none}
