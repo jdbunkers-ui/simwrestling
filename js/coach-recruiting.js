@@ -27,8 +27,6 @@
   let board = [];
   let pipeline = {};
   let searchRows = [];
-  let boardClass = 'ALL';
-  let boardWeight = 'ALL';
   let activeTab = ['search','board','overview'].includes(String(SimSite.query('recruiting_tab') || ''))
     ? String(SimSite.query('recruiting_tab')) : 'board';
   let boardMode = 'top';
@@ -172,11 +170,7 @@
   }
 
   function filteredBoard() {
-    return board.filter(item => {
-      const p = item.prospect || {};
-      return (boardClass === 'ALL' || p.academic_stage === boardClass)
-        && (boardWeight === 'ALL' || String(p.weight_class_code) === boardWeight);
-    }).sort((a, b) => number(b.recruiting_points) - number(a.recruiting_points)
+    return board.slice().sort((a, b) => number(b.recruiting_points) - number(a.recruiting_points)
       || prospectName(a.prospect || {}).localeCompare(prospectName(b.prospect || {})));
   }
 
@@ -221,35 +215,25 @@
   }
   function prospectCells(item, weight, selectable) {
     const p = item.prospect || {};
-    return `<td><a href="${esc(SimSite.prospectUrl(p.wrestler_guid))}">${esc(prospectName(p))}</a></td><td>${esc(gradeLabel(p.academic_stage))}</td><td>${esc(text(p.state_code,'—'))}</td><td>${esc(text(p.county_name,'—'))}</td><td>${esc(recordFor(item))}</td><td>${number(item.recruiting_points)}</td><td>${esc(standingFor(item))}</td><td>${esc(chanceFor(item))}</td><td>${selectable ? `<input type="radio" name="top-${esc(weight)}" data-set-top="${esc(p.wrestler_guid)}" data-weight="${esc(weight)}" ${chosenTop(weight,weightRows(weight))?.prospect?.wrestler_guid === p.wrestler_guid ? 'checked' : ''} aria-label="Make ${esc(prospectName(p))} top prospect at ${esc(weight)}" />` : '<span class="recruit-top-mark">Top</span>'}</td>`;
-  }
-  function actionDetails(item) {
-    const p = item.prospect || {};
-    const types = Array.isArray(overview.action_types) ? overview.action_types : [];
-    const used = new Set(Array.isArray(item.used_stage_action_codes) ? item.used_stage_action_codes : []);
-    const remaining = Math.max(0,3-number(item.current_week_action_qty));
-    const senior = p.academic_stage === 'HIGH_SCHOOL_SENIOR';
-    const eligible = types.filter(action => number(action.minimum_stage_rank) <= number(item.stage_rank) && (!action.once_per_stage_ind || !used.has(action.action_code)) && (!senior || item.senior_outlook?.is_contender));
-    return `<details class="recruit-board-detail"><summary>Recruiting actions and prospect details</summary><div class="recruit-board-actions" data-board-row="${esc(p.wrestler_guid)}"><label>Eligible action<select data-action ${!remaining || !eligible.length ? 'disabled' : ''}><option value="">${remaining ? 'Choose action' : 'Weekly limit reached'}</option>${eligible.map(action=>`<option value="${esc(action.action_code)}">${esc(text(action.action_name,label(action.action_code)))} · ${number(action.point_cost)} pts</option>`).join('')}</select></label><button class="recruit-primary" data-submit-action="${esc(p.wrestler_guid)}" ${!remaining || !eligible.length ? 'disabled' : ''}>Submit action</button><span class="recruit-slots">${remaining} of 3 weekly actions remaining</span><button class="recruit-remove" data-remove-board="${esc(p.wrestler_guid)}">Remove</button></div>${seniorOutlook(item)}</details>`;
+    const selected = chosenTop(weight, weightRows(weight))?.prospect?.wrestler_guid === p.wrestler_guid;
+    return `<td class="recruit-prospect-name${selected ? ' is-top' : ''}"><a href="${esc(SimSite.prospectUrl(p.wrestler_guid))}">${esc(prospectName(p))}</a></td><td>${esc(gradeLabel(p.academic_stage))}</td><td>${esc(text(p.state_code,'—'))}</td><td>${esc(text(p.county_name,'—'))}</td><td class="recruit-stat-center">${esc(recordFor(item))}</td><td class="recruit-stat-center">${number(item.recruiting_points)}</td><td class="recruit-stat-center">${selectable ? `<input type="radio" name="top-${esc(weight)}" data-set-top="${esc(p.wrestler_guid)}" data-weight="${esc(weight)}" ${selected ? 'checked' : ''} aria-label="Make ${esc(prospectName(p))} top prospect at ${esc(weight)}" />` : '<span class="recruit-top-mark">Top</span>'}</td><td class="recruit-stat-center">${esc(standingFor(item))}</td><td class="recruit-stat-center">${esc(chanceFor(item))}</td>`;
   }
   function boardRows() {
     if (!board.length) return empty('Your Big Board is empty. Add prospects through Search & Scout.');
-    const visible = filteredBoard();
-    const widths = boardWeight === 'ALL' ? highSchoolWeights : [boardWeight];
-    const head = '<thead><tr><th>Weight</th><th>Prospect</th><th>Year</th><th>State</th><th>County</th><th>W–L</th><th>Recruiting points</th><th>Team standing</th><th>Signing chance</th><th>Top prospect</th></tr></thead>';
-    const sections = widths.map(weight => {
+    const head = '<thead><tr><th>Weight</th><th>Prospect</th><th>Year</th><th>State</th><th>County</th><th class="recruit-stat-center">W–L</th><th class="recruit-stat-center">Recruiting points</th><th class="recruit-stat-center">Top Prospect</th><th class="recruit-stat-center">Team Standing</th><th class="recruit-stat-center">Signing Chance</th></tr></thead>';
+    const sections = highSchoolWeights.map(weight => {
       const rows = weightRows(weight);
       const chosen = chosenTop(weight, rows);
       const showAll = boardMode === 'all' || expandedWeights.has(weight);
       const other = rows.filter(item => item !== chosen);
-      const main = chosen ? `<tr class="recruit-weight-top"><th scope="row"><button type="button" class="recruit-weight-expand" data-expand-weight="${esc(weight)}" aria-expanded="${showAll}">${showAll ? '▾' : '▸'} ${esc(weight)}</button></th>${prospectCells(chosen,weight,false)}</tr><tr class="recruit-details-row"><td colspan="10">${actionDetails(chosen)}</td></tr>` : `<tr class="recruit-weight-empty"><th scope="row">${esc(weight)}</th><td colspan="9">No prospects on your Big Board</td></tr>`;
-      const extra = showAll ? other.map(item => `<tr class="recruit-weight-backup"><td></td>${prospectCells(item,weight,true)}</tr><tr class="recruit-details-row"><td colspan="10">${actionDetails(item)}</td></tr>`).join('') : '';
+      const main = chosen ? `<tr class="recruit-weight-top"><th scope="row"><button type="button" class="recruit-weight-expand" data-expand-weight="${esc(weight)}" aria-expanded="${showAll}">${showAll ? '▾' : '▸'} ${esc(weight)}</button></th>${prospectCells(chosen,weight,false)}</tr>` : `<tr class="recruit-weight-empty"><th scope="row">${esc(weight)}</th><td colspan="9">No prospects on your Big Board</td></tr>`;
+      const extra = showAll ? other.map(item => `<tr class="recruit-weight-backup"><td></td>${prospectCells(item,weight,true)}</tr>`).join('') : '';
       return main + extra;
     }).join('');
     return `<div class="table-wrap recruit-weight-table-wrap"><table class="coach-live-table recruit-weight-table">${head}<tbody>${sections}</tbody></table></div>`;
   }
   function renderBoard() {
-    return `<section class="panel recruit-section"><div class="panel-heading"><div><p class="eyebrow">YOUR TARGETS</p><h2>Big Board</h2><p class="recruit-heading-note">High school weights 106 through HWT. Expand any weight to see all your recruits; choose one Top Prospect per weight.</p></div><div class="coach-roster-switch" role="group" aria-label="Prospect view"><button type="button" data-board-mode="top" class="${boardMode === 'top' ? 'active' : ''}">Top Prospects</button><button type="button" data-board-mode="all" class="${boardMode === 'all' ? 'active' : ''}">All Prospects</button></div></div><div class="recruit-board-tools"><label>High school class<select id="board-class"><option value="ALL">All classes</option><option value="HIGH_SCHOOL_SENIOR">Seniors</option><option value="HIGH_SCHOOL_JUNIOR">Juniors</option><option value="HIGH_SCHOOL_SOPHOMORE">Sophomores</option><option value="HIGH_SCHOOL_FRESHMAN">Freshmen</option></select></label><label>Weight class<select id="board-weight"><option value="ALL">All weights</option>${highSchoolWeights.map(w=>`<option value="${w}">${w}</option>`).join('')}</select></label><button type="button" class="recruit-secondary" data-clear-board-filters>Clear filters</button></div><div id="big-board-list">${boardRows()}</div></section>`;
+    return `<section class="panel recruit-section"><div class="panel-heading"><div><p class="eyebrow">YOUR TARGETS</p><h2>Big Board</h2><p class="recruit-heading-note">High school weights 106 through HWT. Expand any weight to see all your recruits; choose one Top Prospect per weight.</p></div><div class="coach-roster-switch" role="group" aria-label="Prospect view"><button type="button" data-board-mode="top" class="${boardMode === 'top' ? 'active' : ''}">Top Prospects</button><button type="button" data-board-mode="all" class="${boardMode === 'all' ? 'active' : ''}">All Prospects</button></div></div><div id="big-board-list">${boardRows()}</div></section>`;
   }
   function refreshBoardResults() {
     const host = document.getElementById('big-board-list');
@@ -263,10 +247,6 @@
       document.getElementById('prospect-search-form')?.addEventListener('submit', runSearch);
       ['package-week','package-query','package-owned'].forEach(id => document.getElementById(id)?.addEventListener(id === 'package-query' ? 'input' : 'change', renderPackages));
       renderPackages();
-    } else if (activeTab === 'board') {
-      const c = document.getElementById('board-class'); const w = document.getElementById('board-weight');
-      if (c) {c.value=boardClass;c.addEventListener('change',()=>{boardClass=c.value;refreshBoardResults();});}
-      if (w) {w.value=boardWeight;w.addEventListener('change',()=>{boardWeight=w.value;refreshBoardResults();});}
     }
   }
   async function setTopProspect(weight, wrestlerGuid) {
@@ -426,12 +406,6 @@
     if (mode) {boardMode=mode.dataset.boardMode;renderPanel();return;}
     const expand = event.target.closest('[data-expand-weight]');
     if (expand) {const weight=expand.dataset.expandWeight;expandedWeights.has(weight)?expandedWeights.delete(weight):expandedWeights.add(weight);refreshBoardResults();return;}
-    const clearFilters = event.target.closest('[data-clear-board-filters]');
-    if (clearFilters) { boardClass = 'ALL'; boardWeight = 'ALL'; renderPanel(); return; }
-    const submit = event.target.closest('[data-submit-action]');
-    if (submit) { submitAction(submit.dataset.submitAction, submit.closest('[data-board-row]')); return; }
-    const remove = event.target.closest('[data-remove-board]');
-    if (remove) removeBoard(remove.dataset.removeBoard);
   });
 
   try {

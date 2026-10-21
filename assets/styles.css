@@ -298,3 +298,16 @@
 
 /* v4.4.3 Team header: long ranked names wrap without overlapping the seal. */
 .coach-live-hero h1{overflow-wrap:anywhere;line-height:1.18}.coach-live-hero>div:first-child{min-width:0}.coach-hero-seal{letter-spacing:.015em;text-align:center;padding:3px;font-size:1.05rem}
+
+/* v4.4.4 weight-class recruiting board */
+.recruit-weight-table{width:100%;border-collapse:collapse;min-width:1110px}.recruit-weight-table th,.recruit-weight-table td{padding:12px 10px;text-align:left;border-bottom:1px solid #e0e6ed;font-size:.85rem}.recruit-weight-table thead th{background:#f4f6f9;color:#61718b;font-size:.69rem;text-transform:uppercase;letter-spacing:.04em}.recruit-weight-table tbody th{font-weight:850}.recruit-weight-table a{color:#0d438c;font-weight:850}.recruit-weight-top{background:#fff}.recruit-weight-backup{background:#f8fafc}.recruit-weight-expand{background:transparent;border:0;color:#143459;font:inherit;font-weight:850;cursor:pointer;white-space:nowrap}.recruit-weight-expand:hover{text-decoration:underline}.recruit-weight-empty td{color:#8793a2}.recruit-details-row td{padding:0 16px 10px!important;background:#fbfcfe}.recruit-board-detail{font-size:.78rem;color:#425976}.recruit-board-detail>summary{cursor:pointer;padding:7px 0;font-weight:750}.recruit-board-detail .recruit-board-actions{display:flex;gap:12px;align-items:end;flex-wrap:wrap;margin:8px 0}.recruit-board-detail .recruit-board-actions label{min-width:210px}.recruit-board-detail .recruit-senior-outlook{margin-top:8px}.recruit-top-mark{font-size:.74rem;color:#276343;font-weight:850}.recruit-weight-table input[type=radio]{width:17px;height:17px;accent-color:#16385f;cursor:pointer}.coach-roster-switch{display:flex;border:1px solid #c3cfdf;border-radius:8px;overflow:hidden}.coach-roster-switch button{border:0;background:#fff;color:#143459;padding:11px 14px;font:inherit;font-weight:850;cursor:pointer}.coach-roster-switch button.active{background:#142e51;color:#fff}.recruit-weight-table-wrap{overflow-x:auto}
+
+/* v4.4.5: Recruiting Big Board aligns with Team roster presentation */
+.recruit-weight-table th,.recruit-weight-table td{font-size:.84rem;vertical-align:middle;padding:14px 12px}
+.recruit-weight-table thead th{font-size:.69rem}
+.recruit-weight-table th.recruit-stat-center,.recruit-weight-table td.recruit-stat-center{text-align:center}
+.recruit-weight-table .recruit-prospect-name a{font-weight:850;color:#0c438d;text-decoration:none}
+.recruit-weight-table .recruit-prospect-name a:hover{text-decoration:underline}
+.recruit-weight-table .recruit-prospect-name.is-top a{font-weight:900}
+.recruit-weight-table .recruit-top-mark{display:inline-block;color:#116239;background:#dff3e9;padding:5px 9px;border-radius:5px;font-weight:900;font-size:.75rem}
+.recruit-weight-table .recruit-weight-backup input[type=radio]{vertical-align:middle}
