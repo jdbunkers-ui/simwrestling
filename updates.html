@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Deployed Sim Wrestling engine updates, effective dates, and coaching strategy implications.">
+  <title>Game Engine | Sim Wrestling</title>
+  <link rel="stylesheet" href="assets/styles.css?v=4.5.4">
+  <link rel="stylesheet" href="assets/updates.css?v=4.5.4">
+</head>
+<body data-page="updates">
+<a class="updates-skip" href="#updates-content">Skip to game updates</a>
+<div data-site-header></div>
+<main class="page-shell updates-page" id="updates-content">
+  <section class="page-heading"><p class="eyebrow">ENGINE LEDGER</p><h1>Game Engine</h1><p>A chronological record of deployed game changes and what they mean for your coaching strategy.</p></section>
+  <div class="updates-toolbar"><span>Deployed changes · Newest first</span><span>Select a change to expand or collapse its details</span></div>
+  <p class="updates-timezone">Deployment dates and times are shown in Eastern Time. Game dates are listed separately when available.</p>
+  <div id="updates-status" role="status" aria-live="polite">Loading game updates…</div>
+  <div class="panel table-panel" id="updates-panel" hidden>
+    <table class="updates-table" aria-label="Deployed game engine updates">
+      <thead><tr><th scope="col" class="updates-date-col">Deployed</th><th scope="col" class="updates-ref-col">Reference</th><th scope="col">Change</th></tr></thead>
+      <tbody id="updates-rows"></tbody>
+    </table>
+  </div>
+  <button type="button" class="updates-more" id="updates-more" hidden>Load older updates</button>
+  <button type="button" class="updates-more" id="updates-retry" hidden>Try again</button>
+  <noscript><p>Enable JavaScript to load and expand the game updates.</p></noscript>
+</main>
+<div data-site-footer></div>
+<script src="js/config.js"></script>
+<script src="js/api.js?v=4.5.4"></script>
+<script src="js/site.js?v=4.5.4"></script>
+<script src="js/updates.js?v=4.5.4"></script>
+</body>
+</html>
