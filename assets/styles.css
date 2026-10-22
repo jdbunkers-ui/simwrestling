@@ -340,3 +340,11 @@
 
 /* v4.4.10 - Public recruiting page matches College Rankings table and coach navigation. */
 .recruiting-directory-heading{margin-bottom:20px}.recruiting-directory-heading .directory-filters{grid-template-columns:minmax(220px,1fr);max-width:270px}.recruiting-subnav{margin:0 0 16px;gap:10px}.recruiting-subnav button{font:inherit;font-weight:800;border:1px solid #d1d8e2;background:white;color:#25354d;border-radius:7px;padding:10px 13px;cursor:pointer;white-space:nowrap}.recruiting-subnav button.active{background:#142b4c;color:white;border-color:#142b4c}.recruiting-unified-panel{overflow:hidden;margin-bottom:20px}.recruiting-classes-table{width:100%;min-width:850px}.recruiting-classes-table th:nth-child(1),.recruiting-classes-table td:nth-child(1){width:8%;text-align:center}.recruiting-classes-table th:nth-child(2){width:24%}.recruiting-classes-table th:nth-child(3){width:14%}.recruiting-classes-table th:nth-child(4){width:12%}.recruiting-classes-table .class-score-cell{font-weight:800;font-variant-numeric:tabular-nums}.class-recruit-links{display:flex;flex-wrap:wrap;gap:5px}.class-recruit-links a{color:#174d97;background:#e8effd;text-decoration:none;padding:5px 7px;border-radius:4px;font-size:.74rem;font-weight:800}.class-recruit-links a:hover{text-decoration:underline}.class-recruit-links small{font-weight:500;color:#52657e}.recruiting-unified-panel[hidden]{display:none!important}@media(max-width:760px){.recruiting-directory-heading .directory-filters{max-width:none;width:100%}}
+
+/* v4.5.1: History uses the Rankings directory header and table treatment. */
+.history-page .directory-filters.rankings-simplified{align-self:end}
+.history-page .history-team-table th:first-child,.history-page .history-team-table td:first-child{width:9%;text-align:center}
+.history-page .history-team-table th,.history-page .history-placement-table th{white-space:nowrap}
+.history-page .history-team-table td,.history-page .history-placement-table td{vertical-align:middle}
+.history-page .history-placement-table .history-college{font-weight:500;text-decoration:underline;text-underline-offset:2px}
+.history-page .history-team-table .wrestler-link,.history-page .history-wrestler{font-weight:800}
