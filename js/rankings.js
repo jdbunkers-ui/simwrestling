@@ -1,4 +1,4 @@
-/* v4.4.7 - college-only rankings, mutually exclusive geography, authenticated coach default. */
+/* v4.4.8.1 - Geography limited to the 48 contiguous U.S. states. */
 (async function () {
   'use strict';
   const content = document.getElementById('rankings-content');
@@ -17,9 +17,22 @@
   let coachNames = new Map();
   const coachFor = (guid) => coachNames.get(String(guid || '')) || '';
   const option = (value,label) => `<option value="${e(value)}">${e(label)}</option>`;
-  const stateName = (code) => {try {return new Intl.DisplayNames(['en'],{type:'region'}).of(code) || code;} catch (_) {return code;}};
+  // Explicit allowlist prevents foreign countries and stray location codes from appearing.
+  // Alaska, Hawaii and DC are intentionally excluded from the contiguous 48-state list.
+  const contiguousStates = Object.freeze({
+    AL:'Alabama',AZ:'Arizona',AR:'Arkansas',CA:'California',CO:'Colorado',CT:'Connecticut',
+    DE:'Delaware',FL:'Florida',GA:'Georgia',ID:'Idaho',IL:'Illinois',IN:'Indiana',
+    IA:'Iowa',KS:'Kansas',KY:'Kentucky',LA:'Louisiana',ME:'Maine',MD:'Maryland',
+    MA:'Massachusetts',MI:'Michigan',MN:'Minnesota',MS:'Mississippi',MO:'Missouri',MT:'Montana',
+    NE:'Nebraska',NV:'Nevada',NH:'New Hampshire',NJ:'New Jersey',NM:'New Mexico',NY:'New York',
+    NC:'North Carolina',ND:'North Dakota',OH:'Ohio',OK:'Oklahoma',OR:'Oregon',PA:'Pennsylvania',
+    RI:'Rhode Island',SC:'South Carolina',SD:'South Dakota',TN:'Tennessee',TX:'Texas',
+    UT:'Utah',VT:'Vermont',VA:'Virginia',WA:'Washington',WV:'West Virginia',
+    WI:'Wisconsin',WY:'Wyoming'
+  });
+  const stateName = code => contiguousStates[String(code || '').trim().toUpperCase()] || String(code || '');
   const regions = () => [...new Map(inventory.filter(r=>r.region_code).map(r=>[String(r.region_code).trim(),String(r.region_name||r.region_code).trim()])).entries()].sort((a,b)=>a[1].localeCompare(b[1]));
-  const states = () => [...new Set(inventory.map(r=>String(r.state_code||'').trim()).filter(Boolean))].sort((a,b)=>stateName(a).localeCompare(stateName(b)));
+  const states = () => Object.keys(contiguousStates).sort((a,b)=>stateName(a).localeCompare(stateName(b)));
   const regionKey = code => `REGION:${code}`;
   const stateKey = code => `STATE:${code}`;
   function populateGeography() {
