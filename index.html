@@ -1,96 +1,66 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Preview of the private Sim Wrestling coaching portal.">
-    <title>Coaching Portal Preview | Sim Wrestling</title>
-    <link rel="stylesheet" href="assets/styles.css?v=3.7.0">
-  </head>
-  <body data-page="coaching">
-    <div data-site-header></div>
-    <main class="page-shell portal-page">
-      <aside class="mock-banner" role="note"><strong>This is just a mock up.</strong><span>Features and sample data shown below are not yet active.</span></aside>
-
-      <section class="portal-hero">
-        <div>
-          <p class="eyebrow">Future authenticated coaching portal · Season 3</p>
-          <h1>Atlantic City University</h1>
-          <p>Your roster, schedule, recruiting board and program history—one private command center.</p>
-          <div class="portal-tags"><span>Assigned team</span><span>Mid-Atlantic</span><span>New Jersey</span></div>
-        </div>
-        <div class="portal-monogram" aria-hidden="true">ACU</div>
-      </section>
-
-      <section class="portal-kpis" aria-label="Sample team snapshot">
-        <article><span>Dual record</span><strong>2–0</strong><small>Season 3</small></article>
-        <article><span>National rank</span><strong>#6</strong><small>College teams</small></article>
-        <article><span>Open roster spots</span><strong>4</strong><small>Next season</small></article>
-        <article><span>Recruiting battles</span><strong>12</strong><small>Active seniors</small></article>
-      </section>
-
-      <div class="portal-layout">
-        <section class="panel portal-roster">
-          <div class="panel-heading"><div><p class="eyebrow">Team management</p><h2>Full Roster</h2></div><span class="record-pill">40 wrestlers</span></div>
-          <div class="table-wrap"><table class="portal-table"><thead><tr><th>Weight</th><th>Starter</th><th>Class</th><th>Record</th><th>Depth</th><th>Development</th></tr></thead><tbody>
-            <tr><td><strong>125</strong></td><td>Alan Smith</td><td>Junior</td><td>4–0</td><td><span class="status-chip starter">Starter</span></td><td><span class="trend up">Improving</span></td></tr>
-            <tr><td><strong>133</strong></td><td>Marcus Velez</td><td>Senior</td><td>3–1</td><td><span class="status-chip starter">Starter</span></td><td><span class="trend steady">Steady</span></td></tr>
-            <tr><td><strong>141</strong></td><td>Jonah Patel</td><td>Sophomore</td><td>3–0</td><td><span class="status-chip starter">Starter</span></td><td><span class="trend up">Improving</span></td></tr>
-            <tr><td><strong>149</strong></td><td>Reese Coleman</td><td>Freshman</td><td>2–2</td><td><span class="status-chip open">Competition</span></td><td><span class="trend up">Fast growth</span></td></tr>
-            <tr><td><strong>157</strong></td><td>Andre Bennett</td><td>Junior</td><td>4–0</td><td><span class="status-chip starter">Starter</span></td><td><span class="trend steady">Steady</span></td></tr>
-            <tr><td><strong>165</strong></td><td>Tyler Brooks</td><td>Sophomore</td><td>3–1</td><td><span class="status-chip open">Competition</span></td><td><span class="trend up">Improving</span></td></tr>
-            <tr><td><strong>174</strong></td><td>Malik Jenkins</td><td>Senior</td><td>4–0</td><td><span class="status-chip starter">Starter</span></td><td><span class="trend peak">Peak</span></td></tr>
-            <tr><td><strong>184</strong></td><td>Evan Holloway</td><td>Freshman</td><td>2–1</td><td><span class="status-chip starter">Starter</span></td><td><span class="trend up">Fast growth</span></td></tr>
-            <tr><td><strong>197</strong></td><td>Caleb Price</td><td>Junior</td><td>3–1</td><td><span class="status-chip starter">Starter</span></td><td><span class="trend steady">Steady</span></td></tr>
-            <tr><td><strong>HWT</strong></td><td>Owen Barrett</td><td>Sophomore</td><td>4–0</td><td><span class="status-chip starter">Starter</span></td><td><span class="trend up">Improving</span></td></tr>
-          </tbody></table></div>
-          <p class="mock-note">Future roster controls will expose backups, redshirts, weight changes and development plans.</p>
-        </section>
-
-        <aside class="portal-side">
-          <section class="panel">
-            <div class="panel-heading"><div><p class="eyebrow">Next up</p><h2>Team Schedule</h2></div><span class="record-pill">Week 2</span></div>
-            <div class="portal-schedule">
-              <article><span>Tuesday</span><strong>Garden State Quad</strong><small>vs. Newark State, Hoboken University and Trenton State</small></article>
-              <article><span>Thursday</span><strong>Atlantic City Training</strong><small>Recovery, film and weight management</small></article>
-              <article><span>Saturday</span><strong>Liberty Bell Quad</strong><small>Philadelphia, PA · Four-team dual event</small></article>
-            </div>
-          </section>
-          <section class="panel roster-needs">
-            <div class="panel-heading"><div><p class="eyebrow">Next-season planning</p><h2>Roster Needs</h2></div></div>
-            <div><span>149 lb</span><i style="--need:92%"></i><strong>Critical</strong></div>
-            <div><span>174 lb</span><i style="--need:76%"></i><strong>High</strong></div>
-            <div><span>133 lb</span><i style="--need:54%"></i><strong>Medium</strong></div>
-            <div><span>HWT</span><i style="--need:32%"></i><strong>Watch</strong></div>
-          </section>
-        </aside>
-      </div>
-
-      <section class="panel section-block">
-        <div class="panel-heading"><div><p class="eyebrow">Private recruiting board</p><h2>High-School Seniors You Are Recruiting</h2></div><span class="record-pill">Sample board</span></div>
-        <div class="recruit-card-grid">
-          <article><span class="prospect-rank">1</span><div><strong>Micah Torres</strong><small>NJ · 149 lb · Senior</small></div><b>Strong interest</b><p>ACU currently 1st of 5 schools</p></article>
-          <article><span class="prospect-rank">2</span><div><strong>Elijah Monroe</strong><small>PA · 174 lb · Senior</small></div><b>Warm interest</b><p>ACU currently 2nd of 4 schools</p></article>
-          <article><span class="prospect-rank">3</span><div><strong>Cameron Ellis</strong><small>MD · 133 lb · Senior</small></div><b>Warm interest</b><p>ACU currently 3rd of 6 schools</p></article>
-          <article><span class="prospect-rank">4</span><div><strong>Jayden Russo</strong><small>NY · HWT · Senior</small></div><b>Monitoring</b><p>ACU currently 4th of 5 schools</p></article>
-        </div>
-      </section>
-
-      <section class="program-history section-block">
-        <div class="section-heading"><div><p class="eyebrow">Historical program statistics</p><h2>Championship Standard</h2></div><p class="section-note">Every achievement will be labeled by simulation season—not a calendar year.</p></div>
-        <div class="history-stat-grid">
-          <article><span>All-Americans</span><strong>14</strong><small>Across Seasons 1–2</small></article>
-          <article><span>National champions</span><strong>2</strong><small>Season 1 · Season 2</small></article>
-          <article><span>Regional champions</span><strong>6</strong><small>Four weights represented</small></article>
-          <article><span>State champions</span><strong>11</strong><small>New Jersey college division</small></article>
-        </div>
-        <div class="panel history-seasons"><div class="table-wrap"><table><thead><tr><th>Season</th><th>Team record</th><th>State finish</th><th>Regional finish</th><th>National finish</th><th>Individual honors</th></tr></thead><tbody>
-          <tr><td><strong>Season 2</strong></td><td>11–4</td><td>Champion</td><td>3rd</td><td>7th</td><td>8 All-Americans · 1 National Champion</td></tr>
-          <tr><td><strong>Season 1</strong></td><td>9–6</td><td>Runner-up</td><td>5th</td><td>12th</td><td>6 All-Americans · 1 National Champion</td></tr>
-        </tbody></table></div></div>
-      </section>
-    </main>
-    <div data-site-footer></div>
-    <script src="js/site.js?v=3.9.7"></script>
-  </body>
-</html>
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Preview the Sim Wrestling coaching roster, starting lineup, wrestle-offs and next-season roster decisions.">
+<title>Sample Coaching Page | Sim Wrestling</title>
+<link rel="stylesheet" href="assets/styles.css?v=4.5.1">
+<style>
+/* v4.5.3: public sample only; authenticated coaching styles and behavior stay separate. */
+.coach-preview .coach-live-hero h1{font-size:clamp(1.7rem,3.5vw,2.5rem);line-height:1.2;margin:6px 0 0}.coach-preview .coach-hero-seal{width:70px;height:70px;border-width:1px;font-size:1rem}.coach-preview .coach-live-hero .eyebrow{color:#e6ad24}.coach-preview .preview-notice{margin:15px 0 0;padding:10px 14px;background:#edf2f8;color:#41556f;border:1px solid #d7e1ed;border-radius:6px;font-size:.8rem;line-height:1.6}.preview-notice a,#sample-feedback a{color:#164e98;font-weight:800;text-underline-offset:2px}.coach-preview .coach-live-table{min-width:1080px}.coach-preview .coach-live-table td{padding:15px 16px;font-size:.81rem}.coach-preview .coach-live-table th{padding:12px 16px;font-size:.62rem}.coach-preview .coach-roster-state{color:#617793;font-size:.67rem;font-weight:700}.coach-preview .wrestler-link{color:#064599;font-weight:850;text-decoration:none}.coach-preview .wrestler-link:hover{text-decoration:underline}.coach-preview .coach-detail-note{font-size:.76rem;line-height:1.7;margin-bottom:0}.coach-preview .coach-lineup-feedback{padding:12px 14px;background:#fff5d7;border:1px solid #e5ce94;border-radius:6px;margin:0 0 16px;line-height:1.6}.coach-preview [data-sample-view="starters"] .sample-full-only,.coach-preview [data-sample-view="starters"] tr[data-sample-starter="false"]{display:none}.coach-preview [data-sample-view="starters"] .coach-live-table{min-width:630px}.coach-preview .coach-roster-switch button{font-size:.82rem}.coach-preview .coach-starter,.coach-preview .coach-backup{padding:4px 7px;font-size:.7rem}.coach-preview .coach-select-starter,.coach-preview .coach-wrestle-action{font-size:.72rem}.coach-preview a:focus-visible,.coach-preview button:focus-visible{outline:3px solid #e6ad24;outline-offset:3px}
+@media(max-width:570px){.coach-preview .coach-live-hero{padding:24px 20px}.coach-preview .coach-live-panel{padding:18px}.coach-preview .coach-live-hero h1{font-size:1.8rem}.coach-preview .coach-subnav{gap:8px}.coach-preview .coach-subnav a{font-size:.78rem;padding:9px 10px}}
+</style>
+</head>
+<body data-page="coach-preview"><div data-site-header></div>
+<main class="page-shell coach-live-shell coach-preview">
+<section class="coach-live-hero" aria-labelledby="sample-team-title"><div><p class="eyebrow">YOUR COLLEGE · CURRENT SEASON</p><h1 id="sample-team-title">#4 - University of Cape May (16-12)</h1></div><div class="coach-hero-seal" aria-hidden="true">UCM</div></section>
+<p class="preview-notice"><strong>Sample coaching page.</strong> Explore the roster layout below. <a href="login.html">Sign in</a> or <a href="register.html">create an account</a> to coach your own college.</p>
+<nav class="coach-subnav" aria-label="Sample coaching pages"><a href="index.html" class="active" aria-current="page">Team</a><a href="login.html" title="Sign in to open your recruiting workspace">Recruits</a><a href="login.html" title="Sign in to open your college schedule">Schedule</a><a href="login.html" title="Sign in to open your program history">Wall of Fame</a></nav>
+<section class="panel coach-live-panel" id="sample-roster" data-sample-view="full" aria-labelledby="sample-roster-title"><div class="panel-heading coach-roster-heading"><div><p class="eyebrow">CURRENT COLLEGE</p><h2 id="sample-roster-title">Roster and starting lineup</h2></div><div class="coach-roster-switch" role="group" aria-label="Sample roster view"><button type="button" id="sample-full" class="active" aria-pressed="true">Full Roster</button><button type="button" id="sample-starters" aria-pressed="false">Starters</button></div></div>
+<p id="sample-feedback" class="coach-lineup-feedback" role="status" aria-live="polite" hidden>This is a sample roster. <a href="login.html">Sign in</a> or <a href="register.html">create an account</a> to manage your own team.</p>
+<div class="table-wrap" role="region" aria-label="Sample college roster; scroll horizontally to see all coaching controls" tabindex="0"><table class="coach-live-table"><thead><tr><th scope="col">Weight</th><th scope="col">Wrestler</th><th scope="col">Year</th><th scope="col">Status</th><th scope="col">W–L</th><th scope="col">State rank</th><th scope="col" class="sample-full-only">Starting lineup</th><th scope="col" class="sample-full-only">Move Up</th><th scope="col" class="sample-full-only">Release</th><th scope="col" class="sample-full-only">Wrestle-Off</th></tr></thead><tbody>
+<tr data-sample-starter="true"><td>125</td><td><a class="wrestler-link" href="login.html" title="Sign in to view wrestler profiles">Silas Watson</a><small class="coach-roster-state"> · NJ</small></td><td>Senior</td><td><span class="coach-starter">Starter</span></td><td>33–12</td><td>#2</td><td class="sample-full-only"><span class="coach-current-pick">Selected</span></td><td class="sample-full-only">—</td><td class="sample-full-only">—</td><td class="sample-full-only">—</td></tr>
+<tr data-sample-starter="false"><td>125</td><td><a class="wrestler-link" href="login.html" title="Sign in to view wrestler profiles">Craig Mueller</a><small class="coach-roster-state"> · NJ</small></td><td>Sophomore</td><td><span class="coach-backup">Roster</span></td><td>0–0</td><td>#25</td><td class="sample-full-only"><button type="button" class="coach-select-starter" data-preview-action>Make Starter</button></td><td class="sample-full-only"><input type="checkbox" class="coach-decision" aria-label="Move up Craig Mueller" data-preview-check data-original="false"></td><td class="sample-full-only"><input type="checkbox" class="coach-decision" aria-label="Release Craig Mueller" data-preview-check data-original="false"></td><td class="sample-full-only"><button type="button" class="coach-wrestle-action" data-preview-action disabled>Wrestle-Off</button></td></tr>
+<tr data-sample-starter="false"><td>125</td><td><a class="wrestler-link" href="login.html" title="Sign in to view wrestler profiles">Cory Caputo</a><small class="coach-roster-state"> · NJ</small></td><td>Sophomore</td><td><span class="coach-backup">Roster</span></td><td>0–0</td><td>#26</td><td class="sample-full-only"><button type="button" class="coach-select-starter" data-preview-action>Make Starter</button></td><td class="sample-full-only"><input type="checkbox" class="coach-decision" aria-label="Move up Cory Caputo" data-preview-check data-original="true" checked></td><td class="sample-full-only"><input type="checkbox" class="coach-decision" aria-label="Release Cory Caputo" data-preview-check data-original="false"></td><td class="sample-full-only"><button type="button" class="coach-wrestle-action" data-preview-action>Wrestle-Off</button></td></tr>
+<tr data-sample-starter="false"><td>125</td><td><a class="wrestler-link" href="login.html" title="Sign in to view wrestler profiles">Naoise Hanson</a><small class="coach-roster-state"> · NJ</small></td><td>Sophomore</td><td><span class="coach-backup">Roster</span></td><td>0–0</td><td>#53</td><td class="sample-full-only"><button type="button" class="coach-select-starter" data-preview-action>Make Starter</button></td><td class="sample-full-only"><input type="checkbox" class="coach-decision" aria-label="Move up Naoise Hanson" data-preview-check data-original="false"></td><td class="sample-full-only"><input type="checkbox" class="coach-decision" aria-label="Release Naoise Hanson" data-preview-check data-original="false"></td><td class="sample-full-only"><button type="button" class="coach-wrestle-action" data-preview-action>Wrestle-Off</button></td></tr>
+<tr data-sample-starter="false"><td>125</td><td><a class="wrestler-link" href="login.html" title="Sign in to view wrestler profiles">Grant Cox</a><small class="coach-roster-state"> · NJ</small></td><td>Sophomore</td><td><span class="coach-backup">Roster</span></td><td>0–0</td><td>#68</td><td class="sample-full-only"><button type="button" class="coach-select-starter" data-preview-action>Make Starter</button></td><td class="sample-full-only"><input type="checkbox" class="coach-decision" aria-label="Move up Grant Cox" data-preview-check data-original="false"></td><td class="sample-full-only"><input type="checkbox" class="coach-decision" aria-label="Release Grant Cox" data-preview-check data-original="false"></td><td class="sample-full-only"><button type="button" class="coach-wrestle-action" data-preview-action>Wrestle-Off</button></td></tr>
+<tr data-sample-starter="false"><td>125</td><td><a class="wrestler-link" href="login.html" title="Sign in to view wrestler profiles">Larry Andrade</a><small class="coach-roster-state"> · NJ</small></td><td>Sophomore</td><td><span class="coach-backup">Roster</span></td><td>0–0</td><td>#70</td><td class="sample-full-only"><button type="button" class="coach-select-starter" data-preview-action>Make Starter</button></td><td class="sample-full-only"><input type="checkbox" class="coach-decision" aria-label="Move up Larry Andrade" data-preview-check data-original="false"></td><td class="sample-full-only"><input type="checkbox" class="coach-decision" aria-label="Release Larry Andrade" data-preview-check data-original="false"></td><td class="sample-full-only"><button type="button" class="coach-wrestle-action" data-preview-action>Wrestle-Off</button></td></tr>
+<tr data-sample-starter="false"><td>125</td><td><a class="wrestler-link" href="login.html" title="Sign in to view wrestler profiles">Alfio Cline</a><small class="coach-roster-state"> · NJ</small></td><td>Sophomore</td><td><span class="coach-backup">Roster</span></td><td>0–0</td><td>#87</td><td class="sample-full-only"><button type="button" class="coach-select-starter" data-preview-action>Make Starter</button></td><td class="sample-full-only"><input type="checkbox" class="coach-decision" aria-label="Move up Alfio Cline" data-preview-check data-original="false"></td><td class="sample-full-only"><input type="checkbox" class="coach-decision" aria-label="Release Alfio Cline" data-preview-check data-original="false"></td><td class="sample-full-only"><button type="button" class="coach-wrestle-action" data-preview-action>Wrestle-Off</button></td></tr>
+<tr data-sample-starter="false"><td>125</td><td><a class="wrestler-link" href="login.html" title="Sign in to view wrestler profiles">Cesar Camacho</a><small class="coach-roster-state"> · NJ</small></td><td>Sophomore</td><td><span class="coach-backup">Roster</span></td><td>0–0</td><td>#96</td><td class="sample-full-only"><button type="button" class="coach-select-starter" data-preview-action>Make Starter</button></td><td class="sample-full-only"><input type="checkbox" class="coach-decision" aria-label="Move up Cesar Camacho" data-preview-check data-original="false"></td><td class="sample-full-only"><input type="checkbox" class="coach-decision" aria-label="Release Cesar Camacho" data-preview-check data-original="false"></td><td class="sample-full-only"><button type="button" class="coach-wrestle-action" data-preview-action>Wrestle-Off</button></td></tr>
+<tr data-sample-starter="false"><td>125</td><td><a class="wrestler-link" href="login.html" title="Sign in to view wrestler profiles">Antoin Crawford</a><small class="coach-roster-state"> · NJ</small></td><td>Junior</td><td><span class="coach-backup">Roster</span></td><td>0–0</td><td>#105</td><td class="sample-full-only"><button type="button" class="coach-select-starter" data-preview-action>Make Starter</button></td><td class="sample-full-only"><input type="checkbox" class="coach-decision" aria-label="Move up Antoin Crawford" data-preview-check data-original="false"></td><td class="sample-full-only"><input type="checkbox" class="coach-decision" aria-label="Release Antoin Crawford" data-preview-check data-original="false"></td><td class="sample-full-only"><button type="button" class="coach-wrestle-action" data-preview-action>Wrestle-Off</button></td></tr>
+<tr data-sample-starter="true"><td>133</td><td><a class="wrestler-link" href="login.html" title="Sign in to view wrestler profiles">Aidan Reid</a><small class="coach-roster-state"> · NJ</small></td><td>Freshman</td><td><span class="coach-starter">Starter</span></td><td>12–20</td><td>#15</td><td class="sample-full-only"><span class="coach-current-pick">Selected</span></td><td class="sample-full-only">—</td><td class="sample-full-only">—</td><td class="sample-full-only">—</td></tr>
+<tr data-sample-starter="false"><td>133</td><td><a class="wrestler-link" href="login.html" title="Sign in to view wrestler profiles">Leon Snow</a><small class="coach-roster-state"> · NJ</small></td><td>Sophomore</td><td><span class="coach-backup">Roster</span></td><td>0–0</td><td>#37</td><td class="sample-full-only"><button type="button" class="coach-select-starter" data-preview-action>Make Starter</button></td><td class="sample-full-only"><input type="checkbox" class="coach-decision" aria-label="Move up Leon Snow" data-preview-check data-original="false"></td><td class="sample-full-only"><input type="checkbox" class="coach-decision" aria-label="Release Leon Snow" data-preview-check data-original="false"></td><td class="sample-full-only"><button type="button" class="coach-wrestle-action" data-preview-action>Wrestle-Off</button></td></tr>
+</tbody></table></div>
+<p class="coach-detail-note">Sample roster excerpt from the coaching page. Choose Full Roster or Starters to explore the views. Make Starter sets the lineup; wrestle-offs help evaluate backups; Move Up and Release plan for next season. This preview does not submit coaching decisions.</p>
+</section>
+</main><div data-site-footer></div>
+<script src="js/site.js?v=4.5.2"></script>
+<script>
+(function () {
+  'use strict';
+  const panel=document.getElementById('sample-roster');
+  const full=document.getElementById('sample-full');
+  const starters=document.getElementById('sample-starters');
+  function setView(view){
+    panel.dataset.sampleView=view;
+    full.classList.toggle('active',view==='full');
+    starters.classList.toggle('active',view==='starters');
+    full.setAttribute('aria-pressed',String(view==='full'));
+    starters.setAttribute('aria-pressed',String(view==='starters'));
+  }
+  full.addEventListener('click',()=>setView('full'));
+  starters.addEventListener('click',()=>setView('starters'));
+  function showPreviewNotice(){document.getElementById('sample-feedback').hidden=false;}
+  panel.addEventListener('click',event=>{if(event.target.closest('[data-preview-action]'))showPreviewNotice();});
+  panel.addEventListener('change',event=>{
+    if(event.target.matches('[data-preview-check]')){
+      event.target.checked=event.target.dataset.original==='true';
+      showPreviewNotice();
+    }
+  });
+  // Keep the sample Team navigation on this public preview.
+  const coachingLink=document.querySelector('.main-nav a[href^="coach.html"]');
+  if(coachingLink)coachingLink.href='index.html';
+})();
+</script>
+</body></html>
