@@ -348,3 +348,6 @@
 .history-page .history-team-table td,.history-page .history-placement-table td{vertical-align:middle}
 .history-page .history-placement-table .history-college{font-weight:500;text-decoration:underline;text-underline-offset:2px}
 .history-page .history-team-table .wrestler-link,.history-page .history-wrestler{font-weight:800}
+
+/* v4.5.4: make room for the Game Engine navigation link. */
+@media(min-width:761px) and (max-width:1100px){.site-header{height:auto}.nav-shell{height:auto;flex-direction:column;align-items:flex-start}.brand{padding:13px 0 7px}.main-nav{width:100%;height:42px;gap:20px;overflow-x:auto}.main-nav a{height:42px;flex:0 0 auto}}

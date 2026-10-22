@@ -76,6 +76,9 @@
 
   window.SimApi = {
     isConfigured,
+    gameUpdates: (options = {}) => rpc('get_public_game_updates_v454', {
+      p_limit: options.limit || 51, p_offset: options.offset || 0
+    }),
     season: () => query('v_public_season_context', 'select=*'),
     rankings: () => queryAll('v_public_competitor_directory_v2', 'select=*&order=competition_level.asc,wrestler_rank.asc,wrestler_guid.asc'),
     rankingsFiltered: (filters = {}) => rpc('get_public_rankings_v3_9_1', {

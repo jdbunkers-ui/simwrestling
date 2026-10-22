@@ -6,6 +6,7 @@
     ['recruiting', 'recruiting.html', 'Recruiting'],
     ['schedule', 'schedule.html', 'Schedule'],
     ['history', 'history.html', 'History'],
+    ['updates', 'updates.html', 'Game Engine'],
     ['guide', 'guide.html', 'Guide']
   ];
   const sharedFilterNames = ['level','weight','region','state','county','locality','q','week','day'];
