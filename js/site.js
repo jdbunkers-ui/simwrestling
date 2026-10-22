@@ -26,6 +26,11 @@
   function navigationUrl(href) {
     const url = new URL(href, window.location.href);
     sharedFilterNames.forEach((name) => {
+      // v4.5.5: History navigation starts on Teams, independent of other pages' weight filters.
+      if (name === 'weight' && url.pathname.endsWith('/history.html')) {
+        url.searchParams.delete(name);
+        return;
+      }
       const value = currentParameters.get(name) || storedFilters[name];
       if (value) url.searchParams.set(name, value);
     });
