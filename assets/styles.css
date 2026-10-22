@@ -319,3 +319,6 @@
 .directory-filters.rankings-simplified{grid-template-columns:repeat(2,minmax(200px,1fr));align-self:end;max-width:570px;width:100%;margin-left:auto}
 @media(max-width:1180px){.directory-filters.rankings-simplified{margin-left:0;max-width:650px}}
 @media(max-width:540px){.directory-filters.rankings-simplified{grid-template-columns:1fr;max-width:none}}
+
+/* v4.4.8 public team profile and ranking coach display */
+.public-fame-awards{padding:8px 22px 18px}.public-fame-awards p{border-bottom:1px solid #e1e6ec;padding:10px 0;margin:0}.team-ranking-table th:nth-child(3),.team-ranking-table td:nth-child(3){text-align:left}.coach-live-shell .coach-live-panel{margin-bottom:16px}.coach-live-shell .coach-live-table{min-width:630px}
