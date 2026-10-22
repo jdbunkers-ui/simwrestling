@@ -6,7 +6,7 @@
     ['recruiting', 'recruiting.html', 'Recruiting'],
     ['schedule', 'schedule.html', 'Schedule'],
     ['history', 'history.html', 'History'],
-    ['about', 'about.html', 'About']
+    ['guide', 'guide.html', 'Guide']
   ];
   const sharedFilterNames = ['level','weight','region','state','county','locality','q','week','day'];
   const storedFilters = (() => {
