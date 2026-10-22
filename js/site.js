@@ -3,8 +3,8 @@
   const links = [
     ['coach', 'coach.html', 'Coaching'],
     ['rankings', 'rankings.html', 'Rankings'],
-    ['schedule', 'schedule.html', 'Schedule'],
     ['recruiting', 'recruiting.html', 'Recruiting'],
+    ['schedule', 'schedule.html', 'Schedule'],
     ['history', 'history.html', 'History'],
     ['about', 'about.html', 'About']
   ];
