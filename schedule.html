@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="The complete eight-week Sim Wrestling league schedule.">
+    <title>Schedule | Sim Wrestling</title>
+    <link rel="stylesheet" href="assets/styles.css?v=4.4.9">
+  </head>
+  <body data-page="schedule">
+    <div data-site-header></div>
+    <main class="page-shell">
+      <section class="page-heading schedule-heading">
+        <div><p class="eyebrow" id="schedule-season">Current season</p><h1>College Schedule &amp; Results</h1><p>Follow the season, watch play-by-play, and reveal scores only when you choose.</p></div>
+        <div class="schedule-filters"><label class="filter-control">Geography<select id="schedule-geography" disabled><option>Loading…</option></select></label></div>
+      </section>
+      <section class="panel unified-schedule-intro"><div><p class="eyebrow">Season schedule</p><h2>From Opening Dual to Season Finale</h2><p>Results are hidden by default so you can enjoy every match without spoilers.</p></div><button type="button" id="schedule-results-toggle" aria-pressed="false">Show Results</button></section>
+      <div id="schedule-root" aria-live="polite"><div class="state-card page-state"><span class="spinner" aria-hidden="true"></span><p>Loading the college schedule…</p></div></div>
+    </main>
+    <div data-site-footer></div>
+    <script src="js/config.js"></script><script src="js/api.js?v=4.4.9"></script><script src="js/site.js?v=4.4.9"></script><script src="js/schedule.js?v=4.4.9"></script>
+  </body>
+</html>
