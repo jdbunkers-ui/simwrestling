@@ -261,7 +261,7 @@
       || divisions[0]?.scheduled_event_division_guid || '';
     const tournamentContent = divisions.length ? renderDivisionPicker() : '';
     const eventResults = divisions.length ? tournamentContent : renderDuals();
-    root.innerHTML = `${renderHeader()}<nav class="profile-actions event-back"><a class="quiet-link" href="results.html?week=${event.week_number}&level=${encodeURIComponent(event.competition_level)}">← Return to Week ${event.week_number} Results</a><a class="quiet-link" href="schedule.html?week=${event.week_number}&level=${encodeURIComponent(event.competition_level)}">View Schedule</a></nav>${renderSessions()}${eventResults}${renderStandings()}`;
+    root.innerHTML = `${renderHeader()}<nav class="profile-actions event-back"><a class="quiet-link" href="schedule.html?week=${event.week_number}">← Return to Schedule</a><a class="quiet-link" href="schedule.html?week=${event.week_number}&level=${encodeURIComponent(event.competition_level)}">View Schedule</a></nav>${renderSessions()}${eventResults}${renderStandings()}`;
     if (divisions.length) wireDivisions();
   } catch (error) {
     SimSite.showError(root, error.message);
