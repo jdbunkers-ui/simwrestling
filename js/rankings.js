@@ -1,4 +1,4 @@
-/* v4.4.8.1 - Geography limited to the 48 contiguous U.S. states. */
+/* v4.4.9.1 - Team rankings default; geography retains coach/guest defaults. */
 (async function () {
   'use strict';
   const content = document.getElementById('rankings-content');
@@ -124,8 +124,10 @@
     populateGeography();
     // Explicit shared links override both authenticated and guest defaults.
     const params=new URLSearchParams(location.search);
-    const requestedWeight=String(params.get('weight')||'TEAM').toUpperCase();
-    weightFilter.value=[...weightFilter.options].some(o=>o.value===requestedWeight)?requestedWeight:'TEAM';
+    // A visit to Rankings always opens Team standings, irrespective of a stale
+    // weight query parameter left from a previous visit. Geography still
+    // honors an explicit state/region URL or the signed-in coach's state.
+    weightFilter.value='TEAM';
     const state=String(params.get('state')||'').trim().toUpperCase();
     const region=String(params.get('region')||'').trim().toUpperCase();
     if(state && states().includes(state))geoFilter.value=stateKey(state);
