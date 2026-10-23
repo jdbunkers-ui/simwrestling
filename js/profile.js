@@ -6,6 +6,19 @@
   const e = SimSite.escape;
   const pct = (value) => SimSite.percent(value, 1);
   const num = (value, digits = 0) => SimSite.number(value, digits);
+  let collegeIdentity = null;
+  function applyCollegeWrestlerIdentity() {
+    const hero = root.querySelector('.college-wrestler-hero');
+    if (!hero) return;
+    const safe = x => /^#[0-9a-f]{6}$/i.test(String(x||'')) ? x : null;
+    const primary = safe(collegeIdentity?.primary_color) || '#142B4C';
+    const secondary = safe(collegeIdentity?.secondary_color) || '#E6AD24';
+    const rgb = [1,3,5].map(i=>parseInt(primary.slice(i,i+2),16)/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4);
+    const foreground = rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722>.36 ? '#14263b' : '#ffffff';
+    hero.style.setProperty('--school-primary',primary);
+    hero.style.setProperty('--school-secondary',secondary);
+    hero.style.setProperty('--school-foreground',foreground);
+  }
 
   function stat(label, value, detail) {
     return `<dl><dt>${e(label)}</dt><dd>${e(value)}</dd><span>${e(detail)}</span></dl>`;
@@ -59,7 +72,10 @@
     const seniorYearNames = [['HIGH_SCHOOL_FRESHMAN','Freshman'],['HIGH_SCHOOL_SOPHOMORE','Sophomore'],['HIGH_SCHOOL_JUNIOR','Junior'],['HIGH_SCHOOL_SENIOR','Senior']];
     const pointsByStage = senior?.points_by_stage || {};
     const yearPoints = seniorYearNames.map(([stage,label]) => ({stage,label,points:pointsByStage[stage]}));
-    const initials = `${p.first_name?.[0] || ''}${p.last_name?.[0] || ''}` || String(p.wrestler_name || '').split(/\s+/).map((word)=>word[0]).join('').slice(0,2);
+    const wrestlerInitials = `${p.first_name?.[0] || ''}${p.last_name?.[0] || ''}` || String(p.wrestler_name || '').split(/\s+/).map((word)=>word[0]).join('').slice(0,2);
+    const schoolName = collegeIdentity?.display_name || p.team_name || '';
+    const schoolAcronym = String(collegeIdentity?.abbreviation || schoolName.split(/\s+/).filter(w=>!['of','the','and'].includes(w.toLowerCase())).map(w=>w[0]).join('').slice(0,4)).toUpperCase();
+    const initials = p.competition_level === 'COLLEGE' ? (schoolAcronym || wrestlerInitials) : wrestlerInitials;
     const matchQty = Number(m.match_qty || 0);
     const perMatch = (value) => matchQty ? Number(value || 0) / matchQty : 0;
     const bonusWins = Number(m.major_decision_win_qty || 0) + Number(m.technical_fall_win_qty || 0) + Number(m.fall_win_qty || 0) + Number(m.forfeit_win_qty || 0);
@@ -69,11 +85,11 @@
     document.title = `${p.wrestler_name} | Sim Wrestling`;
 
     root.innerHTML = `
-      <section class="profile-hero">
+      <section class="profile-hero${p.competition_level === 'COLLEGE' ? ' college-wrestler-hero' : ''}">
         <div class="athlete-id"><div class="monogram" aria-hidden="true">${e(initials)}</div><div>
           <p class="eyebrow">${e(p.competition_level_display)} · ${e(p.weight_class_name)} · ${e(p.eligibility_year_display)}</p>
           <h1>${e(p.wrestler_name)}</h1>
-          <p class="origin">${e(p.hometown_display || 'Hometown unavailable')} · ${e(p.height_display)} · ${num(p.current_weight_lbs,1)} lb${p.team_name ? ` · <a href="${SimSite.teamUrl(p.team_guid)}">${e(p.team_name)}</a>` : ''}</p>
+          <p class="origin">${e(p.hometown_display || 'Hometown unavailable')} · ${e(p.height_display)} · ${num(p.current_weight_lbs,1)} lb${p.team_name ? ` · <a href="${SimSite.teamUrl(p.team_guid)}">${e(p.competition_level === 'COLLEGE' ? schoolName : p.team_name)}</a>` : ''}</p>
           <div class="style-tags">${achievements.some((item) => Number(item.final_placement) === 1) ? '<span class="champion-tag">Tournament Champion</span>' : ''}<span>${e(p.stance_display)}</span></div>
         </div></div>
         <dl class="hero-record"><div><dt>Season record</dt><dd>${activeSeason ? `${Number(activeSeason.win_qty||0)}–${Number(activeSeason.loss_qty||0)}` : '—'}</dd></div><div><dt>Season win rate</dt><dd>${activeSeason ? pct(activeSeason.win_percentage) : '—'}</dd></div><div><dt>Season bonus %</dt><dd>${activeSeason ? pct(activeSeason.bonus_point_rate) : '—'}</dd></div><div><dt>Season avg. points</dt><dd>${currentSeasonAverage === null ? '—' : num(currentSeasonAverage,1)}</dd></div></dl>
@@ -94,6 +110,7 @@
       tabButtons.forEach((item) => item.classList.toggle('active',item===button));
       Object.entries(panels).forEach(([name,panel]) => { panel.hidden = name !== button.dataset.tab; });
     }));
+    applyCollegeWrestlerIdentity();
     SimSite.mobileCollapsibles(root);
   }
 
@@ -112,6 +129,11 @@
     if (!payload?.profile && currentProfileError) throw currentProfileError;
     if (!payload?.profile) throw new Error('The requested wrestler profile was not found.');
 
+    // Cosmetic public identity lookup; public profile does not request coach-only records.
+    if (payload.profile.competition_level === 'COLLEGE' && payload.profile.team_guid) {
+      try { collegeIdentity = await SimApi.collegeIdentity(payload.profile.team_guid); }
+      catch (error) { console.warn('Public college identity unavailable:', error.message); }
+    }
     if (payload.profile.archived_ind) {
       renderProfile(payload);
     } else {

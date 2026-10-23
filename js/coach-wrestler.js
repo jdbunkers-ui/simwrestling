@@ -13,6 +13,10 @@
   }
   function renderProfile(payload, activeTab = 'public') {
     const seasonHistory = payload.season_history || [];
+    const activeSeason = seasonHistory.find(item => String(item.season_status).toUpperCase() === 'OPEN') || [...seasonHistory].sort((a,b)=>Number(b.game_season_number||0)-Number(a.game_season_number||0))[0];
+    const activeSeasonNumber = Number(activeSeason?.game_season_number||0);
+    const currentSeasonMatches = (payload.match_history||[]).filter(item => activeSeason && Number(item.game_season_number) === activeSeasonNumber);
+    const currentSeasonAverage = currentSeasonMatches.length ? currentSeasonMatches.reduce((sum,item)=>sum+Number(item.match_points_scored||0),0)/currentSeasonMatches.length : null;
     const careerSummary = payload.career_summary || [];
     const detailsPending = Boolean(payload.details_pending);
     const detailsError = payload.details_error || '';
@@ -70,7 +74,7 @@
           <p class="origin">${e(p.hometown_display || 'Hometown unavailable')} · ${e(p.height_display)} · ${num(p.current_weight_lbs,1)} lb${p.team_name ? ` · <a href="${SimSite.teamUrl(p.team_guid)}">${e(schoolName)}</a>` : ''}</p>
           <div class="style-tags">${achievements.some((item) => Number(item.final_placement) === 1) ? '<span class="champion-tag">Tournament Champion</span>' : ''}<span>${e(p.stance_display)}</span></div>
         </div></div>
-        <dl class="hero-record"><div><dt>Record</dt><dd>${m.win_qty || 0}–${m.loss_qty || 0}</dd></div><div><dt>Win rate</dt><dd>${pct(m.win_pct)}</dd></div><div><dt>Bonus wins</dt><dd>${bonusWins}</dd></div><div><dt>Avg. points</dt><dd>${num(m.average_match_points,1)}</dd></div></dl>
+        <dl class="hero-record"><div><dt>Season record</dt><dd>${activeSeason ? `${Number(activeSeason.win_qty||0)}–${Number(activeSeason.loss_qty||0)}` : "—"}</dd></div><div><dt>Season win rate</dt><dd>${activeSeason ? pct(activeSeason.win_percentage) : "—"}</dd></div><div><dt>Season bonus %</dt><dd>${activeSeason ? pct(activeSeason.bonus_point_rate) : "—"}</dd></div><div><dt>Season avg. points</dt><dd>${currentSeasonAverage === null ? "—" : num(currentSeasonAverage,1)}</dd></div></dl>
       </section>
       <nav class="tabs" aria-label="Wrestler profile sections"><button class="tab active" data-tab="public" type="button">Profile</button><button class="tab" data-tab="history" type="button">Match history</button><button class="tab" data-tab="stats" type="button">Detailed statistics</button><button class="tab" data-tab="pbp" type="button">Play-by-play</button></nav>
       <div class="tab-panel" id="public-panel">
