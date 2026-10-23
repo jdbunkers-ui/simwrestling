@@ -379,3 +379,25 @@
 .college-unified-hero .coach-hero-seal{width:76px;height:76px;flex:0 0 76px}
 .college-unified-hero h1{margin:6px 0;font-size:clamp(2rem,4vw,3rem)}
 @media(max-width:570px){.college-unified-hero .coach-hero-seal{display:none}}
+
+/* v5.0.2 — College wrestler identity and coach-only visual analytics */
+.college-wrestler-hero{background:var(--school-primary,#142B4C);color:var(--school-foreground,#fff)}
+.college-wrestler-hero .monogram{color:var(--school-secondary,#E6AD24);border-color:var(--school-secondary,#E6AD24);font-size:clamp(1.1rem,2.5vw,1.75rem)}
+.college-wrestler-hero .eyebrow{color:var(--school-secondary,#E6AD24)}
+.college-wrestler-hero .origin,.college-wrestler-hero .origin a,.college-wrestler-hero .style-tags span,.college-wrestler-hero .hero-record dt{color:var(--school-foreground,#fff)}
+.college-wrestler-hero .origin a{text-decoration:underline}
+.sw-wrestler-dashboard{--dash-color:var(--school-primary,#142B4C);--dash-accent:var(--school-secondary,#18b7c5);display:grid;gap:16px;margin-top:18px}
+.sw-dash-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:4px 0}
+.sw-dash-kpis>div{border:1px solid #dae2ea;border-top:3px solid var(--dash-accent);border-radius:10px;padding:15px;background:#f8fafc;min-width:0}
+.sw-dash-kpis strong{display:block;font-size:clamp(1.1rem,2vw,1.7rem);font-weight:850;color:#12253c;overflow-wrap:anywhere}
+.sw-dash-kpis span{font-size:.73rem;color:#617088}
+.sw-dash-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.sw-dash-panel{border:1px solid #dce4ec;border-radius:10px;padding:18px;background:#fff;min-width:0}
+.sw-dash-panel h4{margin:0;font-size:1.06rem;color:#192d47}.sw-dash-panel>p{margin:5px 0 15px;font-size:.8rem;color:#68788b}
+.sw-dash-panel .sw-dash-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+.sw-dash-bar{margin:14px 0}.sw-dash-bar-label{display:flex;justify-content:space-between;gap:10px;font-size:.82rem;margin-bottom:6px}.sw-dash-bar-label span{color:#607186;text-align:right}
+.sw-dash-track{height:10px;background:#e8eff4;border-radius:99px;overflow:hidden}.sw-dash-track>div{height:100%;border-radius:99px;background:var(--dash-color)}
+.sw-dash-track.against{margin-top:5px}.sw-dash-track.against>div{background:#a1adba}.sw-dash-legend{font-size:.74rem;color:var(--dash-color);margin:9px 0 0}.sw-dash-legend span{color:#8693a1}
+.sw-dash-note{font-size:.79rem;color:#617088;margin:8px 0 0}.sw-dash-table-scroll{overflow-x:auto}.sw-dash-table{width:100%;border-collapse:collapse;font-size:.81rem}.sw-dash-table th,.sw-dash-table td{padding:10px;border-bottom:1px solid #e5ebf0;text-align:left}.sw-dash-table th{background:#f3f7fa;color:#41556c}.sw-dash-table td:first-child{font-weight:700}
+.coach-stat-tab.active{background:var(--school-primary,#17365c);border-color:var(--school-primary,#17365c);color:var(--school-foreground,#fff)}
+@media(max-width:750px){.sw-dash-two{grid-template-columns:1fr}.sw-dash-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.sw-dash-panel{padding:13px}.sw-dash-bar-label{flex-direction:column;gap:2px}}

@@ -1,6 +1,6 @@
 (async function () {
   const root = document.getElementById('profile-root');
-  let coachClient=null; let privateAttrs=[]; const analyticsCache={};
+  let coachClient=null; let privateAttrs=[]; let collegeIdentity=null; const analyticsCache={};
   const wrestlerGuid = SimSite.query('wrestler');
   if (!wrestlerGuid) { SimSite.showError(root, 'No wrestler was selected.'); return; }
   if (!window.SimSite.configuredOrMessage(root)) return;
@@ -50,7 +50,8 @@
       if (!rows.length && !total) return `<section class="career-level-group"><div class="career-level-heading"><h3>${e(heading)}</h3></div><p class="coach-empty">No ${e(heading.toLocaleLowerCase())} history is available.</p></section>`;
       return `<section class="career-level-group"><div class="career-level-heading"><h3>${e(heading)}</h3><span>${rows.length} season${rows.length===1?'':'s'}</span></div><div class="table-wrap"><table class="season-summary-table"><thead><tr><th>Season</th><th>Year / Team</th><th>Weight</th><th>Record</th><th>Win %</th><th>Bonus %</th><th>State rank</th><th>Accomplishments</th></tr></thead><tbody>${rows.map((item) => `<tr><td><strong>${e(item.game_season_display || item.season_name)}</strong></td><td>${e(yearOnly(item.academic_stage_display))}${item.team_name?`<span class="subtext">${e(item.team_name)}</span>`:''}</td><td>${e(item.weight_class_code)}</td><td>${e(item.record_display)}</td><td>${pct(item.win_percentage)}</td><td>${pct(item.bonus_point_rate)}</td><td>${item.final_state_rank?`#${item.final_state_rank}<span class="subtext">${e(SimSite.resultLabel(item.rank_status))}</span>`:'—'}</td><td>${e(accomplishmentsForSeason(item,level))}</td></tr>`).join('')}${total?`<tr class="career-total-row"><td><strong>Career Total</strong></td><td>—</td><td aria-label="Weight not applicable">—</td><td><strong>${e(total.record_display)}</strong><span class="subtext">${total.win_qty} wins · ${total.loss_qty} losses</span></td><td><strong>${pct(total.career_win_percentage)}</strong></td><td><strong>${pct(total.career_bonus_percentage)}</strong></td><td>—</td><td>${total.match_qty} matches</td></tr>`:''}</tbody></table></div></section>`;
     };
-    const initials = `${p.first_name?.[0] || ''}${p.last_name?.[0] || ''}` || String(p.wrestler_name || '').split(/\s+/).map((word)=>word[0]).join('').slice(0,2);
+    const schoolName = collegeIdentity?.display_name || p.team_name || 'College';
+    const initials = String(collegeIdentity?.abbreviation || schoolName.split(/\s+/).filter(w=>!['of','the','and'].includes(w.toLowerCase())).map(w=>w[0]).join('').slice(0,4)).toUpperCase();
     const matchQty = Number(m.match_qty || 0);
     const perMatch = (value) => matchQty ? Number(value || 0) / matchQty : 0;
     const bonusWins = Number(m.major_decision_win_qty || 0) + Number(m.technical_fall_win_qty || 0) + Number(m.fall_win_qty || 0) + Number(m.forfeit_win_qty || 0);
@@ -62,11 +63,11 @@
     root.innerHTML = `
       <nav class="coach-subnav coach-profile-nav" aria-label="Private coaching pages"><a href="coach.html" class="active" aria-current="page">Team</a><a href="coach-recruiting.html">Recruits</a><a href="coach-matches.html">Schedule</a><a href="coach-history.html">Wall of Fame</a><a href="coach-identity.html">Identity</a></nav>
       <a class="coach-back-link" href="coach.html">← Back to Coaching Roster</a>
-      <section class="profile-hero">
+      <section class="profile-hero college-wrestler-hero">
         <div class="athlete-id"><div class="monogram" aria-hidden="true">${e(initials)}</div><div>
           <p class="eyebrow">${e(p.competition_level_display)} · ${e(p.weight_class_name)} · ${e(p.eligibility_year_display)}</p>
           <h1>${e(p.wrestler_name)}</h1>
-          <p class="origin">${e(p.hometown_display || 'Hometown unavailable')} · ${e(p.height_display)} · ${num(p.current_weight_lbs,1)} lb${p.team_name ? ` · <a href="${SimSite.teamUrl(p.team_guid)}">${e(p.team_name)}</a>` : ''}</p>
+          <p class="origin">${e(p.hometown_display || 'Hometown unavailable')} · ${e(p.height_display)} · ${num(p.current_weight_lbs,1)} lb${p.team_name ? ` · <a href="${SimSite.teamUrl(p.team_guid)}">${e(schoolName)}</a>` : ''}</p>
           <div class="style-tags">${achievements.some((item) => Number(item.final_placement) === 1) ? '<span class="champion-tag">Tournament Champion</span>' : ''}<span>${e(p.stance_display)}</span></div>
         </div></div>
         <dl class="hero-record"><div><dt>Record</dt><dd>${m.win_qty || 0}–${m.loss_qty || 0}</dd></div><div><dt>Win rate</dt><dd>${pct(m.win_pct)}</dd></div><div><dt>Bonus wins</dt><dd>${bonusWins}</dd></div><div><dt>Avg. points</dt><dd>${num(m.average_match_points,1)}</dd></div></dl>
@@ -91,6 +92,7 @@
     }));
     if(activeTab==='stats') setupPrivateStats();
     tabButtons.forEach(button=>button.addEventListener('click',()=>{if(button.dataset.tab==='stats')setupPrivateStats();}));
+    applyCollegeWrestlerIdentity();
     SimSite.mobileCollapsibles(root);
   }
 
@@ -114,28 +116,67 @@
     return value;
   }
   const headings={overview:'Current Season Performance',moves:'Individual Moves',neutral:'Neutral Wrestling',mat:'Mat Wrestling',scramble:'Scrambling and Discipline',period:'Period Splits',score:'Score Situations',fatigue:'Fatigue and Conditioning'};
-  const keyName=k=>String(k).replace(/_/g,' ').replace(/\b\w/g,x=>x.toUpperCase());
-  const ignored=new Set(['wrestler_guid','wrestler_name','move_guid','move_code','action_type','move_family','move_name']);
-  function formatStat(v,k){
-    if(v===null||v===undefined)return '—';
-    if(typeof v==='number')return /rate|percentage|probability/.test(k)?`${(v*100).toFixed(1)}%`:Number.isInteger(v)?v.toLocaleString():v.toFixed(2);
-    return String(v);
-  }
-  function statCards(row,fields,featured=false){
-    return `<div class="coach-metric-grid ${featured?'coach-metric-featured':''}">${fields.filter(k=>row[k]!==undefined).map(k=>`<dl class="coach-metric-card"><dt>${e(keyName(k))}</dt><dd>${e(formatStat(row[k],k))}</dd></dl>`).join('')}</div>`;
-  }
+  // Dashboard v5.0.2: curated measures only, drawn from the existing authorized cache.
+  const fv=(v,d=0)=>v==null||!Number.isFinite(Number(v))?'—':Number(v).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+  const pr=v=>v==null||!Number.isFinite(Number(v))?'—':fv(Number(v)*100,1)+'%';
+  const ratio=(a,b)=>Number(b)>0?Number(a||0)/Number(b):null;
+  const titleCase=s=>String(s||'').replaceAll('_',' ').replace(/\b\w/g,c=>c.toUpperCase());
+  function kpis(arr){return `<div class="sw-dash-kpis">${arr.slice(0,4).map(([label,value])=>`<div><strong>${e(value)}</strong><span>${e(label)}</span></div>`).join('')}</div>`;}
+  function card(title,note,body){return `<section class="sw-dash-panel"><h4>${e(title)}</h4><p>${e(note)}</p>${body}</section>`;}
+  function bars(items){return items.map(([label,value,detail])=>`<div class="sw-dash-bar"><div class="sw-dash-bar-label"><b>${e(label)}</b><span>${e(detail??pr(value))}</span></div><div class="sw-dash-track"><div style="width:${Math.max(0,Math.min(100,Number(value||0)*100))}%"></div></div></div>`).join('');}
+  function compare(items){const max=Math.max(1,...items.flatMap(r=>[Number(r[1])||0,Number(r[2])||0]));return items.map(([label,scored,allowed,note])=>`<div class="sw-dash-bar"><div class="sw-dash-bar-label"><b>${e(label)}</b><span>${e(note||`${fv(scored,2)} for · ${fv(allowed,2)} against`)}</span></div><div class="sw-dash-track"><div style="width:${Math.max(0,Number(scored||0)/max*100)}%"></div></div><div class="sw-dash-track against"><div style="width:${Math.max(0,Number(allowed||0)/max*100)}%"></div></div></div>`).join('')+'<p class="sw-dash-legend">■ Points for &nbsp; <span>■ Points against</span></p>';}
+  function table(headers,rows){return `<div class="sw-dash-table-scroll"><table class="sw-dash-table"><thead><tr>${headers.map(h=>`<th>${e(h)}</th>`).join('')}</tr></thead><tbody>${rows.map(row=>`<tr>${row.map(cell=>`<td>${e(cell)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;}
+  function note(text){return `<p class="sw-dash-note">${e(text)}</p>`;}
   function renderMetrics(section,rows){
-    if(section==='moves'){
-      const fieldNames=['offensive_uses','offensive_successes','offensive_failures','takedowns','points_created','attempts_faced','defensive_stops','points_allowed'];
-      const cards=rows.map(r=>`<article class="coach-move-card"><header><strong>${e(r.move_name||r.move_code||'Move')}</strong><small>${e(String(r.move_family||'').replaceAll('_',' '))}</small></header><div class="coach-move-highlight"><span><b>${e(r.offensive_uses??0)}</b> Uses</span><span><b>${e(r.offensive_successes??0)}</b> Successful</span><span><b>${e(r.points_created??0)}</b> Points</span></div><details><summary>Full move breakdown</summary>${statCards(r,fieldNames)}</details></article>`).join('');
-      return `<div class="coach-move-list">${cards}</div>`;
+    const a=rows[0]||{};let html='';
+    if(section==='overview'){
+      html=kpis([['Season record',`${fv(a.win_qty)}–${fv(a.loss_qty)}`],['Win rate',pr(a.win_rate)],['Points / match',fv(a.points_for_per_match,2)],['Points allowed / match',fv(a.points_against_per_match,2)]])+
+      `<div class="sw-dash-two">${card('Offensive efficiency','Completed techniques divided by attempts',bars([['Takedowns',a.takedown_conversion_rate,`${fv(a.takedowns)}/${fv(a.takedown_attempts)} · ${pr(a.takedown_conversion_rate)}`],['Turns',a.turn_rate,`${fv(a.turns)}/${fv(a.turn_attempts)} · ${pr(a.turn_rate)}`],['Escapes',a.escape_rate,`${fv(a.escapes)}/${fv(a.escape_attempts)} · ${pr(a.escape_rate)}`],['Reversals',a.reversal_rate,`${fv(a.reversals)}/${fv(a.reversal_attempts)} · ${pr(a.reversal_rate)}`]]))}${card('Season scoring','Scored versus conceded',compare([['All matches',a.points_for,a.points_against]]))}</div>`+
+      card('Defensive outlook','Takedown defense based on opponent attempts',bars([['Takedown defense',a.takedown_defense_rate,`${fv(a.opponent_takedown_attempts)} attempts faced · ${pr(a.takedown_defense_rate)}`]]));
+    }else if(section==='moves'){
+      const attacks=rows.filter(r=>r.action_type==='ATTACK').sort((a,b)=>Number(b.offensive_uses||0)-Number(a.offensive_uses||0));
+      const all=[...rows].sort((a,b)=>Number(b.offensive_uses||0)-Number(a.offensive_uses||0));const peak=Math.max(1,...all.map(r=>Number(r.offensive_uses)||0));
+      html=kpis([['Attack attempts',fv(attacks.reduce((sum,r)=>sum+Number(r.offensive_uses||0),0))],['Attack takedowns',fv(attacks.reduce((sum,r)=>sum+Number(r.takedowns||0),0))],['Tracked moves',fv(rows.length)],['Most-used technique',titleCase(all[0]?.move_name||'—')]])+
+      `<div class="sw-dash-two">${card('Signature takedown techniques','Five most-used attacks · takedowns / uses',bars(attacks.slice(0,5).map(r=>[titleCase(r.move_name),ratio(r.takedowns,r.offensive_uses),`${fv(r.takedowns)}/${fv(r.offensive_uses)} · ${pr(ratio(r.takedowns,r.offensive_uses))}`])))}${card('Most-used techniques','Relative use across all move families',bars(all.slice(0,6).map(r=>[titleCase(r.move_name),Number(r.offensive_uses||0)/peak,`${fv(r.offensive_uses)} uses · ${titleCase(r.action_type)}`])))}</div>`+
+      card('Technique scouting board','Top ten moves by usage; condensed from full move cache',table(['Technique','Type','Uses','Successes','Points'],all.slice(0,10).map(r=>[titleCase(r.move_name),titleCase(r.action_type),fv(r.offensive_uses),['SETUP','POSITION'].includes(r.action_type)?'N/A':fv(r.offensive_successes),fv(r.points_created)])))+
+      note('Setup and positioning events may not track completion; zero recorded successes is not necessarily a failed technique. Move-level event counts can differ from aggregate match metrics.');
+    }else if(section==='neutral'){
+      html=kpis([['Open takedowns',fv(a.open_takedowns)],['Clinch takedowns',fv(a.clinch_takedowns)],['Attacks faced',fv(a.attempts_faced)],['Takedowns allowed',fv(a.takedowns_allowed)]])+
+      `<div class="sw-dash-two">${card('Attack conversion','Success by attack type',bars([['Open neutral',a.open_conversion_rate,`${fv(a.open_takedowns)}/${fv(a.open_attempts)} · ${pr(a.open_conversion_rate)}`],['Clinch',a.clinch_conversion_rate,`${fv(a.clinch_takedowns)}/${fv(a.clinch_attempts)} · ${pr(a.clinch_conversion_rate)}`],['Throws',a.throw_conversion_rate,`${fv(a.throw_takedowns)}/${fv(a.throw_attempts)} · ${pr(a.throw_conversion_rate)}`]]))}${card('Defensive effectiveness','Opponent shots successfully stopped',bars([['Takedown defense',a.overall_defense_rate,`${fv(Number(a.attempts_faced||0)-Number(a.takedowns_allowed||0))}/${fv(a.attempts_faced)} · ${pr(a.overall_defense_rate)}`]])+note('Counter conversion is not shown when counter attempts are zero.'))}</div>`+
+      card('Neutral position time','Share of measured neutral seconds',bars([['Open neutral',ratio(a.neutral_open_seconds,Number(a.neutral_open_seconds||0)+Number(a.neutral_clinch_seconds||0)),`${fv(a.neutral_open_seconds)} sec`],['Clinch',ratio(a.neutral_clinch_seconds,Number(a.neutral_open_seconds||0)+Number(a.neutral_clinch_seconds||0)),`${fv(a.neutral_clinch_seconds)} sec`]]));
+    }else if(section==='mat'){
+      html=kpis([['Turns',fv(a.turns)],['Back points',fv(a.back_points)],['Escapes',fv(a.escapes)],['Reversals',fv(a.reversals)]])+
+      `<div class="sw-dash-two">${card('Top-position success','Technique conversion',bars([['Turns',a.turn_rate,`${fv(a.turns)}/${fv(a.turn_attempts)}`],['Mat returns',a.mat_return_rate,`${fv(a.mat_returns)}/${fv(a.mat_return_attempts)}`],['Breakdowns',a.breakdown_rate,`${fv(a.breakdowns)}/${fv(a.breakdown_attempts)}`]]))}${card('Bottom-position success','Escape and reversal efficiency',bars([['Escapes',a.escape_rate,`${fv(a.escapes)}/${fv(a.escape_attempts)}`],['Reversals',a.reversal_rate,`${fv(a.reversals)}/${fv(a.reversal_attempts)}`]])+note(`Riding time: ${fv(a.riding_time_seconds)} seconds · ${fv(a.riding_time_per_match,1)} seconds per match`))}</div>`+
+      card('Back exposure','Back points scored and conceded',compare([['Back points',a.back_points,a.back_points_allowed]])+note(`Pin attempts: ${fv(a.pin_attempts)} · Near-fall control: ${fv(a.near_fall_control_seconds)} sec · Danger: ${fv(a.danger_seconds)} sec`));
+    }else if(section==='scramble'){
+      html=kpis([['Scramble wins',fv(a.scramble_wins)],['Scramble losses',fv(a.scramble_losses)],['Win rate',pr(a.scramble_win_rate)],['Scramble time',`${fv(a.scramble_seconds)} sec`]])+
+      `<div class="sw-dash-two">${card('Scramble outcomes','Distribution of recorded scrambles',bars([['Wins',ratio(a.scramble_wins,a.scrambles_entered),fv(a.scramble_wins)],['Losses',ratio(a.scramble_losses,a.scrambles_entered),fv(a.scramble_losses)],['Neutral',ratio(a.neutral_scrambles,a.scrambles_entered),fv(a.neutral_scrambles)]]))}${card('Discipline','Warnings, penalties and boundary events',kpis([['Stall warnings',fv(a.stall_warnings)],['Penalty points conceded',fv(a.penalty_points_conceded)],['Stall points conceded',fv(a.stall_points_conceded)],['Out of bounds',fv(a.out_of_bounds_events)]]))}</div>`;
+    }else if(section==='period'){
+      html=card('Period scoring','Points per match reaching each segment',compare(rows.map(r=>[titleCase(r.period_display),ratio(r.points_for,r.match_qty),ratio(r.points_against,r.match_qty),`${fv(ratio(r.points_for,r.match_qty),2)} scored · ${fv(ratio(r.points_against,r.match_qty),2)} allowed / match`])))+
+      card('Performance by period','Total techniques and points differential',table(['Period','Matches','TDs','Escapes','Reversals','Net points'],rows.map(r=>[titleCase(r.period_display),fv(r.match_qty),fv(r.takedowns),fv(r.escapes),fv(r.reversals),fv(Number(r.points_for||0)-Number(r.points_against||0))])))+
+      note('Overtime has a smaller sample size than regulation, and should be interpreted separately.');
+    }else if(section==='score'){
+      html=card('Scoring by match situation','While leading, tied and trailing; not final match record',compare(rows.map(r=>[titleCase(r.score_state),r.points_for,r.points_against])))+
+      card('Opportunity by score state','Wrestling activity in each situation',table(['State','Matches entering','Actions','Takedowns','Net points'],rows.map(r=>[titleCase(r.score_state),fv(r.match_qty),fv(r.offensive_actions),fv(r.takedowns),fv(Number(r.points_for||0)-Number(r.points_against||0))])))+
+      note('A match can appear in multiple score states. Do not add the match counts together.');
+    }else if(section==='fatigue'){
+      const sorted=[...rows].sort((a,b)=>Number(b.band_energy_maximum_observed||0)-Number(a.band_energy_maximum_observed||0));
+      const names=r=>titleCase(r.fatigue_band).replace(/\bPlus\b/i,'+');
+      html=kpis(sorted.slice(0,4).map(r=>[`${names(r)} scoring rate`,pr(r.scoring_action_rate)]))+
+      `<div class="sw-dash-two">${card('Scoring action frequency','Scoring actions divided by offensive actions',bars(sorted.map(r=>[names(r),r.scoring_action_rate,`${fv(r.scoring_actions)}/${fv(r.offensive_actions)} · ${pr(r.scoring_action_rate)}`])))}${card('Points by fatigue band','Totals; exposure differs by energy band',compare(sorted.map(r=>[names(r),r.points_for,r.points_against])))}</div>`+
+      note('Only observed fatigue bands are shown. An absent exhausted band means no data, not zero performance. Fatigue events may not reconcile to full match totals.');
     }
-    const groupKey={period:'period_display',score:'score_state',fatigue:'fatigue_band'}[section];
-    return rows.map((r,i)=>{
-      const label=groupKey?String(r[groupKey]||`Group ${i+1}`).replaceAll('_',' '):null;
-      const keys=Object.keys(r).filter(k=>!ignored.has(k)&&k!==groupKey&&k!=='segment_code'&&k!=='segment_number'&&k!=='period_display');
-      const priority={overview:['win_qty','loss_qty','win_rate','takedowns','points_for','points_against'],neutral:['open_takedowns','open_conversion_rate','overall_defense_rate'],mat:['turns','escapes','reversals'],scramble:['scramble_wins','scramble_win_rate'],period:['points_for','takedowns'],score:['points_for','takedowns'],fatigue:['scoring_action_rate','points_for']}[section]||[];const lead=priority.filter(k=>keys.includes(k));return `<section class="coach-metric-group">${label?`<h4>${e(label)}</h4>`:''}${lead.length?statCards(r,lead,true):''}<div class="coach-metric-secondary">${statCards(r,keys.filter(k=>!lead.includes(k)))}</div></section>`;
-    }).join('');
+    return `<div class="sw-wrestler-dashboard">${html}</div>`;
+  }
+  function applyCollegeWrestlerIdentity(){
+    const hero=root.querySelector('.college-wrestler-hero');if(!hero)return;
+    const safe=x=>/^#[0-9a-f]{6}$/i.test(String(x||''))?x:null;
+    const primary=safe(collegeIdentity?.primary_color)||'#142B4C';
+    const secondary=safe(collegeIdentity?.secondary_color)||'#E6AD24';
+    const rgb=[1,3,5].map(i=>parseInt(primary.slice(i,i+2),16)/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4);
+    const foreground=rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722>.36?'#14263b':'#ffffff';
+    hero.style.setProperty('--school-primary',primary);hero.style.setProperty('--school-secondary',secondary);hero.style.setProperty('--school-foreground',foreground);
+    root.style.setProperty('--school-primary',primary);root.style.setProperty('--school-secondary',secondary);
   }
   function setupPrivateStats(){
     const controls=document.getElementById('private-stat-controls'),results=document.getElementById('private-stat-results');
@@ -163,6 +204,15 @@
     const {data:{user},error:userError}=await coachClient.auth.getUser();
     if(userError||!user)throw Error('Please sign in to view your private wrestler profile.');
     privateAttrs=await loadPrivateSection('attributes'); // Server verifies current ownership and entitlement.
+    // Identity RPC is cosmetic; failure leaves the default college colors in place.
+    // Get the current authorized team, rather than trusting a wrestler URL to select another college.
+    try {
+      const {data:dashboard,error:dashboardError}=await coachClient.rpc('get_my_coaching_dashboard_v4_2_0');
+      if(!dashboardError && dashboard?.team_guid){
+        const {data:identity,error:identityError}=await coachClient.rpc('get_college_identity_v459',{p_team_guid:dashboard.team_guid});
+        if(!identityError)collegeIdentity=identity;
+      }
+    }catch(error){console.warn('College profile identity unavailable:',error.message);}
     let payload = null;
     let currentProfileError = null;
     try { payload = await SimApi.profileCore(wrestlerGuid); } catch (error) { currentProfileError = error; }
