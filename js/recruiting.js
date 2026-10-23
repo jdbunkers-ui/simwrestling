@@ -20,6 +20,7 @@
   let recruitingClasses = [];
   let activeTab = 'classes';
   let teams = [], inventory = [], coaches = new Map();
+  let prospectLoadError = null;
 
   function option(value, label) {
     return `<option value="${e(value)}">${e(label)}</option>`;
@@ -53,11 +54,18 @@
   }
 
   function scopedProspects() {
+    const selected = geo();
+    const rankField = selected.state ? 'state_recruiting_rank'
+      : selected.region ? 'region_recruiting_rank' : 'national_recruiting_rank';
+    const rank = (row, field) => {
+      const value = Number(row[field]);
+      return Number.isFinite(value) && value > 0 ? value : Infinity;
+    };
     return prospects.filter((row) => {
       if (!matches(row)) return false;
       return weightFilter.value === 'ALL' || row.weight_class_code === weightFilter.value;
-    }).sort((a, b) => Number(b.total_recruiting_points) - Number(a.total_recruiting_points)
-      || Number(b.recruiting_program_qty) - Number(a.recruiting_program_qty)
+    }).sort((a, b) => rank(a, rankField) - rank(b, rankField)
+      || rank(a, 'national_recruiting_rank') - rank(b, 'national_recruiting_rank')
       || String(a.wrestler_name).localeCompare(String(b.wrestler_name))
       || String(a.wrestler_guid).localeCompare(String(b.wrestler_guid)));
   }
@@ -67,7 +75,7 @@
     if (!schools.length) {
       return '<p class="no-preferences">No preferred schools established</p>';
     }
-    return `<ol>${schools.map((school) => `<li><a href="${SimSite.teamUrl(school.team_guid)}">${e(school.team_name)}</a></li>`).join('')}</ol>`;
+    return `<div class="class-recruit-links">${schools.map((school) => `<a href="${SimSite.teamUrl(school.team_guid)}">${e(school.team_name)}</a>`).join('')}</div>`;
   }
 
   function renderProspects() {
@@ -77,35 +85,43 @@
     const weight = weightFilter.value === 'ALL' ? ''
       : ` ${weightFilter.value === 'HWT' ? 'HWT' : `${weightFilter.value}-Pound`}`;
 
-    prospectTitle.textContent = `${geography}${weight} Most-Recruited High-School Wrestlers`;
+    prospectTitle.textContent = `${geography}${weight} High-School Senior Rankings`;
     prospectCount.textContent = `Top ${visible.length} of ${rows.length} senior${rows.length === 1 ? '' : 's'}`;
     syncUrl();
+
+    if (prospectLoadError) {
+      SimSite.showError(prospectBoard, prospectLoadError.message || 'Senior rankings could not be loaded. Please refresh to try again.');
+      prospectCount.textContent = 'Senior rankings unavailable';
+      return;
+    }
 
     if (!visible.length) {
       prospectBoard.innerHTML = '<div class="state-card"><p>No seniors match the selected recruiting filters.</p></div>';
       return;
     }
 
-    const maximumPoints = Math.max(
-      ...visible.map((row) => Number(row.total_recruiting_points || 0)),1
-    );
-    prospectBoard.innerHTML = visible.map((row, index) => {
+    const body = visible.map((row, index) => {
       const points = Number(row.total_recruiting_points || 0);
-      const interest = Math.max(4, Math.round(points / maximumPoints * 100));
-      return `<article class="prospect-row">
-        <span class="prospect-rank">${index + 1}</span>
-        <div class="prospect-identity">
-          <a href="${SimSite.profileUrl(row.wrestler_guid)}">${e(row.wrestler_name)}</a>
-          <small>${e(row.hometown_city || 'Unknown')}, ${e(row.state_code || '')} · ${e(row.weight_class_code)}${row.weight_class_code === 'HWT' ? '' : ' lb'} · Senior</small>
-        </div>
-        <div class="school-preferences"><span>Preferred schools</span>${preferredSchools(row)}</div>
-        <div class="interest-meter">
-          <span>${points} recruiting point${points === 1 ? '' : 's'}</span>
-          <i style="--interest:${interest}%"></i>
-          <small>${Number(row.recruiting_program_qty || 0)} program${Number(row.recruiting_program_qty || 0) === 1 ? '' : 's'} have recruited him</small>
-        </div>
-      </article>`;
+      const finishes = [
+        ['National', row.national_finish],
+        ['Regional', row.regional_finish],
+        ['State', row.state_finish]
+      ].filter(([, value]) => Number(value) > 0)
+        .map(([label, value]) => `${label} #${Number(value)}`);
+      if (row.record_display) finishes.push(`Record ${row.record_display}`);
+      return `<tr>
+        <td class="rank-number">${index + 1}</td>
+        <td><a class="wrestler-link" href="${SimSite.profileUrl(row.wrestler_guid)}">${e(row.wrestler_name)}</a>
+          <span class="subtext">${e(row.hometown_city || 'Unknown')}, ${e(row.state_code || '')} · ${e(row.weight_class_code)}${row.weight_class_code === 'HWT' ? '' : ' lb'} · Senior</span>
+          ${finishes.length ? `<span class="subtext senior-results">${e(finishes.join(' · '))}</span>` : ''}
+        </td>
+        <td>${preferredSchools(row)}</td>
+        <td class="class-score-cell">${points.toLocaleString('en-US')}
+          <span class="subtext">${Number(row.recruiting_program_qty || 0)} program${Number(row.recruiting_program_qty || 0) === 1 ? '' : 's'} have recruited him</span>
+        </td>
+      </tr>`;
     }).join('');
+    prospectBoard.innerHTML = `<div class="table-wrap"><table class="recruiting-classes-table team-ranking-table senior-ranking-table"><thead><tr><th scope="col">Rank</th><th scope="col">Wrestler</th><th scope="col">Preferred Schools</th><th scope="col">Recruiting Points</th></tr></thead><tbody>${body}</tbody></table></div>`;
   }
 
   function parsedRecruits(row) {
@@ -147,7 +163,7 @@
     classBoard.innerHTML = `<div class="table-wrap"><table class="recruiting-classes-table team-ranking-table"><thead><tr><th>Rank</th><th>Team</th><th>Coach</th><th>Class Score</th><th>Top Five Recruits · Final National Rank</th></tr></thead><tbody>${rows.map(row=>{
       const recruits=parsedRecruits(row);
       const links=recruits.length?recruits.map(recruit=>`<a href="${SimSite.profileUrl(recruit.wrestler_guid)}">${e(recruit.wrestler_name)} <small>#${e(recruit.final_national_recruiting_rank ?? '—')} national</small></a>`).join(''):'<small>No ranked signees</small>';
-      return `<tr><td class="rank-number">${e(row[rankField]??'—')}</td><td><a class="wrestler-link" href="${SimSite.teamUrl(row.team_guid)}">${e(row.team_name)}</a></td><td>${e(coaches.get(String(row.team_guid))||'')}</td><td class="class-score-cell">${Number(row.class_score||0).toFixed(1)}</td><td><div class="class-recruit-links">${links}</div></td></tr>`;
+      return `<tr><td class="rank-number">${e(row[rankField]??'—')}</td><td><a class="wrestler-link" href="${SimSite.teamUrl(row.team_guid)}">${e(row.team_name)}</a></td><td>${e(coaches.get(String(row.team_guid))||'')}</td><td class="class-score-cell">${Number(row.class_score||0).toFixed(0)}</td><td><div class="class-recruit-links">${links}</div></td></tr>`;
     }).join('')}</tbody></table></div>`;
   }
 
@@ -173,6 +189,7 @@
       SimApi.recruitingSeniors(),SimApi.recruitingClasses(),SimApi.regionStateInventory(),SimApi.teamRankings()
     ]);
     if(prospectResult.status==='fulfilled')prospects=prospectResult.value||[];
+    else prospectLoadError=prospectResult.reason;
     if(classResult.status==='fulfilled')recruitingClasses=classResult.value||[];
     if(scopeResult.status==='fulfilled')inventory=scopeResult.value||[];
     if(teamResult.status==='fulfilled')teams=teamResult.value||[];
