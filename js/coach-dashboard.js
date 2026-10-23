@@ -42,7 +42,7 @@
     const today=data.current_league_date;
     document.title=`${data.team_name} — Coaching | Sim Wrestling`;
     root.innerHTML=`
-      <section class="coach-live-hero" id="college-identity-hero"><div><p class="eyebrow">YOUR COLLEGE · CURRENT SEASON</p><h1>${escape(headerText)}</h1>${identity?.mascot?`<p>${escape(identity.mascot)}</p>`:""}</div><div class="coach-hero-seal" aria-hidden="true">${escape(schoolAbbr)}</div></section>
+      ${CoachIdentityBanner.render({identity,teamName:data.team_name,context:'CURRENT SEASON',detail:[rankPrefix?rankPrefix.trim().replace(/ -$/,'')+' state rank':'',record?'Record '+record:''].filter(Boolean).join(' · '),fallbackAbbr:schoolAbbr})}
       <nav class="coach-subnav" aria-label="Private coaching pages"><a href="coach.html" class="active" aria-current="page">Team</a><a href="coach-recruiting.html">Recruits</a><a href="coach-matches.html">Schedule</a><a href="coach-history.html">Wall of Fame</a><a href="coach-identity.html">Identity</a></nav>
       <section class="panel coach-live-panel"><div class="panel-heading coach-roster-heading"><div><p class="eyebrow">CURRENT COLLEGE</p><h2>Roster and starting lineup</h2></div><div class="coach-roster-switch" role="group" aria-label="Roster view"><button type="button" id="roster-full" aria-pressed="false">Full Roster</button><button type="button" id="roster-starters" class="active" aria-pressed="true">Starters</button></div></div>
       <p id="lineup-feedback" class="coach-lineup-feedback" role="status" aria-live="polite"></p>
@@ -51,7 +51,7 @@
       <section class="panel coach-live-panel"><div class="panel-heading"><div><p class="eyebrow">CURRENT SEASON · PRIVATE</p><h2>Wrestle-Offs</h2></div></div><p id="wrestle-feedback" class="coach-lineup-feedback" role="status"></p><div id="wrestle-history"></div><div id="wrestle-pbp" hidden></div></section>
       `;
 
-    if(identity?.primary_color){const hero=document.getElementById('college-identity-hero');hero.style.background=identity.primary_color;const accent=identity.secondary_color||'#E6AD24';hero.querySelector('.eyebrow').style.color=accent;hero.querySelector('.coach-hero-seal').style.color=accent;hero.querySelector('.coach-hero-seal').style.borderColor=accent;}
+    CoachIdentityBanner.apply(root,identity);
     const rosterPanel=document.getElementById('coaching-roster-table');
     const feedback=document.getElementById('lineup-feedback');
     const formatStatus=r=>r.starter_ind?'<span class="coach-starter">Starter</span>':'<span class="coach-backup">Roster</span>';

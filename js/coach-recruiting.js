@@ -23,6 +23,7 @@
 
   let auth;
   let overview;
+  let collegeIdentity=null;
   let catalog = [];
   let board = [];
   let pipeline = {};
@@ -59,12 +60,9 @@
   }
 
   function shell() {
-    document.title = `${overview.team_name || 'My College'} — Recruiting | Sim Wrestling`;
+    document.title = `${collegeIdentity?.display_name || overview.team_name || 'My College'} — Recruiting | Sim Wrestling`;
     root.innerHTML = `
-      <section class="coach-live-hero recruit-hero">
-        <div><p class="eyebrow">YOUR COLLEGE · WEEK ${esc(overview.recruiting_week || '—')}</p><h1>${esc(overview.team_name || 'Recruiting')}</h1><p>${esc(overview.season_code || 'Current season')} · ${esc(overview.league_date || '')}</p></div>
-        <div class="recruit-balance-seal"><strong>${number(overview.available_points)}</strong><span>points available</span></div>
-      </section>
+      ${CoachIdentityBanner.render({identity:collegeIdentity,teamName:overview.team_name,context:'WEEK '+(overview.recruiting_week||'—'),detail:[overview.season_code,number(overview.available_points)+' recruiting points available'].filter(Boolean).join(' · ')})}
       <nav class="coach-subnav" aria-label="Private coaching pages"><a href="coach.html">Team</a><a href="coach-recruiting.html" class="active" aria-current="page">Recruits</a><a href="coach-matches.html">Schedule</a><a href="coach-history.html">Wall of Fame</a><a href="coach-identity.html">Identity</a></nav>
       <div class="coach-summary-grid recruit-summary">
         <article><span>Available</span><strong data-summary="available">${number(overview.available_points)}</strong><small>Rolled forward this season</small></article>
@@ -81,6 +79,7 @@
         <p class="recruit-feedback" id="recruit-feedback" role="status" aria-live="polite"></p>
         <section id="recruit-panel"></section>
       </div>`;
+    CoachIdentityBanner.apply(root,collegeIdentity);
     root.querySelector('.recruit-tabs').addEventListener('click', event => {
       const button = event.target.closest('[data-tab]');
       if (!button || working) return;
@@ -111,8 +110,8 @@
     });
     const badge = root.querySelector('[data-tab="board"] span');
     if (badge) badge.textContent = board.length;
-    const seal = root.querySelector('.recruit-balance-seal strong');
-    if (seal) seal.textContent = number(overview.available_points);
+    const pointsDetail=root.querySelector('.college-hero-meta');
+    if(pointsDetail)pointsDetail.textContent=[collegeIdentity?.mascot,overview.season_code,number(overview.available_points)+' recruiting points available'].filter(Boolean).join(' · ');
   }
 
   function renderOverview() {
@@ -413,6 +412,9 @@
     const {data:{user}, error} = await auth.client.auth.getUser();
     if (error || !user) { fail('Please sign in to access your recruiting headquarters.'); return; }
     await loadCore();
+    let teamGuid=overview?.team_guid;
+    if(!teamGuid){try{const result=await auth.client.rpc('get_my_coaching_dashboard_v4_2_0');if(!result.error)teamGuid=result.data?.team_guid;}catch(_) { /* keep recruiting usable */ }}
+    collegeIdentity=await CoachIdentityBanner.load(auth.client,teamGuid);
     shell();
     if (requestedPackage) await viewPackage(requestedPackage);
   } catch (error) {

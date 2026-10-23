@@ -16,7 +16,8 @@
     return v === null ? '—' : Number.isInteger(v) ? String(v) : v.toFixed(1);
   };
   const nav = `<nav class="coach-subnav" aria-label="Private coaching pages"><a href="coach.html">Team</a><a href="coach-recruiting.html">Recruits</a><a href="coach-matches.html" class="active" aria-current="page">Schedule</a><a href="coach-history.html">Wall of Fame</a><a href="coach-identity.html">Identity</a></nav>`;
-  const fail = message => {root.innerHTML = `<section class="panel coach-gate"><h1>Matches unavailable</h1><p>${esc(message)}</p><p><a href="coach.html">Back to Coach</a> · <a href="login.html">Sign in</a></p></section>`;};
+  const fail = message => {root.innerHTML = `<section class="panel coach-gate"><h1>Matches unavailable</h1><p>${esc(message)}</p><p><a href="coach.html">Back to Coach</a> · <a href="login.html">Sign in</a></p></section>`;
+    };
   try {
     const auth = await window.SimAuth.ready;
     const {data: userData, error: userError} = await auth.client.auth.getUser();
@@ -25,16 +26,18 @@
     const {data, error} = await auth.client.rpc('get_my_coaching_matches_v4_2_5');
     if (error) throw error;
     if (!data?.team_guid || !Array.isArray(data.matches)) throw Error('The matches service did not return a complete schedule.');
+    const collegeIdentity=await CoachIdentityBanner.load(auth.client,data.team_guid);
     const matches = data.matches.slice().sort((a,b) => String(a.scheduled_date || '').localeCompare(String(b.scheduled_date || '')) || (Number(a.dual_order || 0) - Number(b.dual_order || 0)) || String(a.scheduled_dual_guid).localeCompare(String(b.scheduled_dual_guid)));
     const completed = matches.filter(m => m.completed === true && guid(m.dual_guid));
     let showResults = false; // Spoiler preference resets on every load, intentionally not persisted.
     document.title = `Matches — ${data.season_code || 'Current Season'} | Sim Wrestling`;
-    root.innerHTML = `<section class="coach-live-hero"><div><p class="eyebrow">YOUR COLLEGE · CURRENT SEASON</p><h1>Team Dual Meets</h1><p>${esc(data.season_code || 'Current season')} · Complete dual schedule</p></div><div class="coach-hero-seal" aria-hidden="true">SW</div></section>
+    root.innerHTML = `${CoachIdentityBanner.render({identity:collegeIdentity,teamName:data.team_name||'My College',context:'CURRENT SEASON',detail:(data.season_code||'Current season')+' · Team dual meets'})}
       ${nav}
       <section class="panel coach-matches-panel"><div class="coach-matches-heading"><div><p class="eyebrow">SEASON SCHEDULE</p><h2>From Opening Dual to Season Finale</h2><p class="coach-matches-intro">Watch every completed meet without seeing the score first. Opponent rankings and records reflect the current season.</p></div><button type="button" id="coach-reveal-results" class="coach-results-toggle" aria-pressed="false">Show Results</button></div>
         <div class="coach-match-summary"><span><strong>${matches.length}</strong> Dual meets</span><span><strong>${completed.length}</strong> Available to watch</span><span id="coach-spoiler-status" class="coach-spoiler-hidden">Results hidden</span></div>
         <div id="coach-matches-list" class="coach-matches-list" aria-live="polite"></div>
       </section>`;
+    CoachIdentityBanner.apply(root,collegeIdentity);
     const list = document.getElementById('coach-matches-list');
     const toggle = document.getElementById('coach-reveal-results');
     const hint = document.getElementById('coach-spoiler-status');
