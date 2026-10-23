@@ -13,6 +13,8 @@
   const prospectsPanel = document.getElementById('prospects-panel');
   const classesPanel = document.getElementById('classes-panel');
   const e = SimSite.escape;
+  const prospectEyebrow = document.querySelector('#prospects-panel .eyebrow');
+  const classEyebrow = document.querySelector('#classes-panel .eyebrow');
 
   if (!window.SimSite.configuredOrMessage(prospectBoard)) return;
 
@@ -85,7 +87,9 @@
     const weight = weightFilter.value === 'ALL' ? ''
       : ` ${weightFilter.value === 'HWT' ? 'HWT' : `${weightFilter.value}-Pound`}`;
 
+    const activeSeasonNumber = Number(prospects[0]?.game_season_number || 0);
     prospectTitle.textContent = `${geography}${weight} High-School Senior Rankings`;
+    prospectEyebrow.textContent = activeSeasonNumber ? `Season ${activeSeasonNumber} · Active recruiting · Seniors only` : 'Current season · Active recruiting · Seniors only';
     prospectCount.textContent = `Top ${visible.length} of ${rows.length} senior${rows.length === 1 ? '' : 's'}`;
     syncUrl();
 
@@ -148,9 +152,12 @@
     }).sort((a, b) => Number(a[rankField]) - Number(b[rankField])
       || String(a.team_name).localeCompare(String(b.team_name)));
 
-    classTitle.textContent = `${geography} Recruiting Classes`;
+    const signingSeasonNumber = Number(rows[0]?.game_season_number || 0);
+    const recruitingSeasonNumber = Math.max(0, signingSeasonNumber - 1);
+    classTitle.textContent = `${geography} Recruiting Classes · Final Standings`;
+    classEyebrow.textContent = recruitingSeasonNumber ? `Season ${recruitingSeasonNumber} · Final recruiting results` : 'Last completed recruiting season · Final results';
     classCount.textContent = latestSeason
-      ? `Season ${latestSeason} incoming classes · ${rows.length} college program${rows.length === 1 ? '' : 's'}`
+      ? `Season ${recruitingSeasonNumber || latestSeason} recruiting class · Final standings · ${rows.length} college program${rows.length === 1 ? '' : 's'}`
       : 'Class rankings will publish automatically when the season rolls over.';
 
     syncUrl();
@@ -163,7 +170,7 @@
     classBoard.innerHTML = `<div class="table-wrap"><table class="recruiting-classes-table team-ranking-table"><thead><tr><th>Rank</th><th>Team</th><th>Coach</th><th>Class Score</th><th>Top Five Recruits · Final National Rank</th></tr></thead><tbody>${rows.map(row=>{
       const recruits=parsedRecruits(row);
       const links=recruits.length?recruits.map(recruit=>`<a href="${SimSite.profileUrl(recruit.wrestler_guid)}">${e(recruit.wrestler_name)} <small>#${e(recruit.final_national_recruiting_rank ?? '—')} national</small></a>`).join(''):'<small>No ranked signees</small>';
-      return `<tr><td class="rank-number">${e(row[rankField]??'—')}</td><td><a class="wrestler-link" href="${SimSite.teamUrl(row.team_guid)}">${e(row.team_name)}</a></td><td>${e(coaches.get(String(row.team_guid))||'')}</td><td class="class-score-cell">${Number(row.class_score||0).toFixed(0)}</td><td><div class="class-recruit-links">${links}</div></td></tr>`;
+      return `<tr><td class="rank-number">${e(row[rankField]??'—')}</td><td><a class="wrestler-link" href="${SimSite.teamUrl(row.team_guid)}">${e(row.team_name)}</a></td><td>${e(coaches.get(String(row.team_guid))||'')}</td><td class="class-score-cell">${(Number(row.class_score||0)/20).toFixed(2)}</td><td><div class="class-recruit-links">${links}</div></td></tr>`;
     }).join('')}</tbody></table></div>`;
   }
 

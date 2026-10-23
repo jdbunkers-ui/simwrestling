@@ -351,3 +351,22 @@
 
 /* v4.5.4: make room for the Game Engine navigation link. */
 @media(min-width:761px) and (max-width:1100px){.site-header{height:auto}.nav-shell{height:auto;flex-direction:column;align-items:flex-start}.brand{padding:13px 0 7px}.main-nav{width:100%;height:42px;gap:20px;overflow-x:auto}.main-nav a{height:42px;flex:0 0 auto}}
+
+
+/* v4.5.7 · Senior-only recruiting profile */
+.decision-time{border-top:4px solid var(--accent,#e5a000)}
+.decision-time-inner{padding:0 24px 24px}
+.decision-time-highlights{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:22px}
+.decision-time-highlights>div{background:#f0f4fa;border:1px solid #dbe3f0;border-radius:9px;padding:17px;display:flex;flex-direction:column;gap:4px}
+.decision-time-highlights span{color:#52657e;font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.055em}
+.decision-time-highlights strong{font-size:2rem;color:#152945}
+.decision-time-highlights small{font-size:.76rem;color:#52657e}
+.decision-time-inner h3{font-size:1rem;margin:18px 0 10px}
+.decision-time-schools{display:flex;flex-wrap:wrap;gap:8px}
+.decision-time-schools a{background:#e7eefc;color:#0645a4;border-radius:5px;padding:8px 10px;text-decoration:none;font-size:.82rem;font-weight:700}
+.decision-time-years{border:1px solid #dbe3f0;border-radius:9px;overflow:hidden}
+.decision-time-years>div{display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #dbe3f0}
+.decision-time-years>div:last-child{border-bottom:0}
+.decision-time-total{background:#edf3fb;font-weight:800}
+.decision-time-note{font-size:.75rem;color:#52657e;line-height:1.5;margin:13px 0 0}
+@media(max-width:600px){.decision-time-highlights{grid-template-columns:1fr}.decision-time-inner{padding:0 14px 18px}}

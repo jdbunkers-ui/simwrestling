@@ -116,6 +116,7 @@
     // Day-advance work can therefore run without blanking public profiles.
     profile: (guid) => rpc('get_public_wrestler_profile_core_v3_9_5', { p_wrestler_guid: guid }),
     profileCore: (guid) => rpc('get_public_wrestler_profile_core_v3_9_5', { p_wrestler_guid: guid }),
+    seniorDecision: (guid) => rpc('get_public_senior_decision_v457', { p_wrestler_guid: guid }),
     profileHistory: (guid) => rpc('get_public_wrestler_profile_history_v3_9_5', { p_wrestler_guid: guid }),
     archivedProfile: (guid) => rpc('get_archived_college_wrestler_profile', { p_wrestler_guid: guid }),
     matchFeed: (guid) => query(
