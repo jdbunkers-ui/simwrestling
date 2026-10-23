@@ -15,6 +15,8 @@
   const e = SimSite.escape;
   const prospectEyebrow = document.querySelector('#prospects-panel .eyebrow');
   const classEyebrow = document.querySelector('#classes-panel .eyebrow');
+  const classSeasonProminent = document.getElementById('class-season-prominent');
+  const prospectSeasonProminent = document.getElementById('prospect-season-prominent');
 
   if (!window.SimSite.configuredOrMessage(prospectBoard)) return;
 
@@ -89,6 +91,7 @@
 
     const activeSeasonNumber = Number(prospects[0]?.game_season_number || 0);
     prospectTitle.textContent = `${geography}${weight} High-School Senior Rankings`;
+    prospectSeasonProminent.textContent = activeSeasonNumber ? `SEASON ${activeSeasonNumber}` : 'CURRENT SEASON';
     prospectEyebrow.textContent = activeSeasonNumber ? `Season ${activeSeasonNumber} · Active recruiting · Seniors only` : 'Current season · Active recruiting · Seniors only';
     prospectCount.textContent = `Top ${visible.length} of ${rows.length} senior${rows.length === 1 ? '' : 's'}`;
     syncUrl();
@@ -155,6 +158,7 @@
     const signingSeasonNumber = Number(rows[0]?.game_season_number || 0);
     const recruitingSeasonNumber = Math.max(0, signingSeasonNumber - 1);
     classTitle.textContent = `${geography} Recruiting Classes · Final Standings`;
+    classSeasonProminent.textContent = recruitingSeasonNumber ? `SEASON ${recruitingSeasonNumber}` : 'PREVIOUS SEASON';
     classEyebrow.textContent = recruitingSeasonNumber ? `Season ${recruitingSeasonNumber} · Final recruiting results` : 'Last completed recruiting season · Final results';
     classCount.textContent = latestSeason
       ? `Season ${recruitingSeasonNumber || latestSeason} recruiting class · Final standings · ${rows.length} college program${rows.length === 1 ? '' : 's'}`

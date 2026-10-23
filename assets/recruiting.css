@@ -13,3 +13,11 @@
 .recruiting-page .senior-ranking-note{margin:0 22px 16px;color:var(--muted);font-size:.75rem;line-height:1.5}
 .recruiting-page .recruiting-panel-heading{align-items:end}
 @media(max-width:760px){.recruiting-page .recruiting-panel-heading{align-items:stretch}}
+
+/* v4.5.8: Prominent, data-driven recruiting season headers. */
+.recruiting-page .recruiting-season-banner{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:0 0 13px}
+.recruiting-page .recruiting-season-number{display:inline-block;padding:9px 15px;border-radius:7px;background:#172d4d;color:#fff;font-size:1.33rem;font-weight:900;line-height:1.05;letter-spacing:.025em;white-space:nowrap}
+.recruiting-page .recruiting-season-banner-final .recruiting-season-number{background:#172d4d;border-left:4px solid #eca413}
+.recruiting-page .recruiting-season-banner-active .recruiting-season-number{background:#172d4d;border-left:4px solid #3b82f6}
+.recruiting-page .recruiting-season-context{font-size:.85rem;font-weight:700;color:#475a75;letter-spacing:.01em}
+@media(max-width:550px){.recruiting-page .recruiting-season-number{font-size:1.1rem;padding:8px 12px}.recruiting-page .recruiting-season-context{font-size:.78rem}}
