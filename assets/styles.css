@@ -370,3 +370,6 @@
 .decision-time-total{background:#edf3fb;font-weight:800}
 .decision-time-note{font-size:.75rem;color:#52657e;line-height:1.5;margin:13px 0 0}
 @media(max-width:600px){.decision-time-highlights{grid-template-columns:1fr}.decision-time-inner{padding:0 14px 18px}}
+
+/* v4.5.9 College Identity */
+.identity-form{padding:24px}.identity-form h2{margin:5px 0 10px}.identity-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin:24px 0}.identity-grid label{display:flex;flex-direction:column;gap:8px;font-weight:700;color:#243653}.identity-grid input,.identity-grid select{border:1px solid #bcc9da;border-radius:7px;padding:10px;background:#fff;color:#172940;min-height:44px;font:inherit}.identity-grid input:disabled{background:#eef2f7;color:#6c7787}.identity-grid input[type=color]{width:100%;height:52px;padding:4px;cursor:pointer}.identity-actions{display:flex;gap:12px;flex-wrap:wrap}.identity-actions button{background:#142b4c;color:#fff;border:0;border-radius:7px;padding:12px 18px;font-weight:800;cursor:pointer}.identity-actions button+button{background:#eef2f7;color:#182e4d}.identity-actions button:disabled{opacity:.5;cursor:wait}#identity-feedback{min-height:1.5em;color:#174e70}@media(max-width:600px){.identity-grid{grid-template-columns:1fr}}

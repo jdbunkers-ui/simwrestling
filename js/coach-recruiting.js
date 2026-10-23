@@ -65,7 +65,7 @@
         <div><p class="eyebrow">YOUR COLLEGE · WEEK ${esc(overview.recruiting_week || '—')}</p><h1>${esc(overview.team_name || 'Recruiting')}</h1><p>${esc(overview.season_code || 'Current season')} · ${esc(overview.league_date || '')}</p></div>
         <div class="recruit-balance-seal"><strong>${number(overview.available_points)}</strong><span>points available</span></div>
       </section>
-      <nav class="coach-subnav" aria-label="Private coaching pages"><a href="coach.html">Team</a><a href="coach-recruiting.html" class="active" aria-current="page">Recruits</a><a href="coach-matches.html">Schedule</a><a href="coach-history.html">Wall of Fame</a></nav>
+      <nav class="coach-subnav" aria-label="Private coaching pages"><a href="coach.html">Team</a><a href="coach-recruiting.html" class="active" aria-current="page">Recruits</a><a href="coach-matches.html">Schedule</a><a href="coach-history.html">Wall of Fame</a><a href="coach-identity.html">Identity</a></nav>
       <div class="coach-summary-grid recruit-summary">
         <article><span>Available</span><strong data-summary="available">${number(overview.available_points)}</strong><small>Rolled forward this season</small></article>
         <article><span>Awarded</span><strong data-summary="awarded">${number(overview.points_awarded)}</strong><small>100 points each week</small></article>

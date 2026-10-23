@@ -31,13 +31,15 @@
  try {
   const result=await SimApi.publicTeamSnapshot(guid);
   if(!result?.profile)throw Error('The requested college profile was not found.');
+  let identity=null;try {identity=await SimApi.collegeIdentity(guid);}catch(err){console.warn('College identity unavailable:',err.message);}
   const p=result.profile,lineup=Array.isArray(result.starting_lineup)?result.starting_lineup:[];
-  const abbrev=String(p.team_name||'').split(/\s+/).map(w=>w[0]).join('').slice(0,3);
+  const abbrev=identity?.abbreviation||String(p.team_name||'').split(/\s+/).map(w=>w[0]).join('').slice(0,3);
   const rank=p.state_team_rank?'#'+e(p.state_team_rank)+' - ':'';
   const record=p.dual_record_display?' ('+e(p.dual_record_display)+')':'';
-  document.title=String(p.team_name)+' | Sim Wrestling';
+  document.title=String(identity?.display_name||p.team_name)+' | Sim Wrestling';
   root.classList.add('coach-live-shell');
-  root.innerHTML=`<section class="coach-live-hero"><div><p class="eyebrow">COLLEGE · CURRENT SEASON</p><h1>${rank}${e(p.team_name)}${record}</h1></div><div class="coach-hero-seal" aria-hidden="true">${e(abbrev)}</div></section><nav class="coach-subnav" aria-label="College profile sections"><a href="#team" data-section="team" class="active" aria-current="page">Team</a><a href="#schedule" data-section="schedule">Schedule</a><a href="#fame" data-section="fame">Wall of Fame</a></nav><div id="public-team-section" aria-live="polite"></div>`;
+  root.innerHTML=`<section class="coach-live-hero" id="public-college-identity-hero"><div><p class="eyebrow">COLLEGE · CURRENT SEASON</p><h1>${rank}${e(identity?.display_name||p.team_name)}${record}</h1>${identity?.mascot?`<p>${e(identity.mascot)}</p>`:""}</div><div class="coach-hero-seal" aria-hidden="true">${e(abbrev)}</div></section><nav class="coach-subnav" aria-label="College profile sections"><a href="#team" data-section="team" class="active" aria-current="page">Team</a><a href="#schedule" data-section="schedule">Schedule</a><a href="#fame" data-section="fame">Wall of Fame</a></nav><div id="public-team-section" aria-live="polite"></div>`;
+  if(identity?.primary_color){const hero=document.getElementById('public-college-identity-hero'),accent=identity.secondary_color||'#E6AD24';hero.style.background=identity.primary_color;hero.querySelector('.eyebrow').style.color=accent;hero.querySelector('.coach-hero-seal').style.color=accent;hero.querySelector('.coach-hero-seal').style.borderColor=accent;}
   const holder=document.getElementById('public-team-section');
   views.team=`<section class="panel coach-live-panel"><div class="panel-heading"><div><p class="eyebrow">CURRENT COLLEGE</p><h2>Roster and starting lineup</h2></div></div>${renderTeam(lineup)}</section>`;
   async function activate(which){

@@ -23,8 +23,11 @@
       if(!res.error)profile=res.data?.profile||null;
       else console.warn('Team header details unavailable:',res.error.message);
     } catch(e) {console.warn('Team header details unavailable:',e.message);}
-    const schoolName=String(data.team_name||'');
-    const schoolAbbr=schoolName.split(/\s+/).filter(w=>w&&!/^(of|the|and|at|for)$/i.test(w)).map(w=>w[0]).join('').slice(0,4).toUpperCase()||'SW';
+    let identity=null;
+    try { const idResult=await auth.client.rpc('get_college_identity_v459',{p_team_guid:data.team_guid});if(!idResult.error)identity=idResult.data; }
+    catch(e){console.warn('Identity unavailable:',e.message);}
+    const schoolName=String(identity?.display_name||data.team_name||'');
+    const schoolAbbr=identity?.abbreviation||schoolName.split(/\s+/).filter(w=>w&&!/^(of|the|and|at|for)$/i.test(w)).map(w=>w[0]).join('').slice(0,4).toUpperCase()||'SW';
     const rankValue=Number(profile?.state_team_rank);
     const rankPrefix=Number.isInteger(rankValue)&&rankValue>0?'#'+rankValue+' - ':'';
     const record=String(profile?.dual_record_display||'').trim();
@@ -39,8 +42,8 @@
     const today=data.current_league_date;
     document.title=`${data.team_name} — Coaching | Sim Wrestling`;
     root.innerHTML=`
-      <section class="coach-live-hero"><div><p class="eyebrow">YOUR COLLEGE · CURRENT SEASON</p><h1>${escape(headerText)}</h1></div><div class="coach-hero-seal" aria-hidden="true">${escape(schoolAbbr)}</div></section>
-      <nav class="coach-subnav" aria-label="Private coaching pages"><a href="coach.html" class="active" aria-current="page">Team</a><a href="coach-recruiting.html">Recruits</a><a href="coach-matches.html">Schedule</a><a href="coach-history.html">Wall of Fame</a></nav>
+      <section class="coach-live-hero" id="college-identity-hero"><div><p class="eyebrow">YOUR COLLEGE · CURRENT SEASON</p><h1>${escape(headerText)}</h1>${identity?.mascot?`<p>${escape(identity.mascot)}</p>`:""}</div><div class="coach-hero-seal" aria-hidden="true">${escape(schoolAbbr)}</div></section>
+      <nav class="coach-subnav" aria-label="Private coaching pages"><a href="coach.html" class="active" aria-current="page">Team</a><a href="coach-recruiting.html">Recruits</a><a href="coach-matches.html">Schedule</a><a href="coach-history.html">Wall of Fame</a><a href="coach-identity.html">Identity</a></nav>
       <section class="panel coach-live-panel"><div class="panel-heading coach-roster-heading"><div><p class="eyebrow">CURRENT COLLEGE</p><h2>Roster and starting lineup</h2></div><div class="coach-roster-switch" role="group" aria-label="Roster view"><button type="button" id="roster-full" aria-pressed="false">Full Roster</button><button type="button" id="roster-starters" class="active" aria-pressed="true">Starters</button></div></div>
       <p id="lineup-feedback" class="coach-lineup-feedback" role="status" aria-live="polite"></p>
       <div id="coaching-roster-table"></div>
@@ -48,6 +51,7 @@
       <section class="panel coach-live-panel"><div class="panel-heading"><div><p class="eyebrow">CURRENT SEASON · PRIVATE</p><h2>Wrestle-Offs</h2></div></div><p id="wrestle-feedback" class="coach-lineup-feedback" role="status"></p><div id="wrestle-history"></div><div id="wrestle-pbp" hidden></div></section>
       `;
 
+    if(identity?.primary_color){const hero=document.getElementById('college-identity-hero');hero.style.background=identity.primary_color;const accent=identity.secondary_color||'#E6AD24';hero.querySelector('.eyebrow').style.color=accent;hero.querySelector('.coach-hero-seal').style.color=accent;hero.querySelector('.coach-hero-seal').style.borderColor=accent;}
     const rosterPanel=document.getElementById('coaching-roster-table');
     const feedback=document.getElementById('lineup-feedback');
     const formatStatus=r=>r.starter_ind?'<span class="coach-starter">Starter</span>':'<span class="coach-backup">Roster</span>';

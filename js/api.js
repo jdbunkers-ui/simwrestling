@@ -76,6 +76,7 @@
 
   window.SimApi = {
     isConfigured,
+    collegeIdentity: (guid) => rpc('get_college_identity_v459',{p_team_guid:guid}),
     gameUpdates: (options = {}) => rpc('get_public_game_updates_v454', {
       p_limit: options.limit || 51, p_offset: options.offset || 0
     }),

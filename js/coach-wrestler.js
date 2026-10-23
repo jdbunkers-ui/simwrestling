@@ -60,7 +60,7 @@
     document.title = `${p.wrestler_name} | Sim Wrestling`;
 
     root.innerHTML = `
-      <nav class="coach-subnav coach-profile-nav" aria-label="Private coaching pages"><a href="coach.html" class="active" aria-current="page">Team</a><a href="coach-recruiting.html">Recruits</a><a href="coach-matches.html">Schedule</a><a href="coach-history.html">Wall of Fame</a></nav>
+      <nav class="coach-subnav coach-profile-nav" aria-label="Private coaching pages"><a href="coach.html" class="active" aria-current="page">Team</a><a href="coach-recruiting.html">Recruits</a><a href="coach-matches.html">Schedule</a><a href="coach-history.html">Wall of Fame</a><a href="coach-identity.html">Identity</a></nav>
       <a class="coach-back-link" href="coach.html">← Back to Coaching Roster</a>
       <section class="profile-hero">
         <div class="athlete-id"><div class="monogram" aria-hidden="true">${e(initials)}</div><div>
