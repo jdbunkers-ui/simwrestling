@@ -1,0 +1,51 @@
+/* v5.0.7 — private college Wall of Fame, consistent with coaching identity palette */
+.fame-page{--fame-college-color:#142b4c}
+.fame-intro{margin:0 0 16px;padding:8px 2px 4px}
+.fame-intro h2{font-size:clamp(1.45rem,2.5vw,2rem);letter-spacing:-.035em;line-height:1.2;margin:4px 0 7px}
+.fame-intro p:last-child{max-width:850px;margin:0;color:#5f6b7c;font-size:.94rem}
+.fame-summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;margin:0 0 20px}
+.fame-summary-card{background:#fff;border:1px solid #d8dde5;border-top:3px solid var(--fame-college-color);border-radius:9px;min-width:0;padding:18px 20px;box-shadow:0 4px 18px rgba(20,31,50,.035)}
+.fame-summary-card span,.fame-summary-card small{display:block;color:#607087;font-size:.76rem;font-weight:700}
+.fame-summary-card span{letter-spacing:.045em;text-transform:uppercase}
+.fame-summary-card strong{display:block;color:#15243c;font-size:2rem;line-height:1.3;margin:3px 0;font-variant-numeric:tabular-nums}
+.fame-summary-card small{font-weight:500}
+.fame-history-panel{padding:22px 0 0;overflow:hidden}
+.fame-history-panel>.panel-heading,.fame-season-help{margin-left:22px;margin-right:22px}
+.fame-season-help{font-size:.83rem;color:#667389;margin-top:0;margin-bottom:13px}
+.fame-season-scroll{width:100%}
+.fame-season-table{width:100%;min-width:790px;border-collapse:collapse}
+.fame-season-table th{text-align:left!important;white-space:normal;vertical-align:bottom}
+.fame-season-table td{text-align:left!important;vertical-align:middle}
+.fame-season-table .fame-season-row>td{padding:13px 18px}
+.fame-season-table .fame-season-row:hover>td,.fame-season-table .fame-season-open>td{background:#f6f8fb}
+.fame-season-toggle{display:inline-flex;align-items:center;gap:8px;appearance:none;background:transparent;border:0;color:#174d97;font:inherit;cursor:pointer;text-align:left;padding:4px 2px;white-space:nowrap}
+.fame-season-toggle:hover{text-decoration:underline}
+.fame-season-toggle:focus-visible,.fame-sort:focus-visible{outline:3px solid #dca32c;outline-offset:3px;border-radius:4px}
+.fame-chevron{display:inline-block;color:#77849a;min-width:12px;font-size:1.1rem;text-align:center}
+.fame-record{font-size:1rem;font-weight:850;font-variant-numeric:tabular-nums;color:#1b304c}
+.fame-rank{font-weight:800;color:#1d3558}
+.fame-unranked,.fame-empty,.fame-missing{color:#818e9f;font-size:.8rem}
+.fame-graduate-count{display:inline-block;border-radius:5px;background:#e8f1fb;color:#23538a;font-size:.8rem;font-weight:800;padding:5px 9px}
+.fame-detail-row>td{padding:0!important;border-bottom:2px solid #dce2e9;background:#f8fafc!important}
+.fame-detail-content{padding:22px 22px 24px;border-left:4px solid var(--fame-college-color)}
+.fame-alumni-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:12px}
+.fame-alumni-heading h3{margin:3px 0 0;font-size:1.22rem;letter-spacing:-.02em}
+.fame-alumni-scroll{border-radius:7px;border:1px solid #d9e0e8;background:#fff}
+.fame-alumni-table{width:100%;min-width:875px;border-collapse:collapse}
+.fame-alumni-table th,.fame-alumni-table td{text-align:right!important;vertical-align:middle;padding:11px 12px}
+.fame-alumni-table th:first-child,.fame-alumni-table td:first-child{text-align:left!important;min-width:175px}
+.fame-alumni-table th:nth-child(2),.fame-alumni-table td:nth-child(2){text-align:left!important}
+.fame-alumni-table th{background:#edf2f8;white-space:normal;line-height:1.3}
+.fame-alumni-table tr:last-child td{border-bottom:0}
+.fame-alumni-table .fame-wrestler a{font-weight:850}
+.fame-sort{padding:0;min-height:32px;text-align:inherit;font:inherit;text-transform:inherit;letter-spacing:inherit;color:#536377;background:none;border:0;font-weight:800;cursor:pointer}
+.fame-sort:hover{text-decoration:underline;color:#174d97}
+.fame-sort-mark{font-size:.64rem;padding-left:5px;color:#32629b}
+.fame-placement{font-weight:800;color:#2f486b}
+.fame-champion{display:inline-block;padding:3px 7px;border-radius:5px;background:#fff2ca;color:#815400}
+.fame-table-note{margin:12px 0 0;color:#69788c;font-size:.77rem}
+.fame-archive-message{border:1px dashed #ccd7e3;background:#f2f6fb;color:#536579;padding:18px 20px;border-radius:8px;font-size:.9rem}
+.fame-archive-message strong{color:#2f415d}.fame-archive-message p{margin:6px 0 0}
+.fame-disclosure{border-left:3px solid #bec9d8;margin:4px 0 34px;padding:4px 12px;color:#617086;font-size:.81rem}
+@media(max-width:800px){.fame-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.fame-summary-card:last-child{grid-column:1/-1}}
+@media(max-width:570px){.fame-summary-grid{grid-template-columns:1fr}.fame-summary-card:last-child{grid-column:auto}.fame-alumni-heading{align-items:flex-start}.fame-detail-content{padding:16px 12px}.fame-history-panel>.panel-heading{align-items:flex-start;gap:7px;flex-direction:column}.fame-history-panel>.panel-heading,.fame-season-help{margin-left:16px;margin-right:16px}}
