@@ -408,3 +408,6 @@
 .ranking-identity-badge{display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;width:40px;height:40px;border:2px solid;border-radius:50%;font-size:11px;font-weight:900;line-height:1;letter-spacing:.01em;white-space:nowrap}
 .ranking-identity-link:focus-visible{outline:3px solid #c68b16;outline-offset:3px}
 .ranking-identity-link:hover .ranking-identity-badge{box-shadow:0 0 0 3px rgba(16,43,67,.12)}
+
+/* v5.0.5: Accessible unlabeled identity column for recruiting class rankings. */
+.sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
