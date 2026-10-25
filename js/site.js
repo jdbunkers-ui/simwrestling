@@ -52,7 +52,24 @@
             `).join('')}
           </nav>
         </div>
-      </header>`;
+      </header>
+      <aside class="partner-promo-wrap" aria-label="Sponsored promotion">
+        <div class="partner-promo-inner">
+          <span class="partner-promo-label">PARTNER SPOTLIGHT</span>
+          <a class="partner-promo-link" href="https://www.bracketleaders.com/"
+             target="_blank" rel="noopener noreferrer sponsored"
+             aria-label="Visit Bracket Leaders to create your own college wrestling league (opens in a new tab)">
+            <picture>
+              <source media="(max-width: 600px)" srcset="assets/bracket-leaders-mobile-v5_1_0.webp" type="image/webp">
+              <source srcset="assets/bracket-leaders-desktop-v5_1_0.webp" type="image/webp">
+              <source media="(max-width: 600px)" srcset="assets/bracket-leaders-mobile-v5_1_0.png" type="image/png">
+              <img src="assets/bracket-leaders-desktop-v5_1_0.png" width="1200" height="300"
+                   loading="eager" decoding="async"
+                   alt="Bracket Leaders — Run your own college wrestling league. Create your league today!">
+            </picture>
+          </a>
+        </div>
+      </aside>`;
   }
 
   // v4.0.0: Account navigation is intentionally independent of public data APIs.
