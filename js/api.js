@@ -112,6 +112,7 @@
     teamProfile: (guid) => rpc('get_team_profile', { p_team_guid: guid }),
     publicTeamSnapshot: (guid) => rpc('get_public_college_team_snapshot_v448', { p_team_guid: guid }),
     publicTeamCoaches: () => rpc('get_public_team_coaches_v448', {}),
+    publicTeamIdentityBadges: () => rpc('get_public_team_identity_badges_v504', {}),
     publicCollegeSchedule: () => rpc('get_public_college_schedule_v449', {}),
     // Core and history come from the last atomically completed profile cache.
     // Day-advance work can therefore run without blanking public profiles.
