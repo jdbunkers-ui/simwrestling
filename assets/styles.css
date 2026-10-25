@@ -411,3 +411,10 @@
 
 /* v5.0.5: Accessible unlabeled identity column for recruiting class rankings. */
 .sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+/* v5.0.6: History human-college badges — preserve all championship data and links. */
+.history-team-identity{display:inline-flex;align-items:center;gap:9px;flex-wrap:wrap;vertical-align:middle}
+.history-college-identity{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:.3rem}
+.history-college-identity .history-college{margin-top:0}
+.history-page .history-team-identity .history-identity-link .ranking-identity-badge{width:34px;height:34px;font-size:10px}
+.history-page .history-college-identity .history-identity-link .ranking-identity-badge{width:28px;height:28px;font-size:9px}
