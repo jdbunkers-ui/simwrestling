@@ -23,7 +23,25 @@
   let prospects = [];
   let recruitingClasses = [];
   let activeTab = 'classes';
-  let teams = [], inventory = [], coaches = new Map();
+  let teams = [], inventory = [], teamBadges = new Map();
+
+  // Cosmetic badges are returned exclusively for active HUMAN-controlled colleges.
+  const safeColor = value => /^#[0-9a-fA-F]{6}$/.test(String(value || '')) ? String(value) : null;
+  function badgeTextColor(hex) {
+    const channels = [1,3,5].map(i => parseInt(hex.slice(i,i+2),16)/255)
+      .map(x => x <= 0.04045 ? x/12.92 : ((x+0.055)/1.055)**2.4);
+    const luminance = channels[0]*0.2126 + channels[1]*0.7152 + channels[2]*0.0722;
+    return luminance > 0.179 ? '#102b43' : '#ffffff';
+  }
+  function identityBadge(row) {
+    const data = teamBadges.get(String(row.team_guid || ''));
+    if (!data) return '';
+    const acronym = String(data.team_acronym || '').trim().slice(0,8);
+    const primary = safeColor(data.primary_color);
+    const secondary = safeColor(data.secondary_color);
+    if (!acronym || !primary) return '';
+    return `<a class="ranking-identity-link" href="${SimSite.teamUrl(row.team_guid)}" aria-label="View ${e(row.team_name)} team profile" title="${e(row.team_name)}"><span class="ranking-identity-badge" style="background:${primary};color:${badgeTextColor(primary)};border-color:${secondary||primary}">${e(acronym)}</span></a>`;
+  }
   let prospectLoadError = null;
 
   function option(value, label) {
@@ -171,10 +189,10 @@
       return;
     }
 
-    classBoard.innerHTML = `<div class="table-wrap"><table class="recruiting-classes-table team-ranking-table"><thead><tr><th>Rank</th><th>Team</th><th>Coach</th><th>Class Score</th><th>Top Five Recruits · Final National Rank</th></tr></thead><tbody>${rows.map(row=>{
+    classBoard.innerHTML = `<div class="table-wrap"><table class="recruiting-classes-table team-ranking-table"><thead><tr><th>Rank</th><th>Team</th><th class="ranking-identity-heading" scope="col"><span class="sr-only">College identity</span></th><th>Class Score</th><th>Top Five Recruits · Final National Rank</th></tr></thead><tbody>${rows.map(row=>{
       const recruits=parsedRecruits(row);
       const links=recruits.length?recruits.map(recruit=>`<a href="${SimSite.profileUrl(recruit.wrestler_guid)}">${e(recruit.wrestler_name)} <small>#${e(recruit.final_national_recruiting_rank ?? '—')} national</small></a>`).join(''):'<small>No ranked signees</small>';
-      return `<tr><td class="rank-number">${e(row[rankField]??'—')}</td><td><a class="wrestler-link" href="${SimSite.teamUrl(row.team_guid)}">${e(row.team_name)}</a></td><td>${e(coaches.get(String(row.team_guid))||'')}</td><td class="class-score-cell">${(Number(row.class_score||0)/20).toFixed(2)}</td><td><div class="class-recruit-links">${links}</div></td></tr>`;
+      return `<tr><td class="rank-number">${e(row[rankField]??'—')}</td><td><a class="wrestler-link" href="${SimSite.teamUrl(row.team_guid)}">${e(row.team_name)}</a></td><td class="ranking-identity-cell">${identityBadge(row)}</td><td class="class-score-cell">${(Number(row.class_score||0)/20).toFixed(2)}</td><td><div class="class-recruit-links">${links}</div></td></tr>`;
     }).join('')}</tbody></table></div>`;
   }
 
@@ -209,10 +227,10 @@
     const season=prospects[0]||recruitingClasses[0];
     seasonLabel.textContent=season?.game_season_number?`Season ${season.game_season_number} recruiting center`:'Current season recruiting center';
     activateTab('classes');
-    SimApi.publicTeamCoaches().then(rows=>{
-      coaches=new Map((Array.isArray(rows)?rows:[]).map(r=>[String(r.team_guid),String(r.coach_name||'')]));
+    SimApi.publicTeamIdentityBadges().then(rows=>{
+      teamBadges=new Map((Array.isArray(rows)?rows:[]).map(r=>[String(r.team_guid),r]));
       if(activeTab==='classes')renderClasses();
-    }).catch(err=>console.warn('Public coach names unavailable:',err.message));
+    }).catch(err=>console.warn('Recruiting class identity badges unavailable:',err.message));
   } catch (error) {
     SimSite.showError(prospectBoard, error.message);
     prospectCount.textContent = 'Recruiting data unavailable';
