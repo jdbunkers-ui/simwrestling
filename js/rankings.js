@@ -1,4 +1,4 @@
-/* v4.4.9.1 - Team rankings default; geography retains coach/guest defaults. */
+/* v5.0.4 - Human-college identity badges in team rankings. */
 (async function () {
   'use strict';
   const content = document.getElementById('rankings-content');
@@ -14,8 +14,27 @@
   const weights = ['125','133','141','149','157','165','174','184','197','HWT'];
   const cache = new Map();
   let teams = null, inventory = [], renderSequence = 0;
+  let teamBadges = new Map();
   let coachNames = new Map();
   const coachFor = (guid) => coachNames.get(String(guid || '')) || '';
+  // Cosmetic identity data is provided only for active HUMAN-controlled colleges.
+  // Validate values before inserting into an inline style.
+  const safeColor = (value) => /^#[0-9a-fA-F]{6}$/.test(String(value || '')) ? String(value) : null;
+  function badgeTextColor(hex) {
+    const channels = [1,3,5].map(i => parseInt(hex.slice(i,i+2),16)/255)
+      .map(x => x <= 0.04045 ? x/12.92 : ((x+0.055)/1.055)**2.4);
+    const luminance = channels[0]*0.2126 + channels[1]*0.7152 + channels[2]*0.0722;
+    return luminance > 0.179 ? '#102b43' : '#ffffff';
+  }
+  function identityBadge(row) {
+    const data = teamBadges.get(String(row.team_guid || ''));
+    if (!data) return '';
+    const acronym = String(data.team_acronym || '').trim().slice(0,8);
+    const primary = safeColor(data.primary_color);
+    const secondary = safeColor(data.secondary_color);
+    if (!acronym || !primary) return '';
+    return `<a class="ranking-identity-link" href="${SimSite.teamUrl(row.team_guid)}" aria-label="View ${e(row.team_name)} team profile" title="${e(row.team_name)}"><span class="ranking-identity-badge" style="background:${primary};color:${badgeTextColor(primary)};border-color:${secondary||primary}">${e(acronym)}</span></a>`;
+  }
   const option = (value,label) => `<option value="${e(value)}">${e(label)}</option>`;
   // Explicit allowlist prevents foreign countries and stray location codes from appearing.
   // Alaska, Hawaii and DC are intentionally excluded from the contiguous 48-state list.
@@ -79,7 +98,7 @@
     pageTitle.textContent='College Rankings';
     pageCopy.textContent='College teams ranked nationally, by region or by state.';
     if (!rows.length) {content.innerHTML='<div class="state-card"><p>No teams match the selected geography.</p></div>';return;}
-    content.innerHTML=`<div class="table-wrap"><table class="team-ranking-table"><thead><tr><th>Rank</th><th>Team</th><th>Coach</th><th>City</th><th>Record</th><th>Win %</th><th>Avg. margin</th></tr></thead><tbody>${rows.map(row=>`<tr><td class="rank-number">${row.display_rank}</td><td><a class="wrestler-link" href="${SimSite.teamUrl(row.team_guid)}">${e(row.team_name)}</a></td><td>${e(coachFor(row.team_guid))}</td><td>${e(row.hometown_city||'—')}, ${e(String(row.state_code||'').trim())}</td><td><strong>${e(row.dual_record_display||'0-0')}</strong></td><td>${SimSite.percent(row.dual_win_rate,1)}</td><td>${Number(row.average_dual_margin||0)>0?'+':''}${SimSite.number(row.average_dual_margin,1)}</td></tr>`).join('')}</tbody></table></div>`;
+    content.innerHTML=`<div class="table-wrap"><table class="team-ranking-table"><thead><tr><th>Rank</th><th>Team</th><th class="ranking-identity-heading" aria-label="Team identity"></th><th>City</th><th>Record</th><th>Win %</th><th>Avg. margin</th></tr></thead><tbody>${rows.map(row=>`<tr><td class="rank-number">${row.display_rank}</td><td><a class="wrestler-link" href="${SimSite.teamUrl(row.team_guid)}">${e(row.team_name)}</a></td><td class="ranking-identity-cell">${identityBadge(row)}</td><td>${e(row.hometown_city||'—')}, ${e(String(row.state_code||'').trim())}</td><td><strong>${e(row.dual_record_display||'0-0')}</strong></td><td>${SimSite.percent(row.dual_win_rate,1)}</td><td>${Number(row.average_dual_margin||0)>0?'+':''}${SimSite.number(row.average_dual_margin,1)}</td></tr>`).join('')}</tbody></table></div>`;
   }
   async function renderWrestlers() {
     const seq=++renderSequence;
@@ -140,6 +159,11 @@
     weightFilter.addEventListener('change',render);
     geoFilter.addEventListener('change',render);
     render();
+    // One public request for badges, rather than one identity request per team.
+    SimApi.publicTeamIdentityBadges().then(rows => {
+      teamBadges = new Map((Array.isArray(rows) ? rows : []).map(item => [String(item.team_guid), item]));
+      if (weightFilter.value === 'TEAM') render();
+    }).catch(error => console.warn('Team identity badges unavailable:', error.message));
     // Supplementary coach names may fail without blocking rankings.
     SimApi.publicTeamCoaches().then(rows => {
       coachNames = new Map((Array.isArray(rows) ? rows : []).map(x => [String(x.team_guid), String(x.coach_name || '')]));
