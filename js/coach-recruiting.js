@@ -1,4 +1,4 @@
-/* Sim Wrestling v4.4.0 — private Big Board, senior outlook and pipeline */
+/* Sim Wrestling v6.0.0 — private recruiting with an expected closed state */
 (async function () {
   'use strict';
   const root = document.getElementById('coach-recruiting-root');
@@ -19,6 +19,18 @@
   const empty = message => `<div class="recruit-empty">${esc(message)}</div>`;
   const fail = message => {
     root.innerHTML = `<section class="panel coach-gate"><h1>Recruiting</h1><p>${esc(message)}</p><p><a href="account.html">My Account</a> · <a href="login.html">Sign in</a></p></section>`;
+  };
+  const recruitingClosed = leagueDate => {
+    document.title = 'Recruiting is closed | Sim Wrestling';
+    root.innerHTML = `
+      <nav class="coach-subnav" aria-label="Private coaching pages"><a href="coach.html">Team</a><a href="coach-recruiting.html" class="active" aria-current="page">Recruits</a><a href="coach-matches.html">Schedule</a><a href="coach-history.html">Wall of Fame</a><a href="coach-identity.html">Identity</a></nav>
+      <section class="panel coach-gate" aria-labelledby="recruiting-closed-title">
+        <h1 id="recruiting-closed-title">Recruiting is closed</h1>
+        <p>Recruiting actions are unavailable on the current game date.</p>
+        <p>Current league date: <time datetime="${esc(leagueDate)}">${esc(leagueDate)}</time></p>
+        <p>You can continue managing your team or viewing your schedule.</p>
+        <p><a href="coach.html">Return to your team</a> · <a href="coach-matches.html">View schedule</a></p>
+      </section>`;
   };
 
   let auth;
@@ -418,6 +430,8 @@
     shell();
     if (requestedPackage) await viewPackage(requestedPackage);
   } catch (error) {
+    const closed = /^RECRUITING_CLOSED_FOR_CURRENT_LEAGUE_DATE_(\d{4}-\d{2}-\d{2})$/.exec(error?.message || '');
+    if (closed) { recruitingClosed(closed[1]); return; }
     fail(`The recruiting headquarters could not be loaded: ${error?.message || 'Unexpected error'}`);
   }
 })();
