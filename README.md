@@ -1,6 +1,6 @@
 # Sim Wrestling Public Prototype v1.1.0
 
-This is a build-free static website. It uses plain HTML, CSS and JavaScript and reads the existing Supabase views and functions directly.
+This is a static website with a deployment configuration generation step. It uses plain HTML, CSS and JavaScript and reads the existing Supabase views and functions directly.
 
 ## Included pages
 
@@ -35,65 +35,64 @@ The site expects these objects:
 - `public.get_wrestler_profile(uuid)`
 - `public.v_customer_match_experience`
 
-## 2. Connect Supabase
+## Deployment configuration (dev/prod)
 
-If you are replacing files in the already-live GitHub repository, keep your existing working `js/config.js`; the packaged copy intentionally contains placeholders so a project key is never redistributed in the ZIP.
+The Vercel build now generates browser configuration; the older build-free
+instructions do not apply to this package. No npm dependencies are needed.
 
-Open `js/config.js` and replace:
+Upload changes to the GitHub `dev` branch first. Keep the folder paths intact.
+Do not merge into `main` until production environment variables are configured.
 
-- `https://YOUR-PROJECT-REF.supabase.co`
-- `YOUR-SUPABASE-PUBLISHABLE-KEY`
+Use Framework Preset Other, Build Command `node scripts/build.cjs`, Output
+Directory `dist`. These commands are also declared in vercel.json. Remove any
+conflicting dashboard overrides. The source js/config.js intentionally has no
+connection values. Serve dist/ after building, not the source directory.
 
-Find both values in the Supabase project **Connect** dialog or under **Settings → API Keys**.
+Each Vercel project needs:
 
-Use the `sb_publishable_...` key. Never place a Supabase secret key or legacy `service_role` key in this project.
+| Variable | Development Vercel project | Live Vercel project |
+| --- | --- | --- |
+| SIM_WRESTLING_ENV | dev | production |
+| SUPABASE_URL | simwrestling-dev HTTPS project URL | Existing live HTTPS project URL |
+| SUPABASE_PUBLISHABLE_KEY | Development sb_publishable_ key | Live sb_publishable_ key |
 
-## 3. Put the files in GitHub
+Set these for the Vercel Production scope of EACH project. Vercel calls the
+stable deployment of the development project Production too. Also use dev
+values for Preview deployments, or disable those deployments. Missing values
+fail the build; there is no production fallback. Environment changes require
+a new deployment. Never use service-role or secret keys in these variables.
+Publishable keys are included in browser code intentionally; RLS and database
+permissions enforce access.
 
-Create or open the GitHub repository that will contain the prototype. Upload the **contents of this folder** to the repository root. `index.html` should be visible at the top level of the repository—not inside an additional nested folder.
+The guard recognizes the current live project hostname from the supplied
+source package. It refuses that hostname for dev and requires it for production.
+Update this guard deliberately if the live Supabase project changes. A key's
+project ownership is verified during live connection testing, not by this build.
 
-Suggested repository layout:
+Connect the development Vercel project's production branch to GitHub dev.
+Keep the existing live Vercel project tracking main and owning simwrestling.com.
+A GitHub dev commit may also cause a Preview build in the live Vercel project;
+configure that Preview scope with dev values or disable preview builds before
+uploading. A preview does not replace the live domain, but its configuration
+still matters. No Namecheap changes are required.
 
-```text
-index.html
-wrestler.html
-match.html
-statistics.html
-about.html
-README.md
-assets/
-  styles.css
-js/
-  config.js
-  api.js
-  site.js
-  rankings.js
-  profile.js
-  match.js
-  statistics.js
-supabase/
-  College_Wrestling_Simulation_Public_Demo_API_v1_0_0.sql
-  College_Wrestling_Simulation_Public_Web_Enhancements_v1_1_0.sql
-```
+After the test URL is known, configure the DEVELOPMENT Supabase Auth Site URL
+and redirect allowlist for that URL. Verify sign-in and recovery stay there.
+Storage files, Edge Functions, SMTP, Realtime and other project settings may
+need separate configuration after the database restore. Do not assume copying
+the database copied every service setting.
 
-Commit the files to the `main` branch.
+Release tested code by merging dev into main only after live Vercel variables
+are ready. Apply tested database migrations separately; never replace live
+user/game data with the development database. No SQL migrations are included.
 
-The rankings and statistics pages default to 125 pounds. They also accept `?weight=165`, `?weight=HWT`, or `?weight=PBP`. The PBP value displays the pound-for-pound list across all weights.
+## Validation performed
 
-## 4. Deploy through Vercel
-
-1. In Vercel, select **Add New → Project**.
-2. Import the GitHub repository.
-3. Select **Other** as the framework preset if Vercel asks.
-4. Leave the build command empty.
-5. Leave the output directory empty or set it to `.`.
-6. Deploy.
-
-Vercel will assign a temporary `vercel.app` URL. Once the prototype works, add `simwrestling.com` in the Vercel project's Domain settings.
-
-## Optional local check
-
-Because the site calls browser APIs, open it through a small local web server rather than double-clicking `index.html`. VS Code Live Server is sufficient.
+Builds were checked using synthetic public keys and project URLs. Missing
+settings, wrong environment/database combinations, secret keys, legacy
+service-role JWTs and malformed URLs are rejected. Static output preserves
+all supplied HTML/assets/scripts except generated config. No live Supabase
+connection, login, or Vercel deployment has been tested by this package.
 
 ## Prototype boundaries
 

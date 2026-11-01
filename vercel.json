@@ -1,0 +1,15 @@
+{
+  "buildCommand": "node scripts/build.cjs",
+  "outputDirectory": "dist",
+  "headers": [
+    {
+      "source": "/js/config.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    }
+  ]
+}
