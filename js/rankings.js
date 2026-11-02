@@ -15,8 +15,6 @@
   const cache = new Map();
   let teams = null, inventory = [], renderSequence = 0;
   let teamBadges = new Map();
-  let coachNames = new Map();
-  const coachFor = (guid) => coachNames.get(String(guid || '')) || '';
   // Cosmetic identity data is provided only for active HUMAN-controlled colleges.
   // Validate values before inserting into an inline style.
   const safeColor = (value) => /^#[0-9a-fA-F]{6}$/.test(String(value || '')) ? String(value) : null;
@@ -118,7 +116,7 @@
       pageTitle.textContent='College Rankings';
       pageCopy.textContent='College wrestlers ranked nationally, by region or by state.';
       if(!rows.length){content.innerHTML='<div class="state-card"><p>No wrestlers match the selected filters.</p></div>';return;}
-      content.innerHTML=`<div class="table-wrap"><table><thead><tr><th>Rank</th><th>Weight</th><th>Year</th><th>Wrestler</th><th>Coach</th><th>College team</th><th>Wins</th><th>Losses</th><th>Bonus %</th></tr></thead><tbody>${rows.map(row=>`<tr><td class="rank-number">${row.display_rank}</td><td><strong>${e(row.weight_class_code)}</strong></td><td>${e(row.eligibility_year_display)}</td><td><a class="wrestler-link" href="${SimSite.profileUrl(row.wrestler_guid)}">${e(row.wrestler_name)}</a>${row.roster_status==='BACKUP'?'<span class="subtext">Backup</span>':''}</td><td>${e(coachFor(row.team_guid))}</td><td>${row.team_name?`<a class="table-link" href="${SimSite.teamUrl(row.team_guid)}">${e(row.team_name)}</a>`:'—'}</td><td>${Number(row.win_qty||0)}</td><td>${Number(row.loss_qty||0)}</td><td><span class="bonus-pill">${e(row.bonus_point_percentage_display||'0.0%')}</span></td></tr>`).join('')}</tbody></table></div>`;
+      content.innerHTML=`<div class="table-wrap"><table><thead><tr><th>Rank</th><th>Weight</th><th>Year</th><th>Wrestler</th><th class="ranking-identity-heading" scope="col">Team Crest</th><th>College team</th><th>Wins</th><th>Losses</th><th>Bonus %</th></tr></thead><tbody>${rows.map(row=>`<tr><td class="rank-number">${row.display_rank}</td><td><strong>${e(row.weight_class_code)}</strong></td><td>${e(row.eligibility_year_display)}</td><td><a class="wrestler-link" href="${SimSite.profileUrl(row.wrestler_guid)}">${e(row.wrestler_name)}</a>${row.roster_status==='BACKUP'?'<span class="subtext">Backup</span>':''}</td><td class="ranking-identity-cell">${identityBadge(row)}</td><td>${row.team_name?`<a class="table-link" href="${SimSite.teamUrl(row.team_guid)}">${e(row.team_name)}</a>`:'—'}</td><td>${Number(row.win_qty||0)}</td><td>${Number(row.loss_qty||0)}</td><td><span class="bonus-pill">${e(row.bonus_point_percentage_display||'0.0%')}</span></td></tr>`).join('')}</tbody></table></div>`;
     }catch(error){if(seq===renderSequence)SimSite.showError(content,error.message);}
     finally{if(seq===renderSequence)content.classList.remove('is-loading');}
   }
@@ -162,12 +160,8 @@
     // One public request for badges, rather than one identity request per team.
     SimApi.publicTeamIdentityBadges().then(rows => {
       teamBadges = new Map((Array.isArray(rows) ? rows : []).map(item => [String(item.team_guid), item]));
-      if (weightFilter.value === 'TEAM') render();
-    }).catch(error => console.warn('Team identity badges unavailable:', error.message));
-    // Supplementary coach names may fail without blocking rankings.
-    SimApi.publicTeamCoaches().then(rows => {
-      coachNames = new Map((Array.isArray(rows) ? rows : []).map(x => [String(x.team_guid), String(x.coach_name || '')]));
       render();
-    }).catch(error => console.warn('Coach names unavailable:', error.message));
+    }).catch(error => console.warn('Team identity badges unavailable:', error.message));
+
   }catch(error){SimSite.showError(content,error.message);count.textContent='Unavailable';}
 })();
