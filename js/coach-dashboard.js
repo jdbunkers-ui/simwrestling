@@ -6,7 +6,7 @@
   const safeGuid=value=>/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(String(value||''))?String(value):null;
   const empty=msg=>`<div class="coach-empty-note">${escape(msg)}</div>`;
   const error=msg=>{root.innerHTML=`<section class="panel coach-gate"><h1>Coaching portal</h1><p>${escape(msg)}</p><p><a href="account.html">My Account</a> · <a href="login.html">Sign in</a></p></section>`;};
-  const dateText=value=>{if(!value)return '—';const d=new Date(String(value).slice(0,10)+'T12:00:00');return isNaN(d)?String(value):d.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});};
+  const dateText=value=>SimSite.gameDate(value);
   try{
     const auth=await window.SimAuth.ready;
     const {data:{user},error:userError}=await auth.client.auth.getUser();
@@ -44,7 +44,7 @@
     root.innerHTML=`
       ${CoachIdentityBanner.render({identity,teamName:data.team_name,context:'CURRENT SEASON',detail:[rankPrefix?rankPrefix.trim().replace(/ -$/,'')+' state rank':'',record?'Record '+record:''].filter(Boolean).join(' · '),fallbackAbbr:schoolAbbr})}
       <nav class="coach-subnav" aria-label="Private coaching pages"><a href="coach.html" class="active" aria-current="page">Team</a><a href="coach-recruiting.html">Recruits</a><a href="coach-matches.html">Schedule</a><a href="coach-history.html">Wall of Fame</a><a href="coach-identity.html">Identity</a></nav>
-      <section class="panel coach-live-panel"><div class="panel-heading coach-roster-heading"><div><p class="eyebrow">CURRENT COLLEGE</p><h2>Roster and starting lineup</h2></div><div class="coach-roster-switch" role="group" aria-label="Roster view"><button type="button" id="roster-full" aria-pressed="false">Full Roster</button><button type="button" id="roster-starters" class="active" aria-pressed="true">Starters</button></div></div>
+      <section class="panel coach-live-panel"><div class="panel-heading coach-roster-heading"><div><p class="eyebrow">CURRENT COLLEGE</p><div class="coach-roster-title"><h2>Roster and starting lineup</h2><div id="coach-roster-total" class="coach-roster-total" role="status" aria-live="polite" aria-atomic="true"></div></div></div><div class="coach-roster-switch" role="group" aria-label="Roster view"><button type="button" id="roster-full" aria-pressed="false">Full Roster</button><button type="button" id="roster-starters" class="active" aria-pressed="true">Starters</button></div></div>
       <p id="lineup-feedback" class="coach-lineup-feedback" role="status" aria-live="polite"></p>
       <div id="coaching-roster-table"></div>
       <p class="coach-detail-note">Select a starter in the Full Roster view, then confirm the change. Changes affect future competitions, not completed matches. Wrestler names open their private scouting profiles.</p></section>
@@ -56,6 +56,12 @@
     const feedback=document.getElementById('lineup-feedback');
     const formatStatus=r=>r.starter_ind?'<span class="coach-starter">Starter</span>':'<span class="coach-backup">Roster</span>';
     const renderRoster=()=>{
+      // Count the complete server-returned roster, independent of the view filter.
+      const total=roster.length;
+      const excess=Math.max(0,total-30);
+      const rosterTotal=document.getElementById('coach-roster-total');
+      rosterTotal.className='coach-roster-total'+(excess?' is-over-limit':'');
+      rosterTotal.innerHTML=`<span class="coach-roster-count">${total} / 30 ${total===1?'wrestler':'wrestlers'}</span>${excess?`<small class="coach-roster-limit-note">Cut ${excess} ${excess===1?'wrestler':'wrestlers'} before Week 2 starts.</small>`:''}`;
       const shown=roster.filter(r=>rosterMode==='full'||r.starter_ind);
       rosterPanel.innerHTML=shown.length?`<div class="table-wrap"><table class="coach-live-table"><thead><tr><th>Weight</th><th>Wrestler</th><th>Year</th><th>Status</th><th>W–L</th><th>State rank</th>${rosterMode==='full'?'<th>Starting lineup</th><th>Move Up</th><th>Release</th><th>Wrestle-Off</th>':''}</tr></thead><tbody>${shown.map(r=>{
         const id=safeGuid(r.wrestler_guid);
@@ -92,7 +98,7 @@
     const historyFeedback=document.getElementById('wrestle-feedback');
     const pbpPanel=document.getElementById('wrestle-pbp');
     const renderHistory=()=>{
-      historyPanel.innerHTML=wrestleOffs.length?`<div class="table-wrap"><table class="coach-live-table"><thead><tr><th>League date</th><th>Weight</th><th>Starter</th><th>Challenger</th><th>Status</th><th>Result / PBP</th></tr></thead><tbody>${wrestleOffs.map(x=>`<tr><td>${escape(dateText(x.scheduled_league_date))}</td><td>${escape(x.weight_class)}</td><td>${escape(x.starter_name)}</td><td>${escape(x.challenger_name)}</td><td>${escape(x.status)}</td><td>${x.status==='COMPLETED'?`${escape(x.starter_score)}–${escape(x.challenger_score)} · ${escape(x.result_type||'')} <button type="button" class="coach-pbp-action" data-id="${escape(x.wrestle_off_guid)}">View PBP</button>`:'—'}</td></tr>`).join('')}</tbody></table></div>`:empty('No wrestle-offs scheduled this season. Use the Full Roster view to schedule a backup against the starter.');
+      historyPanel.innerHTML=wrestleOffs.length?`<div class="table-wrap"><table class="coach-live-table"><thead><tr><th>Game day</th><th>Weight</th><th>Starter</th><th>Challenger</th><th>Status</th><th>Result / PBP</th></tr></thead><tbody>${wrestleOffs.map(x=>`<tr><td>${escape(dateText(x.scheduled_league_date))}</td><td>${escape(x.weight_class)}</td><td>${escape(x.starter_name)}</td><td>${escape(x.challenger_name)}</td><td>${escape(x.status)}</td><td>${x.status==='COMPLETED'?`${escape(x.starter_score)}–${escape(x.challenger_score)} · ${escape(x.result_type||'')} <button type="button" class="coach-pbp-action" data-id="${escape(x.wrestle_off_guid)}">View PBP</button>`:'—'}</td></tr>`).join('')}</tbody></table></div>`:empty('No wrestle-offs scheduled this season. Use the Full Roster view to schedule a backup against the starter.');
     };
     rosterPanel.addEventListener('change',async ev=>{
       const input=ev.target.closest('.coach-decision');if(!input||saving)return;

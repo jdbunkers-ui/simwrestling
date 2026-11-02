@@ -418,3 +418,14 @@
 .history-college-identity .history-college{margin-top:0}
 .history-page .history-team-identity .history-identity-link .ranking-identity-badge{width:34px;height:34px;font-size:10px}
 .history-page .history-college-identity .history-identity-link .ranking-identity-badge{width:28px;height:28px;font-size:9px}
+
+/* v6.0.2: current engine position is visible on every shared banner. */
+.site-header{height:auto;min-height:82px}.nav-shell{min-height:79px;gap:20px}.brand-block{display:flex;flex-direction:column;align-items:flex-start;gap:5px;padding:12px 0;flex-shrink:0}.game-clock{display:block;color:#f4c34d;font-size:.75rem;font-weight:750;letter-spacing:.025em;line-height:1.4}.main-nav{min-height:79px;gap:22px}.main-nav a{min-height:79px}
+@media(max-width:1100px){.nav-shell{gap:0}.brand-block{padding:10px 0 4px}.brand-block .brand{padding:0}.main-nav,.main-nav a{height:42px;min-height:42px}.game-clock{font-size:.72rem}}
+@media(max-width:480px){.brand-block{max-width:100%}.game-clock{white-space:normal}.main-nav{gap:18px}}
+
+.main-nav{scrollbar-width:none;overflow-y:hidden}.main-nav::-webkit-scrollbar{display:none}
+
+/* v6.0.3: full roster count beside the coaching roster heading. */
+.coach-roster-title{display:flex;align-items:center;flex-wrap:wrap;gap:10px 16px}.coach-roster-title h2{margin:0}.coach-roster-total{color:var(--ink);line-height:1.4}.coach-roster-count{font-size:.88rem;font-weight:800;white-space:nowrap}.coach-roster-total.is-over-limit{color:#b42318}.coach-roster-limit-note{display:block;font-size:.75rem;font-weight:700;margin-top:2px;max-width:270px}
+@media(max-width:680px){.coach-roster-title{align-items:flex-start;flex-direction:column;gap:5px}.coach-roster-limit-note{max-width:none}}

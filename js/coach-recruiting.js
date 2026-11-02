@@ -27,7 +27,7 @@
       <section class="panel coach-gate" aria-labelledby="recruiting-closed-title">
         <h1 id="recruiting-closed-title">Recruiting is closed</h1>
         <p>Recruiting actions are unavailable on the current game date.</p>
-        <p>Current league date: <time datetime="${esc(leagueDate)}">${esc(leagueDate)}</time></p>
+        <p>Current game position: ${esc(SimSite.gameDate(leagueDate))}</p>
         <p>You can continue managing your team or viewing your schedule.</p>
         <p><a href="coach.html">Return to your team</a> · <a href="coach-matches.html">View schedule</a></p>
       </section>`;
@@ -74,7 +74,7 @@
   function shell() {
     document.title = `${collegeIdentity?.display_name || overview.team_name || 'My College'} — Recruiting | Sim Wrestling`;
     root.innerHTML = `
-      ${CoachIdentityBanner.render({identity:collegeIdentity,teamName:overview.team_name,context:'WEEK '+(overview.recruiting_week||'—'),detail:[overview.season_code,number(overview.available_points)+' recruiting points available'].filter(Boolean).join(' · ')})}
+      ${CoachIdentityBanner.render({identity:collegeIdentity,teamName:overview.team_name,context:'WEEK '+(overview.recruiting_week||'—'),detail:[SimSite.seasonLabel(overview),number(overview.available_points)+' recruiting points available'].filter(Boolean).join(' · ')})}
       <nav class="coach-subnav" aria-label="Private coaching pages"><a href="coach.html">Team</a><a href="coach-recruiting.html" class="active" aria-current="page">Recruits</a><a href="coach-matches.html">Schedule</a><a href="coach-history.html">Wall of Fame</a><a href="coach-identity.html">Identity</a></nav>
       <div class="coach-summary-grid recruit-summary">
         <article><span>Available</span><strong data-summary="available">${number(overview.available_points)}</strong><small>Rolled forward this season</small></article>
@@ -123,7 +123,7 @@
     const badge = root.querySelector('[data-tab="board"] span');
     if (badge) badge.textContent = board.length;
     const pointsDetail=root.querySelector('.college-hero-meta');
-    if(pointsDetail)pointsDetail.textContent=[collegeIdentity?.mascot,overview.season_code,number(overview.available_points)+' recruiting points available'].filter(Boolean).join(' · ');
+    if(pointsDetail)pointsDetail.textContent=[collegeIdentity?.mascot,SimSite.seasonLabel(overview),number(overview.available_points)+' recruiting points available'].filter(Boolean).join(' · ');
   }
 
   function renderOverview() {

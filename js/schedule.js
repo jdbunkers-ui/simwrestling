@@ -45,7 +45,6 @@
       ${ev.event_type!=='COLLEGE_QUAD'?`<a class="schedule-event-link" href="${SimSite.eventUrl(ev.event_guid)}">${completed?'View Tournament / Brackets':'View Event Details'} →</a>`:''}
     </article>`;
   }
-  function dateText(d){return new Date(`${d}T12:00:00`).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});}
   function render(){
     const visible=events.filter(matches);
     let html='';
@@ -58,9 +57,8 @@
         if(!dateSet.length)html+='<div class="schedule-no-events">No college events for this geography.</div>';
         else dateSet.forEach((date,index)=>{
           const dayEvents=weekEvents.filter(ev=>ev.scheduled_date===date);
-          const dayNum=Number(dayEvents[0]?.day_number||index+1);
           const dayOpen=openDay===date;
-          html+=`<div class="schedule-day-block"><button class="schedule-day-trigger" type="button" data-date="${e(date)}" aria-expanded="${dayOpen}"><span><span class="schedule-chevron">${dayOpen?'▾':'▸'}</span> Day ${dayNum} · ${e(dateText(date))}</span><small>${dayEvents.length} event${dayEvents.length===1?'':'s'}</small></button>${dayOpen?`<div class="schedule-event-list">${dayEvents.map(eventCard).join('')}</div>`:''}</div>`;
+          html+=`<div class="schedule-day-block"><button class="schedule-day-trigger" type="button" data-date="${e(date)}" aria-expanded="${dayOpen}"><span><span class="schedule-chevron">${dayOpen?'▾':'▸'}</span> ${e(SimSite.gameDay(date))}</span><small>${dayEvents.length} event${dayEvents.length===1?'':'s'}</small></button>${dayOpen?`<div class="schedule-event-list">${dayEvents.map(eventCard).join('')}</div>`:''}</div>`;
         });
       }
       html+='</section>';

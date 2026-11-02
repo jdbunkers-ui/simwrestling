@@ -6,11 +6,6 @@
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const guid = value => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(value || '')) ? String(value) : null;
   const n = value => Number.isFinite(Number(value)) ? Number(value) : null;
-  const fmtDate = value => {
-    if (!/^\d{4}-\d{2}-\d{2}/.test(String(value || ''))) return 'Date pending';
-    const d = new Date(String(value).slice(0, 10) + 'T12:00:00Z');
-    return d.toLocaleDateString('en-US', {weekday:'long', month:'short', day:'numeric', timeZone:'UTC'});
-  };
   const formatScore = value => {
     const v = n(value);
     return v === null ? '—' : Number.isInteger(v) ? String(v) : v.toFixed(1);
@@ -30,8 +25,8 @@
     const matches = data.matches.slice().sort((a,b) => String(a.scheduled_date || '').localeCompare(String(b.scheduled_date || '')) || (Number(a.dual_order || 0) - Number(b.dual_order || 0)) || String(a.scheduled_dual_guid).localeCompare(String(b.scheduled_dual_guid)));
     const completed = matches.filter(m => m.completed === true && guid(m.dual_guid));
     let showResults = false; // Spoiler preference resets on every load, intentionally not persisted.
-    document.title = `Matches — ${data.season_code || 'Current Season'} | Sim Wrestling`;
-    root.innerHTML = `${CoachIdentityBanner.render({identity:collegeIdentity,teamName:data.team_name||'My College',context:'CURRENT SEASON',detail:(data.season_code||'Current season')+' · Team dual meets'})}
+    document.title = `Matches — ${SimSite.seasonLabel(data)} | Sim Wrestling`;
+    root.innerHTML = `${CoachIdentityBanner.render({identity:collegeIdentity,teamName:data.team_name||'My College',context:'CURRENT SEASON',detail:SimSite.seasonLabel(data)+' · Team dual meets'})}
       ${nav}
       <section class="panel coach-matches-panel"><div class="coach-matches-heading"><div><p class="eyebrow">SEASON SCHEDULE</p><h2>From Opening Dual to Season Finale</h2><p class="coach-matches-intro">Watch every completed meet without seeing the score first. Opponent rankings and records reflect the current season.</p></div><button type="button" id="coach-reveal-results" class="coach-results-toggle" aria-pressed="false">Show Results</button></div>
         <div class="coach-match-summary"><span><strong>${matches.length}</strong> Dual meets</span><span><strong>${completed.length}</strong> Available to watch</span><span id="coach-spoiler-status" class="coach-spoiler-hidden">Results hidden</span></div>
@@ -52,7 +47,7 @@
         const cpu = m.opponent_control_type !== 'HUMAN';
         const type = m.match_type === 'Team Tournament Dual' ? 'Team Tournament Dual' : 'Scheduled Dual';
         const result = showResults && done ? `<span class="coach-match-score" aria-label="Final result">${esc(m.result || 'T')} ${formatScore(m.team_score)}–${formatScore(m.opponent_score)}</span>` : done ? `<span class="coach-score-hidden">Result hidden</span>` : `<span class="coach-match-upcoming">Upcoming</span>`;
-        return `<article class="coach-match-row" aria-label="Dual ${i+1}"><div class="coach-match-date"><strong>Week ${esc(m.week_number ?? '—')}</strong><span>${esc(fmtDate(m.scheduled_date))}</span><small>${esc(type)}</small></div><div class="coach-match-opponent"><h3>${opp}${state ? ` <span class="coach-match-state">· ${esc(state)}</span>` : ''}</h3><p class="coach-match-meta">${rank && rank>0 ? `State #${rank}` : 'State unranked'} <span aria-hidden="true">·</span> ${record}</p><p class="coach-match-coach">${cpu ? '<span aria-hidden="true">▣</span> ' : '<span aria-hidden="true">♙</span> '}${cpu ? 'Computer Coach' : 'Coach: '+coachName}</p>${type === 'Team Tournament Dual' && m.round_code ? `<p class="coach-match-round">${esc(String(m.round_code).replace(/_/g,' '))}</p>` : ''}</div><div class="coach-match-action">${result}${done ? `<a class="coach-watch-dual" href="dual.html?dual=${encodeURIComponent(m.dual_guid)}" aria-label="Watch dual versus ${opp}">Watch Dual <span aria-hidden="true">↗</span></a>` : `<span class="coach-watch-pending">Awaiting simulation</span>`}</div></article>`;
+        return `<article class="coach-match-row" aria-label="Dual ${i+1}"><div class="coach-match-date"><strong>Week ${esc(m.week_number ?? '—')}</strong><span>${esc(SimSite.gameDay(m.scheduled_date))}</span><small>${esc(type)}</small></div><div class="coach-match-opponent"><h3>${opp}${state ? ` <span class="coach-match-state">· ${esc(state)}</span>` : ''}</h3><p class="coach-match-meta">${rank && rank>0 ? `State #${rank}` : 'State unranked'} <span aria-hidden="true">·</span> ${record}</p><p class="coach-match-coach">${cpu ? '<span aria-hidden="true">▣</span> ' : '<span aria-hidden="true">♙</span> '}${cpu ? 'Computer Coach' : 'Coach: '+coachName}</p>${type === 'Team Tournament Dual' && m.round_code ? `<p class="coach-match-round">${esc(String(m.round_code).replace(/_/g,' '))}</p>` : ''}</div><div class="coach-match-action">${result}${done ? `<a class="coach-watch-dual" href="dual.html?dual=${encodeURIComponent(m.dual_guid)}" aria-label="Watch dual versus ${opp}">Watch Dual <span aria-hidden="true">↗</span></a>` : `<span class="coach-watch-pending">Awaiting simulation</span>`}</div></article>`;
       }).join('') : '<div class="coach-empty-note">No team dual meets are scheduled for this season.</div>';
       toggle.textContent = showResults ? 'Hide Results' : 'Show Results';
       toggle.setAttribute('aria-pressed', String(showResults));

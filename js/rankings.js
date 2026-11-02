@@ -136,7 +136,7 @@
     const [scope,seasonRows,teamRows]=await Promise.all([SimApi.regionStateInventory(),SimApi.season(),SimApi.teamRankings()]);
     inventory=Array.isArray(scope)?scope:[];
     teams=Array.isArray(teamRows)?teamRows:[];
-    if(seasonBadge && seasonRows?.[0])seasonBadge.textContent=seasonRows[0].season_name;
+    if(seasonBadge && seasonRows?.[0])seasonBadge.textContent=SimSite.seasonLabel(seasonRows[0]);
     weightFilter.innerHTML=option('TEAM','Teams')+option('PBP','Pound-for-Pound')+weights.map(w=>option(w,w==='HWT'?'Heavyweight':`${w} lb`)).join('');
     populateGeography();
     // Explicit shared links override both authenticated and guest defaults.
