@@ -44,7 +44,7 @@
     root.innerHTML=`
       ${CoachIdentityBanner.render({identity,teamName:data.team_name,context:'CURRENT SEASON',detail:[rankPrefix?rankPrefix.trim().replace(/ -$/,'')+' state rank':'',record?'Record '+record:''].filter(Boolean).join(' · '),fallbackAbbr:schoolAbbr})}
       <nav class="coach-subnav" aria-label="Private coaching pages"><a href="coach.html" class="active" aria-current="page">Team</a><a href="coach-recruiting.html">Recruits</a><a href="coach-matches.html">Schedule</a><a href="coach-history.html">Wall of Fame</a><a href="coach-identity.html">Identity</a></nav>
-      <section class="panel coach-live-panel"><div class="panel-heading coach-roster-heading"><div><p class="eyebrow">CURRENT COLLEGE</p><h2>Roster and starting lineup</h2></div><div class="coach-roster-switch" role="group" aria-label="Roster view"><button type="button" id="roster-full" aria-pressed="false">Full Roster</button><button type="button" id="roster-starters" class="active" aria-pressed="true">Starters</button></div></div>
+      <section class="panel coach-live-panel"><div class="panel-heading coach-roster-heading"><div><p class="eyebrow">CURRENT COLLEGE</p><div class="coach-roster-title"><h2>Roster and starting lineup</h2><div id="coach-roster-total" class="coach-roster-total" role="status" aria-live="polite" aria-atomic="true"></div></div></div><div class="coach-roster-switch" role="group" aria-label="Roster view"><button type="button" id="roster-full" aria-pressed="false">Full Roster</button><button type="button" id="roster-starters" class="active" aria-pressed="true">Starters</button></div></div>
       <p id="lineup-feedback" class="coach-lineup-feedback" role="status" aria-live="polite"></p>
       <div id="coaching-roster-table"></div>
       <p class="coach-detail-note">Select a starter in the Full Roster view, then confirm the change. Changes affect future competitions, not completed matches. Wrestler names open their private scouting profiles.</p></section>
@@ -56,6 +56,12 @@
     const feedback=document.getElementById('lineup-feedback');
     const formatStatus=r=>r.starter_ind?'<span class="coach-starter">Starter</span>':'<span class="coach-backup">Roster</span>';
     const renderRoster=()=>{
+      // Count the complete server-returned roster, independent of the view filter.
+      const total=roster.length;
+      const excess=Math.max(0,total-30);
+      const rosterTotal=document.getElementById('coach-roster-total');
+      rosterTotal.className='coach-roster-total'+(excess?' is-over-limit':'');
+      rosterTotal.innerHTML=`<span class="coach-roster-count">${total} / 30 ${total===1?'wrestler':'wrestlers'}</span>${excess?`<small class="coach-roster-limit-note">Cut ${excess} ${excess===1?'wrestler':'wrestlers'} before Week 2 starts.</small>`:''}`;
       const shown=roster.filter(r=>rosterMode==='full'||r.starter_ind);
       rosterPanel.innerHTML=shown.length?`<div class="table-wrap"><table class="coach-live-table"><thead><tr><th>Weight</th><th>Wrestler</th><th>Year</th><th>Status</th><th>W–L</th><th>State rank</th>${rosterMode==='full'?'<th>Starting lineup</th><th>Move Up</th><th>Release</th><th>Wrestle-Off</th>':''}</tr></thead><tbody>${shown.map(r=>{
         const id=safeGuid(r.wrestler_guid);
