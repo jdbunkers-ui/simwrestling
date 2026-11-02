@@ -84,7 +84,7 @@
       || Number(b.dual_win_qty||0)-Number(a.dual_win_qty||0)
       || Number(b.tied_opponent_win_qty||0)-Number(a.tied_opponent_win_qty||0)
       || Number(b.average_dual_margin||0)-Number(a.average_dual_margin||0)
-      || String(a.team_name).localeCompare(String(b.team_name));
+      || String(SimApi.teamSortName(a)).localeCompare(String(SimApi.teamSortName(b)));
   }
   function renderTeams() {
     const geo=geography();

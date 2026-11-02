@@ -37,8 +37,78 @@
     return payload;
   }
 
+  // v6.0.7: one fresh public identity directory per page, shared by all reads.
+  // The transport below deliberately bypasses rpc() to avoid recursive loading.
+  let identityPromise = null;
+  let identities = new Map();
+  let identityNames = new Map();
+  function loadTeamIdentities() {
+    if (!identityPromise) {
+      identityPromise = (async () => {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 4000);
+        try {
+          const rows = await request('rpc/get_public_college_identities_v607', {
+            method: 'POST', body: '{}', signal: controller.signal
+          });
+          if (!Array.isArray(rows)) throw new Error('Unexpected college identity directory response.');
+          identities = new Map(rows.filter(row => row?.team_guid).map(row => [String(row.team_guid), row]));
+          identityNames = new Map();
+          for (const row of rows) {
+            if (row?.base_team_name) {
+              // A name-only fallback is used only where an older college payload lacks a GUID.
+              const name = String(row.base_team_name);
+              identityNames.set(name, identityNames.has(name) ? null : row);
+            }
+          }
+          return rows;
+        } catch (error) {
+          console.warn('Current college identities unavailable; using supplied team labels:', error.message);
+          return [];
+        } finally { clearTimeout(timer); }
+      })();
+    }
+    return identityPromise;
+  }
+  function teamIdentity(guid, fallbackName = '') {
+    return guid ? identities.get(String(guid)) || null : identityNames.get(String(fallbackName)) || null;
+  }
+  function teamDisplayName(guid, fallbackName = '') {
+    return teamIdentity(guid, fallbackName)?.display_name || fallbackName;
+  }
+  function applyTeamIdentities(value) {
+    if (Array.isArray(value)) return value.map(applyTeamIdentities);
+    if (!value || typeof value !== 'object') return value;
+    const row = Object.fromEntries(Object.entries(value).map(([key, item]) => [key, applyTeamIdentities(item)]));
+    // Pair explicit team identifiers with their labels; never replace arbitrary text,
+    // wrestler names, competition records, or stored database snapshots.
+    for (const [nameKey, guidKey] of [
+      ['team_name', 'team_guid'], ['team_1_name', 'team_1_guid'], ['team_2_name', 'team_2_guid'],
+      ['opponent_team_name', 'opponent_team_guid'], ['opponent_name', 'opponent_team_guid'],
+      ['home_team_name', 'home_team_guid'], ['away_team_name', 'away_team_guid'],
+      ['winner_team_name', 'winner_team_guid'], ['loser_team_name', 'loser_team_guid'],
+      ['final_team_name', 'final_team_guid'], ['author_team_name', 'author_team_guid']
+    ]) {
+      if (row[guidKey] && typeof row[nameKey] === 'string') {
+        row[nameKey] = teamDisplayName(row[guidKey], row[nameKey]);
+      }
+    }
+    const identity = row.team_guid && teamIdentity(row.team_guid);
+    if (identity) {
+      // Replace already-present cosmetic fields without changing payload structure.
+      for (const key of ['primary_color', 'secondary_color', 'team_acronym']) {
+        if (Object.prototype.hasOwnProperty.call(row, key) && identity[key]) row[key] = identity[key];
+      }
+    }
+    return row;
+  }
+  async function withTeamIdentities(payloadPromise) {
+    const [payload] = await Promise.all([payloadPromise, loadTeamIdentities()]);
+    return applyTeamIdentities(payload);
+  }
+
   function query(table, parameters = '') {
-    return request(`${table}${parameters ? `?${parameters}` : ''}`);
+    return withTeamIdentities(request(`${table}${parameters ? `?${parameters}` : ''}`));
   }
 
   async function queryAll(table, parameters = '', pageSize = 500) {
@@ -58,14 +128,15 @@
       offset += page.length;
     }
 
-    return rows;
+    await loadTeamIdentities();
+    return applyTeamIdentities(rows);
   }
 
   function rpc(functionName, body) {
-    return request(`rpc/${functionName}`, {
+    return withTeamIdentities(request(`rpc/${functionName}`, {
       method: 'POST',
       body: JSON.stringify(body)
-    });
+    }));
   }
 
   const encoded = (value) => encodeURIComponent(String(value));
@@ -76,6 +147,8 @@
 
   window.SimApi = {
     isConfigured,
+    loadTeamIdentities, teamIdentity, teamDisplayName, applyTeamIdentities,
+    teamSortName: row => teamIdentity(row.team_guid)?.base_team_name || row.team_name,
     collegeIdentity: (guid) => rpc('get_college_identity_v459',{p_team_guid:guid}),
     gameUpdates: (options = {}) => rpc('get_public_game_updates_v454', {
       p_limit: options.limit || 51, p_offset: options.offset || 0
@@ -113,7 +186,7 @@
     publicTeamSnapshot: (guid) => rpc('get_public_college_team_snapshot_v448', { p_team_guid: guid }),
     teamWallOfFame: (guid) => rpc('get_team_wall_of_fame_v1', { p_team_guid: guid }),
     publicTeamCoaches: () => rpc('get_public_team_coaches_v448', {}),
-    publicTeamIdentityBadges: () => rpc('get_public_team_identity_badges_v504', {}),
+    publicTeamIdentityBadges: () => loadTeamIdentities(),
     publicCollegeSchedule: () => rpc('get_public_college_schedule_v449', {}),
     // Core and history come from the last atomically completed profile cache.
     // Day-advance work can therefore run without blanking public profiles.

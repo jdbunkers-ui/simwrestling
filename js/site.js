@@ -307,3 +307,28 @@
     window.addEventListener('focus', updateGameClock);
   }
 })();
+
+/* v6.0.7: compact, accessible current-college identity in public lists. */
+(function () {
+  const safeColor = value => /^#[0-9a-f]{6}$/i.test(String(value || '')) ? String(value) : null;
+  function foreground(hex) {
+    const rgb = [1,3,5].map(i => parseInt(hex.slice(i,i+2),16)/255)
+      .map(x => x <= 0.04045 ? x/12.92 : ((x+0.055)/1.055)**2.4);
+    return rgb[0]*0.2126+rgb[1]*0.7152+rgb[2]*0.0722 > 0.179 ? '#102b43' : '#ffffff';
+  }
+  SimSite.teamIdentityBadge = function (guid, fallbackName = '') {
+    const identity = window.SimApi?.teamIdentity(guid, fallbackName);
+    const primary = safeColor(identity?.primary_color);
+    const secondary = safeColor(identity?.secondary_color);
+    const acronym = String(identity?.team_acronym || '').trim().slice(0,8);
+    if (!identity || !primary || !acronym) return '';
+    return `<span class="college-identity-mini" aria-hidden="true" style="background:${primary};color:${foreground(primary)};border-color:${secondary || primary}">${SimSite.escape(acronym)}</span>`;
+  };
+  SimSite.collegeLink = function (guid, fallbackName = '') {
+    const identity = window.SimApi?.teamIdentity(guid, fallbackName);
+    const name = identity?.display_name || fallbackName;
+    const teamGuid = guid || identity?.team_guid;
+    if (!teamGuid) return SimSite.escape(name);
+    return `<a class="college-identity-link" href="${SimSite.teamUrl(teamGuid)}">${SimSite.teamIdentityBadge(teamGuid)}<span>${SimSite.escape(name)}</span></a>`;
+  };
+})();

@@ -429,3 +429,9 @@
 /* v6.0.3: full roster count beside the coaching roster heading. */
 .coach-roster-title{display:flex;align-items:center;flex-wrap:wrap;gap:10px 16px}.coach-roster-title h2{margin:0}.coach-roster-total{color:var(--ink);line-height:1.4}.coach-roster-count{font-size:.88rem;font-weight:800;white-space:nowrap}.coach-roster-total.is-over-limit{color:#b42318}.coach-roster-limit-note{display:block;font-size:.75rem;font-weight:700;margin-top:2px;max-width:270px}
 @media(max-width:680px){.coach-roster-title{align-items:flex-start;flex-direction:column;gap:5px}.coach-roster-limit-note{max-width:none}}
+
+/* v6.0.7 current college identity on schedules and preferred-school links. */
+.college-identity-link{display:inline-flex;align-items:center;gap:.4em;max-width:100%;vertical-align:middle}
+.college-identity-link>span:last-child{min-width:0;overflow-wrap:anywhere}
+.college-identity-mini{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;min-width:1.9em;height:1.9em;padding:0 .25em;border:1px solid;border-radius:50%;font-size:.7em;font-weight:800;line-height:1;vertical-align:middle}
+.coach-match-opponent h3>.college-identity-mini{margin-right:.45em}
