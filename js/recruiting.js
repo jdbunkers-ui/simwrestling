@@ -97,7 +97,7 @@
     if (!schools.length) {
       return '<p class="no-preferences">No preferred schools established</p>';
     }
-    return `<div class="class-recruit-links">${schools.map((school) => `<a href="${SimSite.teamUrl(school.team_guid)}">${e(school.team_name)}</a>`).join('')}</div>`;
+    return `<div class="class-recruit-links">${schools.map((school) => SimSite.collegeLink(school.team_guid,school.team_name)).join('')}</div>`;
   }
 
   function renderProspects() {
@@ -171,7 +171,7 @@
       if (Number(row.game_season_number) !== latestSeason) return false;
       return matches(row);
     }).sort((a, b) => Number(a[rankField]) - Number(b[rankField])
-      || String(a.team_name).localeCompare(String(b.team_name)));
+      || String(SimApi.teamSortName(a)).localeCompare(String(SimApi.teamSortName(b))));
 
     const signingSeasonNumber = Number(rows[0]?.game_season_number || 0);
     const recruitingSeasonNumber = Math.max(0, signingSeasonNumber - 1);

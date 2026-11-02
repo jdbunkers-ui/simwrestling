@@ -23,7 +23,7 @@
   }
   function label(ev){const type=String(ev.event_type||'');if(type==='COLLEGE_QUAD')return 'Dual Match';const kind=type.endsWith('_DUAL')?'Dual Tournament': 'Individual Tournament';const tier=type.includes('_STATE_')?'State':type.includes('_REGIONAL_')?'Regional':type.includes('_NATIONAL_')?'National':type.includes('HOLIDAY')?'Invitational':'';return tier?`${kind} · ${tier}`:kind;}
   function stateRank(guid){const t=teamMap.get(String(guid));return t?.state_team_rank!=null?`#${e(t.state_team_rank)}`:'—';}
-  const teamLink=(t)=>`<a href="${SimSite.teamUrl(t.team_guid)}">${e(t.team_name)}</a>`;
+  const teamLink=(t)=>SimSite.collegeLink(t.team_guid,t.team_name);
   function duels(ev){
     const people=new Map((ev.teams||[]).map(t=>[String(t.team_guid),t]));
     const matches=(ev.duals||[]).filter(d=>d.team_1_guid&&d.team_2_guid);

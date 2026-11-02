@@ -21,6 +21,7 @@
     const {data, error} = await auth.client.rpc('get_my_coaching_matches_v4_2_5');
     if (error) throw error;
     if (!data?.team_guid || !Array.isArray(data.matches)) throw Error('The matches service did not return a complete schedule.');
+    await SimApi.loadTeamIdentities();
     const collegeIdentity=await CoachIdentityBanner.load(auth.client,data.team_guid);
     const matches = data.matches.slice().sort((a,b) => String(a.scheduled_date || '').localeCompare(String(b.scheduled_date || '')) || (Number(a.dual_order || 0) - Number(b.dual_order || 0)) || String(a.scheduled_dual_guid).localeCompare(String(b.scheduled_dual_guid)));
     const completed = matches.filter(m => m.completed === true && guid(m.dual_guid));
@@ -39,7 +40,10 @@
     const render = () => {
       list.innerHTML = matches.length ? matches.map((m,i) => {
         const done = m.completed === true && !!guid(m.dual_guid);
-        const opp = esc(m.opponent_name || 'Opponent pending');
+        const opponentGuid = m.opponent_team_guid || m.opponent_guid;
+        const opponentName = SimApi.teamDisplayName(opponentGuid,m.opponent_name || 'Opponent pending');
+        const opp = esc(opponentName);
+        const opponentBadge = SimSite.teamIdentityBadge(opponentGuid,m.opponent_name);
         const state = String(m.opponent_state || '').trim().toUpperCase();
         const rank = n(m.opponent_state_rank);
         const record = esc(m.opponent_record || '0-0');
@@ -47,7 +51,7 @@
         const cpu = m.opponent_control_type !== 'HUMAN';
         const type = m.match_type === 'Team Tournament Dual' ? 'Team Tournament Dual' : 'Scheduled Dual';
         const result = showResults && done ? `<span class="coach-match-score" aria-label="Final result">${esc(m.result || 'T')} ${formatScore(m.team_score)}–${formatScore(m.opponent_score)}</span>` : done ? `<span class="coach-score-hidden">Result hidden</span>` : `<span class="coach-match-upcoming">Upcoming</span>`;
-        return `<article class="coach-match-row" aria-label="Dual ${i+1}"><div class="coach-match-date"><strong>Week ${esc(m.week_number ?? '—')}</strong><span>${esc(SimSite.gameDay(m.scheduled_date))}</span><small>${esc(type)}</small></div><div class="coach-match-opponent"><h3>${opp}${state ? ` <span class="coach-match-state">· ${esc(state)}</span>` : ''}</h3><p class="coach-match-meta">${rank && rank>0 ? `State #${rank}` : 'State unranked'} <span aria-hidden="true">·</span> ${record}</p><p class="coach-match-coach">${cpu ? '<span aria-hidden="true">▣</span> ' : '<span aria-hidden="true">♙</span> '}${cpu ? 'Computer Coach' : 'Coach: '+coachName}</p>${type === 'Team Tournament Dual' && m.round_code ? `<p class="coach-match-round">${esc(String(m.round_code).replace(/_/g,' '))}</p>` : ''}</div><div class="coach-match-action">${result}${done ? `<a class="coach-watch-dual" href="dual.html?dual=${encodeURIComponent(m.dual_guid)}" aria-label="Watch dual versus ${opp}">Watch Dual <span aria-hidden="true">↗</span></a>` : `<span class="coach-watch-pending">Awaiting simulation</span>`}</div></article>`;
+        return `<article class="coach-match-row" aria-label="Dual ${i+1}"><div class="coach-match-date"><strong>Week ${esc(m.week_number ?? '—')}</strong><span>${esc(SimSite.gameDay(m.scheduled_date))}</span><small>${esc(type)}</small></div><div class="coach-match-opponent"><h3>${opponentBadge}${opp}${state ? ` <span class="coach-match-state">· ${esc(state)}</span>` : ''}</h3><p class="coach-match-meta">${rank && rank>0 ? `State #${rank}` : 'State unranked'} <span aria-hidden="true">·</span> ${record}</p><p class="coach-match-coach">${cpu ? '<span aria-hidden="true">▣</span> ' : '<span aria-hidden="true">♙</span> '}${cpu ? 'Computer Coach' : 'Coach: '+coachName}</p>${type === 'Team Tournament Dual' && m.round_code ? `<p class="coach-match-round">${esc(String(m.round_code).replace(/_/g,' '))}</p>` : ''}</div><div class="coach-match-action">${result}${done ? `<a class="coach-watch-dual" href="dual.html?dual=${encodeURIComponent(m.dual_guid)}" aria-label="Watch dual versus ${opp}">Watch Dual <span aria-hidden="true">↗</span></a>` : `<span class="coach-watch-pending">Awaiting simulation</span>`}</div></article>`;
       }).join('') : '<div class="coach-empty-note">No team dual meets are scheduled for this season.</div>';
       toggle.textContent = showResults ? 'Hide Results' : 'Show Results';
       toggle.setAttribute('aria-pressed', String(showResults));
