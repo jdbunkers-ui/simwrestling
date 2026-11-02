@@ -6,7 +6,7 @@
   const safeGuid=value=>/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(String(value||''))?String(value):null;
   const empty=msg=>`<div class="coach-empty-note">${escape(msg)}</div>`;
   const error=msg=>{root.innerHTML=`<section class="panel coach-gate"><h1>Coaching portal</h1><p>${escape(msg)}</p><p><a href="account.html">My Account</a> · <a href="login.html">Sign in</a></p></section>`;};
-  const dateText=value=>{if(!value)return '—';const d=new Date(String(value).slice(0,10)+'T12:00:00');return isNaN(d)?String(value):d.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});};
+  const dateText=value=>SimSite.gameDate(value);
   try{
     const auth=await window.SimAuth.ready;
     const {data:{user},error:userError}=await auth.client.auth.getUser();
@@ -92,7 +92,7 @@
     const historyFeedback=document.getElementById('wrestle-feedback');
     const pbpPanel=document.getElementById('wrestle-pbp');
     const renderHistory=()=>{
-      historyPanel.innerHTML=wrestleOffs.length?`<div class="table-wrap"><table class="coach-live-table"><thead><tr><th>League date</th><th>Weight</th><th>Starter</th><th>Challenger</th><th>Status</th><th>Result / PBP</th></tr></thead><tbody>${wrestleOffs.map(x=>`<tr><td>${escape(dateText(x.scheduled_league_date))}</td><td>${escape(x.weight_class)}</td><td>${escape(x.starter_name)}</td><td>${escape(x.challenger_name)}</td><td>${escape(x.status)}</td><td>${x.status==='COMPLETED'?`${escape(x.starter_score)}–${escape(x.challenger_score)} · ${escape(x.result_type||'')} <button type="button" class="coach-pbp-action" data-id="${escape(x.wrestle_off_guid)}">View PBP</button>`:'—'}</td></tr>`).join('')}</tbody></table></div>`:empty('No wrestle-offs scheduled this season. Use the Full Roster view to schedule a backup against the starter.');
+      historyPanel.innerHTML=wrestleOffs.length?`<div class="table-wrap"><table class="coach-live-table"><thead><tr><th>Game day</th><th>Weight</th><th>Starter</th><th>Challenger</th><th>Status</th><th>Result / PBP</th></tr></thead><tbody>${wrestleOffs.map(x=>`<tr><td>${escape(dateText(x.scheduled_league_date))}</td><td>${escape(x.weight_class)}</td><td>${escape(x.starter_name)}</td><td>${escape(x.challenger_name)}</td><td>${escape(x.status)}</td><td>${x.status==='COMPLETED'?`${escape(x.starter_score)}–${escape(x.challenger_score)} · ${escape(x.result_type||'')} <button type="button" class="coach-pbp-action" data-id="${escape(x.wrestle_off_guid)}">View PBP</button>`:'—'}</td></tr>`).join('')}</tbody></table></div>`:empty('No wrestle-offs scheduled this season. Use the Full Roster view to schedule a backup against the starter.');
     };
     rosterPanel.addEventListener('change',async ev=>{
       const input=ev.target.closest('.coach-decision');if(!input||saving)return;

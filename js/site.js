@@ -42,10 +42,10 @@
     header.innerHTML = `
       <header class="site-header">
         <div class="nav-shell">
-          <a class="brand" href="index.html" aria-label="Sim Wrestling coaching portal">
+          <div class="brand-block"><a class="brand" href="index.html" aria-label="Sim Wrestling coaching portal">
             <span class="brand-mark" aria-hidden="true"><span></span></span>
             <span>SIM WRESTLING</span>
-          </a>
+          </a><span class="game-clock" data-game-clock role="status" aria-live="polite">Loading game clock…</span></div>
           <nav class="main-nav" aria-label="Main navigation">
             ${links.map(([id, href, label]) => `
               <a href="${navigationUrl(href)}" ${page === id || (id === 'coach' && page.startsWith('coach')) ? 'aria-current="page"' : ''}>${label}</a>
@@ -186,17 +186,43 @@
       const total = Math.max(0, Math.round(Number(seconds || 0)));
       return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
     },
-    date(value, includeYear = false) {
-      if (!value) return '—';
-      const text = String(value).slice(0, 10);
-      const parsed = new Date(`${text}T12:00:00`);
-      if (Number.isNaN(parsed.getTime())) return text;
-      return parsed.toLocaleDateString(undefined, {
-        month: 'short', day: 'numeric', ...(includeYear ? { year: 'numeric' } : {})
-      });
+    // League days are calendar days: Sunday=1 through Saturday=7.
+    // Schedule calculations use UTC date-only arithmetic, never browser time.
+    gamePosition(value, context = {}) {
+      const raw = String(value || '').slice(0, 10);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return null;
+      const date = new Date(raw + 'T00:00:00Z');
+      if (!Number.isFinite(date.getTime()) || date.toISOString().slice(0,10) !== raw) return null;
+      const seasonMatch = String(context.season_code || context.season_name || '').match(/^(\d{4})[_-]/);
+      const year = seasonMatch ? Number(seasonMatch[1]) : date.getUTCFullYear() - (date.getUTCMonth() < 7 ? 1 : 0);
+      const first = new Date(Date.UTC(year, 7, 1));
+      first.setUTCDate(1 + (7 - first.getUTCDay()) % 7);
+      const explicitBase = context.league_starts_on && new Date(String(context.league_starts_on).slice(0,10) + 'T00:00:00Z');
+      const base = explicitBase || first;
+      if (!Number.isFinite(base.getTime())) return null;
+      const season = Number(context.game_season_number || context.season_number) || base.getUTCFullYear() - 2025;
+      const offset = Math.round((date - base) / 86400000);
+      return {season: season > 0 ? season : null, week: Math.floor(offset / 7) + 1,
+        day: date.getUTCDay() + 1, weekday: ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][date.getUTCDay()],
+        phase: offset < 0 ? 'Preseason' : offset > 55 ? 'Offseason' : null};
+    },
+    gameDate(value, includeSeason = true, context = {}) {
+      const position = this.gamePosition(value, context);
+      if (!position) return 'Game day unavailable';
+      const prefix = includeSeason && position.season ? `S${position.season} · ` : '';
+      return position.phase ? prefix + position.phase : `${prefix}W${position.week} · D${position.day}`;
+    },
+    gameDay(value) {
+      const position = this.gamePosition(value);
+      return position ? `Day ${position.day} · ${position.weekday}` : 'Day pending';
+    },
+    date(value, includeSeason = false, context = {}) {
+      return this.gameDate(value, includeSeason, context);
     },
     seasonLabel(row) {
-      return row?.game_season_display || (row?.game_season_number ? `Season ${row.game_season_number}` : 'Current season');
+      const year = String(row?.season_code || row?.season_name || '').match(/^(\d{4})[_-]/);
+      const season = Number(row?.game_season_number || row?.season_number) || (year ? Number(year[1]) - 2025 : 0);
+      return season > 0 ? `Season ${season}` : row?.game_season_display || 'Current season';
     },
     percent(value, digits = 1) {
       return `${(Number(value || 0) * 100).toFixed(digits)}%`;
@@ -235,4 +261,49 @@
       });
     }
   };
+
+  let clockRequest = null, clockValue = null, clockLoadedAt = 0;
+  window.SimSite.loadLeagueClock = function(force = false) {
+    if (clockRequest) return clockRequest;
+    if (!force && clockValue && Date.now() - clockLoadedAt < 15000) return Promise.resolve(clockValue);
+    clockRequest = (async () => {
+      const config = window.SIM_WRESTLING_CONFIG || {};
+      if (!config.supabaseUrl || !config.supabasePublishableKey) throw Error('Game clock unavailable');
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 8000);
+      try {
+        const response = await fetch(String(config.supabaseUrl).replace(/\/$/,'') + '/rest/v1/v_current_league_clock?select=*', {
+          headers: {apikey:config.supabasePublishableKey}, signal:controller.signal, cache:'no-store'
+        });
+        if (!response.ok) throw Error('Game clock unavailable');
+        const rows = await response.json();
+        if (!Array.isArray(rows) || rows.length !== 1 || !rows[0]?.league_starts_on || !Number(rows[0]?.game_season_number)) throw Error('Game clock unavailable');
+        clockValue = rows[0]; clockLoadedAt = Date.now();
+        return clockValue;
+      } finally { clearTimeout(timer); }
+    })().finally(() => {clockRequest = null;});
+    return clockRequest;
+  };
+  async function updateGameClock() {
+    const badge = document.querySelector('[data-game-clock]');
+    if (!badge || document.hidden) return;
+    try {
+      const clock = await window.SimSite.loadLeagueClock(true);
+      const position = window.SimSite.gamePosition(clock.current_league_date, clock);
+      if (!position) throw Error('Game clock unavailable');
+      badge.textContent = position.phase
+        ? `Season ${position.season} · ${position.phase}`
+        : `Season ${position.season} · Week ${position.week} · Day ${position.day}`;
+      badge.title = position.phase || `${position.weekday} · Sunday is Day 1; Saturday is Day 7`;
+    } catch (_) {
+      badge.textContent = 'Game clock unavailable';
+      badge.title = 'The current game position could not be loaded. Refresh to retry.';
+    }
+  }
+  if (header) {
+    updateGameClock();
+    setInterval(updateGameClock, 60000);
+    document.addEventListener('visibilitychange', updateGameClock);
+    window.addEventListener('focus', updateGameClock);
+  }
 })();
