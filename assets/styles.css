@@ -425,3 +425,7 @@
 @media(max-width:480px){.brand-block{max-width:100%}.game-clock{white-space:normal}.main-nav{gap:18px}}
 
 .main-nav{scrollbar-width:none;overflow-y:hidden}.main-nav::-webkit-scrollbar{display:none}
+
+/* v6.0.3: full roster count beside the coaching roster heading. */
+.coach-roster-title{display:flex;align-items:center;flex-wrap:wrap;gap:10px 16px}.coach-roster-title h2{margin:0}.coach-roster-total{color:var(--ink);line-height:1.4}.coach-roster-count{font-size:.88rem;font-weight:800;white-space:nowrap}.coach-roster-total.is-over-limit{color:#b42318}.coach-roster-limit-note{display:block;font-size:.75rem;font-weight:700;margin-top:2px;max-width:270px}
+@media(max-width:680px){.coach-roster-title{align-items:flex-start;flex-direction:column;gap:5px}.coach-roster-limit-note{max-width:none}}
