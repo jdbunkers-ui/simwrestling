@@ -64,7 +64,7 @@
     accountLink.textContent = 'Sign In';
     mainNav.appendChild(accountLink);
     const authPage = ['login', 'register', 'forgot-password', 'reset-password', 'account', 'coach', 'coach-wrestler', 'coach-recruiting', 'rankings'].includes(page);
-    if (!authPage) {
+    if (!authPage && !window.SimAuth) {
       const loadAuth = document.createElement('script');
       loadAuth.src = 'js/auth.js?v=4.0.0';
       document.head.appendChild(loadAuth);

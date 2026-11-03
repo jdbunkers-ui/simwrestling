@@ -78,7 +78,7 @@
       <nav class="coach-subnav" aria-label="Private coaching pages"><a href="coach.html">Team</a><a href="coach-recruiting.html" class="active" aria-current="page">Recruits</a><a href="coach-matches.html">Schedule</a><a href="coach-history.html">Wall of Fame</a><a href="coach-identity.html">Identity</a></nav>
       <div class="coach-summary-grid recruit-summary">
         <article><span>Available</span><strong data-summary="available">${number(overview.available_points)}</strong><small>Rolled forward this season</small></article>
-        <article><span>Awarded</span><strong data-summary="awarded">${number(overview.points_awarded)}</strong><small>100 points each week</small></article>
+        <article><span>Awarded</span><strong data-summary="awarded">${number(overview.points_awarded)}</strong><small>100 per week · Weeks 2–8</small></article>
         <article><span>Scouting</span><strong data-summary="scouting">${number(overview.scouting_points_spent)}</strong><small>Points spent on results</small></article>
         <article><span>Persuasion</span><strong data-summary="persuasion">${number(overview.persuasion_points_spent)}</strong><small>Points spent on recruits</small></article>
       </div>
@@ -131,7 +131,7 @@
     const owned = catalog.filter(item => item.purchased).length;
     return `
       <div class="recruit-overview-grid">
-        <section class="panel recruit-card recruit-callout"><p class="eyebrow">THIS WEEK</p><h2>Build information, then build relationships.</h2><p>Search the free geographic inventory, purchase completed result packages, flag recruits and use up to three eligible actions on a recruit each week.</p><button type="button" class="recruit-primary" data-open-tab="search">Search prospects</button></section>
+        <section class="panel recruit-card recruit-callout"><p class="eyebrow">THIS WEEK</p><h2>Build information, then build relationships.</h2><p>Search the free geographic inventory, purchase completed result packages, open a prospect and submit one eligible action per recruit each week. Your first point adds him to your Big Board and unlocks his current-season matches.</p><button type="button" class="recruit-primary" data-open-tab="search">Search prospects</button></section>
         <section class="panel recruit-card"><p class="eyebrow">YOUR PIPELINE</p><h2>${board.length} active targets</h2><dl class="recruit-mini-stats"><div><dt>Scouting packages</dt><dd>${owned}</dd></div><div><dt>Week</dt><dd>${number(overview.recruiting_week)}</dd></div><div><dt>Unused points</dt><dd>${number(overview.available_points)}</dd></div></dl><button type="button" class="recruit-secondary" data-open-tab="board">Open Big Board</button></section>
       </div>
       <section class="panel recruit-section"><div class="panel-heading"><div><p class="eyebrow">PERSUASION MENU</p><h2>Available recruiting actions</h2></div></div>
@@ -153,30 +153,59 @@
     if (!searchRows.length) return empty('Use the filters above to search the free high-school prospect inventory.');
     return `<div class="recruit-prospect-list">${searchRows.map(row => {
       const flagged = Boolean(row.flagged);
-      return `<article class="recruit-prospect-row"><div><a class="recruit-prospect-link" href="${esc(SimSite.prospectUrl(row.wrestler_guid))}">${esc(prospectName(row))}</a><span>${esc(text(row.weight_class_code, '—'))} · ${esc(label(row.academic_stage || 'High school'))}</span><small>${esc(text(row.county_name, row.hometown_display, row.hometown_city, 'Location unavailable'))}${row.state_code ? `, ${esc(row.state_code)}` : ''}</small></div><button type="button" class="${flagged ? 'recruit-flagged' : 'recruit-secondary'}" data-flag-recruit="${esc(row.wrestler_guid)}" ${flagged ? 'disabled' : ''}>${flagged ? 'On Big Board' : 'Flag recruit'}</button></article>`;
+      return `<article class="recruit-prospect-row"><div><a class="recruit-prospect-link" href="${esc(SimSite.prospectUrl(row.wrestler_guid))}">${esc(prospectName(row))}</a><span>${esc(text(row.weight_class_code, '—'))} · ${esc(label(row.academic_stage || 'High school'))}</span><small>${esc(text(row.county_name, row.hometown_display, row.hometown_city, 'Location unavailable'))}${row.state_code ? `, ${esc(row.state_code)}` : ''}</small></div><button type="button" class="${flagged ? 'recruit-flagged' : 'recruit-secondary'}" data-flag-recruit="${esc(row.wrestler_guid)}" ${flagged ? 'disabled' : ''}>${flagged ? 'On Big Board' : 'Recruit prospect'}</button></article>`;
     }).join('')}</div>`;
   }
 
+  let market = {scope:'COUNTY',state:'',county:'',region:'',week:'',weight:'',query:'',owned:false};
+  const stateNames = {DE:'Delaware',MD:'Maryland',NJ:'New Jersey',NY:'New York',PA:'Pennsylvania',WV:'West Virginia'};
+  const marketRows = () => catalog.filter(item => item.purchased || (item.result_available && number(item.week_number) <= number(overview.recruiting_week)));
+  const optionsFor = (rows, key, name) => [...new Map(rows.filter(x=>x[key]).map(x=>[String(x[key]),text(x[name],stateNames[x[key]],x[key])])).entries()].sort((a,b)=>a[1].localeCompare(b[1]));
+  const selectOptions = (options, selected) => options.map(([value,name])=>`<option value="${esc(value)}" ${String(selected)===String(value)?'selected':''}>${esc(name)}</option>`).join('');
   function packageList() {
-    return `<div class="recruit-package-tools"><label>Week<select id="package-week"><option value="">All</option>${[1,2,3,4,5,6,7,8].map(week => `<option value="${week}">Week ${week}</option>`).join('')}</select></label><label>Find a package<input id="package-query" type="search" placeholder="County, state or event"></label><label class="recruit-check"><input id="package-owned" type="checkbox"> Purchased only</label></div><div id="package-list"></div>`;
+    return '<div id="package-controls"></div><div id="package-list" aria-live="polite"></div>';
   }
-
+  function renderPackageControls() {
+    const host=document.getElementById('package-controls');
+    if(!host)return;
+    const rows=marketRows().filter(x=>x.scope_level===market.scope);
+    const county=market.scope==='COUNTY', regional=market.scope==='REGION';
+    const states=optionsFor(rows,'state_code','state_name');
+    const counties=optionsFor(rows.filter(x=>!market.state||x.state_code===market.state),'county_guid','county_name');
+    const regions=optionsFor(rows,'region_code','region_name');
+    const weeks=[...new Set(rows.filter(x=>(!market.state||x.state_code===market.state)&&(!market.county||x.county_guid===market.county)).map(x=>number(x.week_number)))].sort((a,b)=>a-b).map(w=>[w,`Week ${w}`]);
+    host.innerHTML=`<div class="recruit-package-tools recruit-market-filters">
+      <label>Tournament level<select data-market="scope">${selectOptions([['COUNTY','County · 2 points / all weights'],['STATE','State · 12 points / weight'],['REGION','Regional · 8 points / weight'],['NATIONAL','National · 5 points / weight']],market.scope)}</select></label>
+      ${county||market.scope==='STATE'?`<label>State<select data-market="state"><option value="">Choose a state</option>${selectOptions(states,market.state)}</select></label>`:''}
+      ${county?`<label>County tournament<select data-market="county" ${!market.state?'disabled':''}><option value="">Choose a county</option>${selectOptions(counties,market.county)}</select></label><label>Week<select data-market="week"><option value="">All completed weeks</option>${selectOptions(weeks,market.week)}</select></label>`:''}
+      ${regional&&rows.length?`<label>Regional tournament<select data-market="region"><option value="">Choose a region</option>${selectOptions(regions,market.region)}</select></label>`:''}
+      ${!county&&rows.length?`<label>Weight class<select data-market="weight"><option value="">Choose a weight</option>${selectOptions(highSchoolWeights.map(w=>[w,w==='HWT'?'Heavyweight':w+' lb']),market.weight)}</select></label>`:''}
+      <label>Find a package<input data-market="query" type="search" placeholder="Event name" value="${esc(market.query)}"></label>
+      <label class="recruit-check"><input data-market="owned" type="checkbox" ${market.owned?'checked':''}> Purchased only</label>
+    </div>`;
+    host.querySelectorAll('[data-market]').forEach(input=>input.addEventListener(input.dataset.market==='query'?'input':'change',()=>{
+      const key=input.dataset.market;market[key]=key==='owned'?input.checked:input.value;
+      if(key==='scope'){Object.assign(market,{state:'',county:'',region:'',week:'',weight:''});}
+      if(key==='state'){market.county='';market.week='';}
+      if(key!=='query'&&key!=='owned')renderPackageControls();
+      renderPackages();
+    }));
+  }
   function renderPackages() {
-    const host = document.getElementById('package-list');
-    if (!host) return;
-    const week = document.getElementById('package-week')?.value;
-    const query = String(document.getElementById('package-query')?.value || '').trim().toLowerCase();
-    const ownedOnly = Boolean(document.getElementById('package-owned')?.checked);
-    const rows = catalog.filter(item => (!week || String(item.week_number) === week) && (!query || String(item.package_name || '').toLowerCase().includes(query)) && (!ownedOnly || item.purchased)).slice(0, 100);
-    host.innerHTML = rows.length ? `<div class="recruit-package-list">${rows.map(item => {
-      const locked = !item.result_available || number(item.week_number) > number(overview.recruiting_week);
-      return `<article class="recruit-package-row"><div><span class="recruit-scope">Week ${esc(item.week_number)} · ${esc(label(item.scope_level))}</span><strong>${esc(item.package_name)}</strong><small>${item.result_available ? 'Results available' : 'Results have not started'} · ${number(item.point_cost)} points</small></div><div class="recruit-package-actions">${item.purchased ? `<button type="button" class="recruit-primary" data-view-package="${esc(item.scouting_package_guid)}">View results</button>` : `<button type="button" class="recruit-secondary" data-buy-package="${esc(item.scouting_package_guid)}" ${locked || working ? 'disabled' : ''}>Unlock · ${number(item.point_cost)}</button>`}</div></article>`;
-    }).join('')}</div>${rows.length === 100 ? '<p class="coach-detail-note">Showing the first 100 matching packages. Narrow the search to find a specific county or event.</p>' : ''}` : empty('No scouting packages match these filters.');
+    const host=document.getElementById('package-list');if(!host)return;
+    const available=marketRows().filter(x=>x.scope_level===market.scope);
+    if(!available.length){host.innerHTML=empty(`${label(market.scope)} tournament packages will appear after results have been processed for this season.`);return;}
+    if((market.scope==='COUNTY'&&(!market.state||!market.county)) || (market.scope==='STATE'&&!market.state) || (market.scope==='REGION'&&!market.region)){
+      host.innerHTML=empty(market.scope==='COUNTY'?'Choose a state and county to see completed weekly packages.':`Choose a ${market.scope==='STATE'?'state':'region'} to see available brackets.`);return;
+    }
+    if(market.scope!=='COUNTY'&&!market.weight&&!market.owned){host.innerHTML=empty('Choose a weight class to see available championship brackets.');return;}
+    const rows=available.filter(x=>(!market.state||x.state_code===market.state)&&(!market.county||x.county_guid===market.county)&&(!market.region||x.region_code===market.region)&&(!market.week||String(x.week_number)===market.week)&&(!market.weight||x.weight_class_code===market.weight||x.legacy_full_event)&&(!market.owned||x.purchased)&&(!market.query||String(x.package_name).toLowerCase().includes(market.query.trim().toLowerCase())));
+    host.innerHTML=rows.length?`<div class="recruit-package-list">${rows.map(item=>`<article class="recruit-package-row"><div><span class="recruit-scope">Week ${esc(item.week_number)} · ${esc(label(item.scope_level))} · ${esc(item.weight_class_code||'All weights')}</span><strong>${esc(item.package_name)}</strong><small>${item.purchased?`Purchased · ${number(item.points_paid??item.point_cost)} points paid`:`${number(item.point_cost)} points`} · ${item.legacy_full_event?'Previously purchased full-event coverage':'Results available'}</small></div><div class="recruit-package-actions">${item.purchased?`<button type="button" class="recruit-primary" data-view-package="${esc(item.scouting_package_guid)}">View results</button>`:`<button type="button" class="recruit-secondary" data-buy-package="${esc(item.scouting_package_guid)}" ${working||number(overview.available_points)<number(item.point_cost)||number(overview.recruiting_week)<2?'disabled':''}>Unlock · ${number(item.point_cost)}</button>`}</div></article>`).join('')}</div>`:empty('No completed packages match these filters.');
   }
 
   function renderSearch() {
-    return `${renderPipelineDashboard()}<section class="panel recruit-section"><div class="panel-heading"><div><p class="eyebrow">FREE INVENTORY</p><h2>Search prospects</h2><p class="recruit-heading-note">Names and geography are free. Results require a scouting package.</p></div></div>${searchForm()}<div id="prospect-results">${prospectRows()}</div></section>
-      <section class="panel recruit-section"><div class="panel-heading"><div><p class="eyebrow">SCOUTING MARKET</p><h2>Purchase result packages</h2><p class="recruit-heading-note">A purchase updates as sessions finish and remains available under its season retention rule.</p></div></div>${packageList()}</section>
+    return `${renderPipelineDashboard()}<section class="panel recruit-section"><div class="panel-heading"><div><p class="eyebrow">FREE INVENTORY</p><h2>Search prospects</h2><p class="recruit-heading-note">Search is free. Your first recruiting point adds a prospect to your Big Board and unlocks his current-season matches.</p></div></div>${searchForm()}<div id="prospect-results">${prospectRows()}</div></section>
+      <section class="panel recruit-section"><div class="panel-heading"><div><p class="eyebrow">SCOUTING MARKET</p><h2>Purchase result packages</h2><p class="recruit-heading-note">County: 2 points for all weights in one county and week. State: 12, regional: 8, national: 5 points per weight-class bracket. Completed results appear below.</p></div></div>${packageList()}</section>
       <section class="panel recruit-results" id="scouting-results" hidden></section>`;
   }
 
@@ -256,7 +285,7 @@
     panel.innerHTML = activeTab === 'search' ? renderSearch() : activeTab === 'overview' ? renderOverview() : renderBoard();
     if (activeTab === 'search') {
       document.getElementById('prospect-search-form')?.addEventListener('submit', runSearch);
-      ['package-week','package-query','package-owned'].forEach(id => document.getElementById(id)?.addEventListener(id === 'package-query' ? 'input' : 'change', renderPackages));
+      renderPackageControls();
       renderPackages();
     }
   }
@@ -293,16 +322,8 @@
     finally { working = false; }
   }
 
-  async function flagRecruit(wrestlerGuid, packageGuid = null) {
-    if (working) return;
-    working = true; setFeedback('Adding recruit to your Big Board…');
-    try {
-      await rpc('set_my_big_board_recruit_v4_3_0', {p_wrestler_guid:wrestlerGuid,p_priority_rank:3,p_coach_note:null,p_scouting_package_guid:packageGuid});
-      searchRows.forEach(row => { if (row.wrestler_guid === wrestlerGuid) row.flagged = true; });
-      await refresh();
-      setFeedback('Recruit added to your Big Board.', 'success');
-    } catch (error) { setFeedback(error.message || 'The recruit could not be flagged.', 'error'); }
-    finally { working = false; }
+  function flagRecruit(wrestlerGuid) {
+    window.location.assign(SimSite.prospectUrl(wrestlerGuid));
   }
 
   async function buyPackage(packageGuid) {
@@ -328,7 +349,7 @@
     if (!host) return;
     const events = Array.isArray(data?.events) ? data.events : [];
     const duals = Array.isArray(data?.duals) ? data.duals : [];
-    const tournaments = Array.isArray(data?.tournaments) ? data.tournaments : [];
+    const tournaments = (Array.isArray(data?.tournaments) ? data.tournaments : []).slice().sort((a,b)=>highSchoolWeights.indexOf(a.weight_class_code)-highSchoolWeights.indexOf(b.weight_class_code));
     const participants = new Map((Array.isArray(data?.participants) ? data.participants : [])
       .map(row => [String(row.wrestler_guid), row]));
     const wrestlerLink = (guid, name) => {
@@ -351,7 +372,7 @@
         const payload = row.payload || {};
         const entries = Array.isArray(payload.entries) ? payload.entries : [];
         const bracket = Array.isArray(payload.bracket) ? payload.bracket : [];
-        return `<details><summary><strong>${esc(text(row.tournament_name,row.event_name,'Tournament'))}</strong><span>${esc(text(row.weight_class_code,'—'))} · ${bracket.length} bouts</span></summary><div class="recruit-entry-chips">${entries.filter(entry => entry.wrestler_guid).map(entry => `<span>${wrestlerLink(entry.wrestler_guid,text(entry.wrestler_name,entry.display_name,'Recruit'))}<button type="button" data-flag-recruit="${esc(entry.wrestler_guid)}" data-package="${esc(packageGuid)}">Flag</button></span>`).join('')}</div><div class="table-wrap"><table class="coach-live-table recruit-bracket-table"><thead><tr><th>Round</th><th>Matchup</th><th>Score</th><th>Result</th><th></th></tr></thead><tbody>${bracket.map(bout => `<tr><td>${esc(text(bout.round_name,bout.round_code,'—'))}</td><td>${wrestlerLink(bout.wrestler_1_guid,bout.wrestler_1_name)} <span class="recruit-versus">vs.</span> ${wrestlerLink(bout.wrestler_2_guid,bout.wrestler_2_name)}</td><td>${score(bout.wrestler_1_match_score,bout.wrestler_2_match_score)}</td><td>${esc(label(bout.result_type || 'Pending'))}</td><td>${bout.match_guid ? `<a class="recruit-pbp-button" href="${esc(pbpUrl(bout.match_guid))}">PBP</a>` : ''}</td></tr>`).join('')}</tbody></table></div></details>`;
+        return `<details><summary><strong>${esc(text(row.tournament_name,row.event_name,'Tournament'))}</strong><span>${esc(text(row.weight_class_code,'—'))} · ${bracket.length} bouts</span></summary><div class="recruit-entry-chips">${entries.filter(entry => entry.wrestler_guid).map(entry => `<span>${wrestlerLink(entry.wrestler_guid,text(entry.wrestler_name,entry.display_name,'Recruit'))}<button type="button" data-flag-recruit="${esc(entry.wrestler_guid)}" data-package="${esc(packageGuid)}">Recruit prospect</button></span>`).join('')}</div><div class="table-wrap"><table class="coach-live-table recruit-bracket-table"><thead><tr><th>Round</th><th>Matchup</th><th>Score</th><th>Result</th><th></th></tr></thead><tbody>${bracket.map(bout => `<tr><td>${esc(text(bout.round_name,bout.round_code,'—'))}</td><td>${wrestlerLink(bout.wrestler_1_guid,bout.wrestler_1_name)} <span class="recruit-versus">vs.</span> ${wrestlerLink(bout.wrestler_2_guid,bout.wrestler_2_name)}</td><td>${score(bout.wrestler_1_match_score,bout.wrestler_2_match_score)}</td><td>${esc(label(bout.result_type || 'Pending'))}</td><td>${bout.match_guid ? `<a class="recruit-pbp-button" href="${esc(pbpUrl(bout.match_guid))}">PBP</a>` : ''}</td></tr>`).join('')}</tbody></table></div></details>`;
       }).join('')}</div>` : ''}`;
     host.scrollIntoView({behavior:'smooth',block:'start'});
   }

@@ -16,6 +16,7 @@
   const stageRanks = {HIGH_SCHOOL_FRESHMAN:1,HIGH_SCHOOL_SOPHOMORE:2,HIGH_SCHOOL_JUNIOR:3,HIGH_SCHOOL_SENIOR:4};
   const stageNames = {1:'Freshman',2:'Sophomore',3:'Junior',4:'Senior'};
   let recruiting = null;
+  let profilePayload = null;
   let submitting = false;
   const submittedThisVisit = [];
   async function privateRpc(name, params = {}) {
@@ -34,19 +35,19 @@
     if (loadError) return `<section class="panel section-block prospect-recruit-actions"><div class="panel-heading"><div><p class="eyebrow">COACH RECRUITING</p><h2>Recruiting Actions</h2></div></div><p class="coach-empty">Could not load recruiting availability: ${e(loadError)}</p></section>`;
     const types = Array.isArray(overview?.action_types) ? overview.action_types : [];
     const used = new Set(Array.isArray(entry?.used_stage_action_codes) ? entry.used_stage_action_codes : []);
-    const remaining = entry ? Math.max(0,3-Number(entry.current_week_action_qty || 0)) : 0;
+    const weekOpen = Number(overview.recruiting_week)>=2 && Number(overview.recruiting_week)<=8 && new Date(String(overview.league_date)+'T00:00:00Z').getUTCDay()!==6;
+    const remaining = weekOpen ? Math.max(0,1-Number(entry?.current_week_action_qty || 0)) : 0;
     const senior = stageRank === 4;
-    const isContender = !senior || Boolean(entry?.senior_outlook?.is_contender);
+    const isContender = !senior || !entry || Boolean(entry?.senior_outlook?.is_contender);
     const options = types.filter(action => Number(action.minimum_stage_rank || 1) <= stageRank).map(action => {
       const onceUsed = Boolean(action.once_per_stage_ind && used.has(action.action_code));
-      const blocked = onceUsed || !isContender || remaining === 0;
+      const blocked = onceUsed || !isContender || remaining === 0 || Number(action.point_cost)>Number(overview.available_points);
       return `<option value="${e(action.action_code)}" ${blocked ? 'disabled' : ''}>${e(action.action_name || action.display_name || actionName(action.action_code))} — ${Number(action.point_cost || 0)} pts${onceUsed ? ' (already used this stage)' : ''}</option>`;
     }).join('');
     const feedback = `<p id="prospect-action-feedback" class="recruit-feedback" role="status" aria-live="polite"></p>`;
     const newActions = submittedThisVisit.length ? `<div class="prospect-new-actions"><strong>Actions submitted this visit</strong><ul>${submittedThisVisit.map(x=>`<li>${e(x)}</li>`).join('')}</ul></div>` : '';
-    const headline = `<div class="panel-heading"><div><p class="eyebrow">COACH RECRUITING</p><h2>Recruiting Actions</h2><p class="recruit-heading-note">${e(stageNames[stageRank] || 'High school')} eligibility · ${Number(overview.available_points || 0)} recruiting points available${entry ? ` · ${remaining} of 3 weekly actions remaining` : ''}</p></div></div>`;
-    if (!entry) return `<section class="panel section-block prospect-recruit-actions">${headline}<p>This wrestler is not currently on your Big Board. Add the prospect to your board before submitting recruiting actions.</p><button class="recruit-primary" id="prospect-add-board" type="button">Add to Big Board</button>${feedback}${newActions}</section>`;
-    return `<section class="panel section-block prospect-recruit-actions">${headline}<form id="prospect-action-form" class="prospect-action-form"><label for="prospect-action-choice">Eligible recruiting action</label><div class="prospect-action-controls"><select id="prospect-action-choice" required ${remaining === 0 || !isContender ? 'disabled' : ''}><option value="">${remaining === 0 ? 'Weekly limit reached' : !isContender ? 'Not eligible for senior recruiting actions' : 'Choose an action'}</option>${options}</select><button type="submit" class="recruit-primary" ${remaining === 0 || !isContender || !options ? 'disabled' : ''}>Submit action</button></div></form><p class="coach-detail-note">One action per recruit per week is subject to the league rules. Once-per-stage actions cannot be repeated. The server validates cost and eligibility.</p>${feedback}${newActions}</section>`;
+    const headline = `<div class="panel-heading"><div><p class="eyebrow">COACH RECRUITING</p><h2>Recruiting Actions</h2><p class="recruit-heading-note">${e(stageNames[stageRank] || 'High school')} eligibility · ${Number(overview.available_points || 0)} recruiting points available · ${remaining} of 1 weekly action remaining</p></div></div>`;
+    return `<section class="panel section-block prospect-recruit-actions">${headline}<form id="prospect-action-form" class="prospect-action-form"><label for="prospect-action-choice">Eligible recruiting action</label><div class="prospect-action-controls"><select id="prospect-action-choice" required ${remaining === 0 || !isContender ? 'disabled' : ''}><option value="">${remaining === 0 ? 'Weekly limit reached' : !isContender ? 'Not eligible for senior recruiting actions' : 'Choose an action'}</option>${options}</select><button type="submit" class="recruit-primary" ${remaining === 0 || !isContender || !options ? 'disabled' : ''}>Submit action</button></div></form><p class="coach-detail-note">${!entry?'Your first recruiting point adds this prospect to your Big Board and unlocks his current-season matches. ':''}${!weekOpen?'Recruiting actions are closed for this game date. ':'Submit before advancing from Day 6 to Day 7. '}One action per recruit per week. Once-per-stage actions cannot be repeated. The server validates cost and eligibility.</p>${feedback}${newActions}</section>`;
   }
   function showActionFeedback(message, error = false) {
     const el = document.getElementById('prospect-action-feedback');
@@ -87,37 +88,26 @@
     if (button) button.disabled = true;
     showActionFeedback('Submitting recruiting action…');
     try {
-      await privateRpc('submit_my_recruiting_action_v4_3_0', {p_wrestler_guid:wrestlerGuid,p_action_code:code});
+      const receipt = await privateRpc('submit_my_recruiting_action_v4_3_0', {p_wrestler_guid:wrestlerGuid,p_action_code:code});
       submittedThisVisit.unshift(name);
-      const [overview,board] = await Promise.all([
-        privateRpc('get_my_recruiting_overview_v4_3_0'),privateRpc('get_my_big_board_v4_4_0')
+      recruiting.entry = {...(recruiting.entry||{}),current_week_action_qty:1};
+      recruiting.overview.available_points = receipt.available_points;
+      const refreshed = await Promise.allSettled([
+        privateRpc('get_my_recruiting_overview_v4_3_0'),
+        privateRpc('get_my_big_board_v4_4_0'),
+        SimApi.profileHistory(wrestlerGuid)
       ]);
-      recruiting.overview = overview || {};
-      recruiting.entry = boardEntry(board);
-      updateRecruitingPanel();
-      showActionFeedback(`${name} submitted and recorded. Recruiting totals refreshed.`);
+      if(refreshed[0].status==='fulfilled')recruiting.overview=refreshed[0].value||{};
+      if(refreshed[1].status==='fulfilled')recruiting.entry=boardEntry(refreshed[1].value)||recruiting.entry;
+      if(refreshed[2].status==='fulfilled')profilePayload={...profilePayload,...refreshed[2].value};
+      render(profilePayload);
+      showActionFeedback(`${name} recorded. ${refreshed.some(x=>x.status==='rejected')?'Refresh this page if updated details are not yet visible.':'Big Board and match access refreshed.'}`);
     } catch (error) {
       showActionFeedback(error?.message || 'The action could not be submitted.', true);
       if (button) button.disabled = false;
     } finally {submitting = false;}
   }
   root.addEventListener('submit', handleRecruitingAction);
-  root.addEventListener('click', async event => {
-    if (event.target?.id !== 'prospect-add-board' || submitting) return;
-    submitting = true;
-    event.target.disabled = true;
-    try {
-      await privateRpc('set_my_big_board_recruit_v4_3_0', {p_wrestler_guid:wrestlerGuid,p_priority_rank:3,p_coach_note:null,p_scouting_package_guid:null});
-      const [overview,board] = await Promise.all([
-        privateRpc('get_my_recruiting_overview_v4_3_0'),privateRpc('get_my_big_board_v4_4_0')
-      ]);
-      recruiting.overview = overview || {};
-      recruiting.entry = boardEntry(board);
-      updateRecruitingPanel();
-      showActionFeedback('Added to Big Board. You can now select a recruiting action.');
-    } catch (error) {showActionFeedback(error?.message || 'Unable to add this prospect.', true);event.target.disabled=false;}
-    finally {submitting = false;}
-  });
   const yearOnly = value => String(value || '—').replace(/^(?:College|High School)\s*(?:[·•|\-]\s*)?/i, '');
 
   function render(payload) {
@@ -135,6 +125,8 @@
     const career = payload.career_summary || [];
     const activeSeason = history.find(item => String(item.season_status).toUpperCase() === 'OPEN') || history[0];
     const honorSeasons = [...new Set(achievements.map(seasonNumber))].sort((a, b) => b - a);
+    const seasonMatches = (payload.match_history||[]).filter(match=>String(match.season_guid)===String(p.season_guid)).sort((a,b)=>new Date(b.match_date)-new Date(a.match_date));
+    const seasonStats = activeSeason || m;
     const initials = `${p.first_name?.[0] || ''}${p.last_name?.[0] || ''}` || String(p.wrestler_name || '').split(/\s+/).map(word => word[0]).join('').slice(0, 2);
     const bonusWins = Number(m.major_decision_win_qty || 0) + Number(m.technical_fall_win_qty || 0) + Number(m.fall_win_qty || 0) + Number(m.forfeit_win_qty || 0);
 
@@ -162,10 +154,11 @@
           <p class="origin">${e(p.hometown_display || 'Hometown unavailable')} · ${e(p.height_display)} · ${num(p.current_weight_lbs, 1)} lb</p>
           <div class="style-tags">${achievements.some(item => placement(item) === 1) ? '<span class="champion-tag">Tournament Champion</span>' : ''}${p.stance_display ? `<span>${e(p.stance_display)}</span>` : ''}</div>
         </div></div>
-        <dl class="hero-record"><div><dt>Record</dt><dd>${num(m.win_qty)}–${num(m.loss_qty)}</dd></div><div><dt>Win rate</dt><dd>${pct(m.win_pct)}</dd></div><div><dt>Bonus wins</dt><dd>${bonusWins}</dd></div><div><dt>Avg. points</dt><dd>${num(m.average_match_points, 1)}</dd></div></dl>
+        <dl class="hero-record"><div><dt>Season record</dt><dd>${num(seasonStats.win_qty)}–${num(seasonStats.loss_qty)}</dd></div><div><dt>Season win rate</dt><dd>${pct(seasonStats.win_percentage??seasonStats.win_pct)}</dd></div><div><dt>Season bonus wins</dt><dd>${num(seasonStats.bonus_win_qty??bonusWins)}</dd></div><div><dt>Avg. point diff.</dt><dd>${num(seasonStats.average_point_differential, 1)}</dd></div></dl>
       </section>
       <div id="prospect-recruit-panel">${actionBox()}</div>
       <section class="award-board section-block" data-collapse-label="Podium Finishes"><div class="section-heading"><div><p class="eyebrow">Tournament honors</p><h2>Podium Finishes</h2></div><span class="record-pill">${detailsError ? '—' : `${achievements.length} finish${achievements.length === 1 ? '' : 'es'}`}</span></div>${detailsError ? `<p class="coach-empty">Podium finishes could not be loaded: ${e(detailsError)}</p>` : achievements.length ? `<div class="season-award-groups">${honorSeasons.map(number => `<section class="season-award-group"><header><h3>Season ${number}</h3><span>${achievements.filter(item => seasonNumber(item) === number).length} honor${achievements.filter(item => seasonNumber(item) === number).length === 1 ? '' : 's'}</span></header><div class="award-grid">${achievements.filter(item => seasonNumber(item) === number).map(item => { const place = placement(item); const body = `<span class="placement-medal place-${Math.min(3, place || 4)}">${place || '—'}</span><div><strong>${e(honorLabel(item))}</strong><small>${e([item.tournament_name || item.event_name || 'Tournament', item.weight_class_code ? `${item.weight_class_code} lb` : '', item.seed_number ? `No. ${item.seed_number} seed` : ''].filter(Boolean).join(' · '))}</small></div>${item.tournament_guid ? '<i aria-hidden="true">→</i>' : ''}`; return item.tournament_guid ? `<a class="award-card-link" href="${e(SimSite.tournamentUrl(item.tournament_guid))}">${body}</a>` : `<article>${body}</article>`; }).join('')}</div></section>`).join('')}</div>` : '<p class="coach-empty">No podium finishes are recorded yet.</p>'}</section>
+      <section class="panel section-block prospect-season-matches"><div class="panel-heading"><div><p class="eyebrow">CURRENT SEASON</p><h2>Match History</h2><p class="recruit-heading-note">${recruiting?.entry?'Big Board access · All recorded current-season matches.':'Submit a recruiting action to unlock all current-season matches. Purchased coverage may reveal individual matches.'}</p></div></div>${detailsError?`<p class="coach-empty">Match history could not be loaded: ${e(detailsError)}</p>`:seasonMatches.length?`<div class="table-wrap"><table><thead><tr><th>Season</th><th>Opponent</th><th>Result</th><th>Method</th><th>Review</th></tr></thead><tbody>${seasonMatches.map(match=>`<tr><td>${e(match.game_season_display||'Current season')}</td><td>${match.opponent_wrestler_guid?`<a href="${e(SimSite.prospectUrl(match.opponent_wrestler_guid))}">${e(match.opponent_name)}</a>`:e(match.opponent_name||'Forfeit')}</td><td class="${match.result_outcome==='WIN'?'result-win':'result-loss'}">${e(match.result_outcome)} ${e(match.score_display)}</td><td>${e(String(match.result_type||'').replaceAll('_',' '))}</td><td><a href="coach-scouted-match.html?match=${encodeURIComponent(match.match_guid)}&amp;prospect=${encodeURIComponent(wrestlerGuid)}">PBP →</a></td></tr>`).join('')}</tbody></table></div>`:'<p class="coach-empty">No accessible current-season matches are available yet.</p>'}</section>
       <section class="panel season-timeline section-block" data-collapse-label="Career Progression"><div class="panel-heading"><div><p class="eyebrow">Career progression</p><h2>Season and Career Records</h2></div><span class="record-pill">${detailsError ? '—' : `${history.length} season${history.length === 1 ? '' : 's'}`}</span></div><div class="career-level-groups">${detailsError ? `<p class="coach-empty">Season and career records could not be loaded: ${e(detailsError)}</p>` : `${careerTable('HIGH_SCHOOL')}${careerTable('COLLEGE') || ''}${history.length || career.length ? '' : '<p class="coach-empty">No season records are available yet.</p>'}`}</div></section>
       ${isCurrentSenior ? `<section class="panel section-block decision-time" data-collapse-label="Decision Time"><div class="panel-heading"><div><p class="eyebrow">Road to Signing Day · Season ${e(senior?.game_season_number || seasonNumber(activeSeason) || '—')}</p><h2>Decision Time</h2></div><span class="record-pill">Senior recruiting watch</span></div>${!senior ? '<p class="coach-empty">Recruiting information is temporarily unavailable.</p>' : `<div class="decision-time-inner"><div class="decision-time-highlights"><div><span>State · Weight-Class Rank</span><strong>${senior.state_weight_rank ? `#${e(senior.state_weight_rank)}` : '—'}</strong><small>${e(senior.state_code || p.hometown_state_code || '')} · ${e(senior.weight_class_code || p.weight_class_code || '')} lb</small></div><div><span>Career Recruiting Points</span><strong>${num(senior.total_recruiting_points || 0)}</strong><small>Across all recruiting programs</small></div></div><h3>Schools Under Consideration</h3><div class="decision-time-schools">${(senior.preferred_schools || []).length ? senior.preferred_schools.map(team=>`<a href="${SimSite.teamUrl(team.team_guid)}">${e(team.team_name)}</a>`).join('') : '<span class="subtext">No preferred schools established</span>'}</div><h3>Recruiting Points by School Year</h3><div class="decision-time-years">${yearPoints.map(item=>`<div><span>${e(item.label)}</span><strong>${item.points === null || item.points === undefined ? '—' : num(item.points)}</strong></div>`).join('')}<div class="decision-time-total"><span>Career Total</span><strong>${num(senior.total_recruiting_points || 0)}</strong></div></div><p class="decision-time-note">Recruiting totals include all recorded team actions. A dash indicates unavailable historical coverage, not zero points. Preferred schools reflect the latest completed recruiting week.</p></div>`}</section>` : ''}`;
     SimSite.mobileCollapsibles(root);
@@ -189,7 +182,8 @@
     }) : Promise.resolve(null);
     await loadRecruiting(core.profile);
     const seniorRecruiting = await decisionPromise;
-    render({...core, ...history, senior_recruiting:seniorRecruiting});
+    profilePayload = {...core, ...history, senior_recruiting:seniorRecruiting};
+    render(profilePayload);
   } catch (error) {
     SimSite.showError(root, error?.message || 'The prospect profile could not be loaded.');
   }

@@ -28,7 +28,7 @@
 
   async function renderTournament() {
     const payload = await SimApi.tournament(tournamentGuid);
-    if (!payload?.tournament || !payload?.bracket?.length) throw new Error('The completed tournament could not be loaded.');
+    if (!payload?.tournament || !payload?.bracket?.length) throw new Error('This bracket is unavailable. For high school tournaments, sign in and purchase coverage for this event and weight in Recruiting → Search & Scout.');
     const tournament = payload.tournament;
     const bouts = [...payload.bracket].sort((a,b) => a.bout_order-b.bout_order);
     const entries = payload.entries || [];

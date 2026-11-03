@@ -139,6 +139,20 @@
     }));
   }
 
+  async function scoutingRequest(path, options = {}) {
+    let token = null;
+    if (window.SimAuth?.ready) {
+      try {
+        const {client} = await window.SimAuth.ready;
+        const {data, error} = await client.auth.getSession();
+        if (!error) token = data?.session?.access_token || null;
+      } catch (_) { /* Public college results remain available when sign-in is unavailable. */ }
+    }
+    return withTeamIdentities(request(path, {...options,
+      headers:{...options.headers,...(token?{Authorization:`Bearer ${token}`}:{})}}));
+  }
+  const scoutingRpc = (name,body) => scoutingRequest(`rpc/${name}`,{method:'POST',body:JSON.stringify(body)});
+
   const encoded = (value) => encodeURIComponent(String(value));
   const filtered = (table, guidColumn, guid, order = '') => query(
     table,
@@ -193,14 +207,11 @@
     profile: (guid) => rpc('get_public_wrestler_profile_core_v3_9_5', { p_wrestler_guid: guid }),
     profileCore: (guid) => rpc('get_public_wrestler_profile_core_v3_9_5', { p_wrestler_guid: guid }),
     seniorDecision: (guid) => rpc('get_public_senior_decision_v457', { p_wrestler_guid: guid }),
-    profileHistory: (guid) => rpc('get_public_wrestler_profile_history_v3_9_5', { p_wrestler_guid: guid }),
+    profileHistory: (guid) => scoutingRpc('get_public_wrestler_profile_history_v3_9_5', { p_wrestler_guid: guid }),
     archivedProfile: (guid) => rpc('get_archived_college_wrestler_profile', { p_wrestler_guid: guid }),
-    matchFeed: (guid) => query(
-      'v_customer_match_experience',
-      `select=*&match_guid=eq.${encodeURIComponent(guid)}&order=event_sequence.asc`
-    ),
+    matchFeed: (guid) => scoutingRequest(`v_customer_match_experience?select=*&match_guid=eq.${encodeURIComponent(guid)}&order=event_sequence.asc`),
     dual: (guid) => rpc('get_dual_payload', { p_dual_guid: guid }),
-    tournament: (guid) => rpc('get_tournament_payload', { p_tournament_guid: guid })
+    tournament: (guid) => scoutingRpc('get_tournament_payload', { p_tournament_guid: guid })
     ,leagueClock: async () => window.SimSite?.loadLeagueClock ? window.SimSite.loadLeagueClock() : (await query('v_current_league_clock', 'select=*'))?.[0] || null
     ,resultsContext: async () => (await query('v_public_results_context', 'select=*'))?.[0] || null
     ,leagueCalendar: (seasonGuid = '') => queryAll(

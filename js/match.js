@@ -13,7 +13,7 @@
 
   try {
     const events = await SimApi.matchFeed(matchGuid);
-    if (!events.length) throw new Error('The match exists, but its public play-by-play is not available.');
+    if (!events.length) throw new Error('This match is unavailable. High school match details require Big Board access or purchased tournament coverage.');
     const first = events[0];
     document.title = `${first.wrestler_1_name} vs. ${first.wrestler_2_name} | Sim Wrestling`;
     root.innerHTML = `
