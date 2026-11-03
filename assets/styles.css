@@ -435,3 +435,7 @@
 .college-identity-link>span:last-child{min-width:0;overflow-wrap:anywhere}
 .college-identity-mini{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;min-width:1.9em;height:1.9em;padding:0 .25em;border:1px solid;border-radius:50%;font-size:.7em;font-weight:800;line-height:1;vertical-align:middle}
 .coach-match-opponent h3>.college-identity-mini{margin-right:.45em}
+
+/* v6.0.8 recruiting discovery controls */
+.recruit-market-filters{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}.recruit-market-filters select:disabled{background:#eef2f6;color:#6b7887}.prospect-season-matches table{width:100%}.prospect-season-matches .table-wrap{margin-top:12px}.recruit-entry-chips button{cursor:pointer}.recruit-heading-note{max-width:76ch}
+@media(max-width:600px){.recruit-market-filters{grid-template-columns:1fr}.prospect-season-matches th,.prospect-season-matches td{white-space:nowrap}}
