@@ -1,4 +1,4 @@
-/* Sim Wrestling v7.0.2 — lazy recruiting workspace resources */
+/* Sim Wrestling v7.0.3 — weekly and leader recruiting points */
 (async function () {
   'use strict';
   const root = document.getElementById('coach-recruiting-root');
@@ -317,18 +317,18 @@
   function prospectCells(item, weight, selectable, selectedGuid) {
     const p = item.prospect || {};
     const selected = selectedGuid === p.wrestler_guid;
-    return `<td class="recruit-prospect-name${selected ? ' is-top' : ''}"><a href="${esc(SimSite.prospectUrl(p.wrestler_guid))}">${esc(prospectName(p))}</a></td><td>${esc(gradeLabel(p.academic_stage))}</td><td>${esc(text(p.state_code,'—'))}</td><td>${esc(text(p.county_name,'—'))}</td><td class="recruit-stat-center">${esc(recordFor(item))}</td><td class="recruit-stat-center">${number(item.recruiting_points)}</td><td class="recruit-stat-center">${selectable ? `<input type="radio" name="top-${esc(weight)}" data-set-top="${esc(p.wrestler_guid)}" data-weight="${esc(weight)}" ${selected ? 'checked' : ''} aria-label="Make ${esc(prospectName(p))} top prospect at ${esc(weight)}" />` : '<span class="recruit-top-mark">Top</span>'}</td><td class="recruit-stat-center">${esc(standingFor(item))}</td><td class="recruit-stat-center">${esc(chanceFor(item))}</td>`;
+    return `<td class="recruit-prospect-name${selected ? ' is-top' : ''}"><a href="${esc(SimSite.prospectUrl(p.wrestler_guid))}">${esc(prospectName(p))}</a></td><td>${esc(gradeLabel(p.academic_stage))}</td><td>${esc(text(p.state_code,'—'))}</td><td>${esc(text(p.county_name,'—'))}</td><td class="recruit-stat-center">${esc(recordFor(item))}</td><td class="recruit-stat-center">${number(item.recruiting_points)}</td><td class="recruit-stat-center">${item.current_week_points == null ? '—' : number(item.current_week_points)}</td><td class="recruit-stat-center">${item.leader_recruiting_points == null ? '—' : number(item.leader_recruiting_points)}</td><td class="recruit-stat-center">${selectable ? `<input type="radio" name="top-${esc(weight)}" data-set-top="${esc(p.wrestler_guid)}" data-weight="${esc(weight)}" ${selected ? 'checked' : ''} aria-label="Make ${esc(prospectName(p))} top prospect at ${esc(weight)}" />` : '<span class="recruit-top-mark">Top</span>'}</td><td class="recruit-stat-center">${esc(standingFor(item))}</td><td class="recruit-stat-center">${esc(chanceFor(item))}</td>`;
   }
   function boardRows() {
     if (!board.length) return empty('Your Big Board is empty. Add prospects through Search & Scout.');
-    const head = '<thead><tr><th>Weight</th><th>Prospect</th><th>Year</th><th>State</th><th>County</th><th class="recruit-stat-center">W–L</th><th class="recruit-stat-center">Recruiting points</th><th class="recruit-stat-center">Top Prospect</th><th class="recruit-stat-center">Team Standing</th><th class="recruit-stat-center">Signing Chance</th></tr></thead>';
+    const head = '<thead><tr><th>Weight</th><th>Prospect</th><th>Year</th><th>State</th><th>County</th><th class="recruit-stat-center">W–L</th><th class="recruit-stat-center" title="Your college’s total recorded recruiting points across seasons">Recruiting Points</th><th class="recruit-stat-center" title="Your college’s recruiting points spent in the current season and week">This week</th><th class="recruit-stat-center" title="Highest total recorded recruiting points invested by any college in this prospect, including your college">Leader</th><th class="recruit-stat-center">Top Prospect</th><th class="recruit-stat-center">Team Standing</th><th class="recruit-stat-center">Signing Chance</th></tr></thead>';
     const sorted=filteredBoard();
     const sections = highSchoolWeights.map(weight => {
       const rows = sorted.filter(item=>String(item.prospect?.weight_class_code || '')===weight);
       const chosen = chosenTop(weight, rows);
       const showAll = boardMode === 'all' || expandedWeights.has(weight);
       const other = rows.filter(item => item !== chosen);
-      const main = chosen ? `<tr class="recruit-weight-top"><th scope="row"><button type="button" class="recruit-weight-expand" data-expand-weight="${esc(weight)}" aria-expanded="${showAll}">${showAll ? '▾' : '▸'} ${esc(weight)}</button></th>${prospectCells(chosen,weight,false,chosen.prospect?.wrestler_guid)}</tr>` : `<tr class="recruit-weight-empty"><th scope="row">${esc(weight)}</th><td colspan="9">No prospects on your Big Board</td></tr>`;
+      const main = chosen ? `<tr class="recruit-weight-top"><th scope="row"><button type="button" class="recruit-weight-expand" data-expand-weight="${esc(weight)}" aria-expanded="${showAll}">${showAll ? '▾' : '▸'} ${esc(weight)}</button></th>${prospectCells(chosen,weight,false,chosen.prospect?.wrestler_guid)}</tr>` : `<tr class="recruit-weight-empty"><th scope="row">${esc(weight)}</th><td colspan="11">No prospects on your Big Board</td></tr>`;
       const extra = showAll ? other.map(item => `<tr class="recruit-weight-backup"><td></td>${prospectCells(item,weight,true,chosen?.prospect?.wrestler_guid)}</tr>`).join('') : '';
       return main + extra;
     }).join('');
