@@ -6,11 +6,12 @@
   const e = value => SimSite.escape(value ?? '');
   const matchGuid = String(SimSite.query('match') || '').trim();
   const packageGuid = String(SimSite.query('package') || '').trim();
-  const returnUrl = `coach-recruiting.html?recruiting_tab=search${packageGuid ? `&package=${encodeURIComponent(packageGuid)}` : ''}`;
+  const prospectGuid = String(SimSite.query('prospect')||'');
+  const returnUrl = prospectGuid ? SimSite.prospectUrl(prospectGuid) : `coach-recruiting.html?recruiting_tab=search${packageGuid ? `&package=${encodeURIComponent(packageGuid)}` : ''}`;
 
   function showFailure(message) {
     SimSite.showError(root, message);
-    root.insertAdjacentHTML('beforeend', `<div class="match-return"><a class="secondary-button" href="${e(returnUrl)}">Return to Scouting Results</a></div>`);
+    root.insertAdjacentHTML('beforeend', `<div class="match-return"><a class="secondary-button" href="${e(returnUrl)}">${prospectGuid?'Return to Prospect':'Return to Scouting Results'}</a></div>`);
   }
 
   if (!matchGuid) { showFailure('No scouted match was selected.'); return; }
@@ -18,7 +19,7 @@
   try {
     const auth = await window.SimAuth.ready;
     const {data:{user}, error:userError} = await auth.client.auth.getUser();
-    if (userError || !user) { showFailure('Please sign in to view purchased scouting results.'); return; }
+    if (userError || !user) { showFailure('Please sign in to view this match.'); return; }
     const {data, error} = await auth.client.rpc(
       'get_my_scouted_match_experience_v4_4_1',
       {p_match_guid:matchGuid}
@@ -39,11 +40,11 @@
         </div>
       </section>
       <div class="playback-controls">
-        <p>Purchased scouting report · completed match review</p>
+        <p>Authorized scouting · completed match review</p>
         <div class="control-buttons"><button id="pause-button" type="button">Pause</button><button class="active" data-speed="1800" type="button">Review</button><button data-speed="700" type="button">Fast</button><button id="show-all" type="button">Show all</button></div>
       </div>
       <section class="pbp-feed" id="pbp-feed" aria-label="Match play-by-play"></section>
-      <div class="match-return"><a class="secondary-button" href="${e(returnUrl)}">Return to Scouting Results</a></div>`;
+      <div class="match-return"><a class="secondary-button" href="${e(returnUrl)}">${prospectGuid?'Return to Prospect':'Return to Scouting Results'}</a></div>`;
 
     const feed = document.getElementById('pbp-feed');
     const period = document.getElementById('score-period');
