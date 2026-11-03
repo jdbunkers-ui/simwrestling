@@ -1,0 +1,32 @@
+Sim Wrestling v6.0.8 website deployment
+
+DEV database is already installed and validated. Do not rerun the dev installer.
+
+If GitHub direct update succeeds, Vercel builds the dev branch automatically.
+Otherwise extract the CHANGES_ONLY zip and upload its CONTENTS (folders included)
+to jdbunkers-ui/simwrestling, branch dev, repository root; commit together.
+Do not drag the zip itself into GitHub. The FULL zip is a complete source copy.
+
+Vercel dev settings stay:
+SIM_WRESTLING_ENV=dev
+SUPABASE_URL=https://jyhgtytwbhwyulrqrlcq.supabase.co
+SUPABASE_PUBLISHABLE_KEY=your existing dev publishable key
+Do not overwrite these settings with production values. js/config.js in source
+is a placeholder; the build generates browser configuration from Vercel settings.
+
+Smoke test on DEV while staying at Week 2 Day 6:
+1. Search & Scout: choose State NJ, a county, and a completed week. County cost 2.
+2. Future regional/national results should not be offered before processing.
+3. Open an uncontacted freshman. Submitting a letter spends 1 real dev point,
+   adds him to the Big Board, displays his current-season matches, and disables
+   a second action this week. Only submit if you intend to recruit that prospect.
+4. Click an opponent; his full history stays locked until investment or coverage.
+5. Match PBP should load for a board prospect or purchased coverage.
+6. Signed-out high school profiles should hide match details; college pages work.
+7. Confirm the league clock remains Week 2 Day 6. Do not advance yet.
+
+Later production rollout:
+1. Deploy and validate the separate production DATABASE bundle first.
+2. Merge the tested dev website branch into main.
+3. Vercel main keeps SIM_WRESTLING_ENV=production and the existing prod URL/key.
+No site code or environment values need manual switching between branches.
