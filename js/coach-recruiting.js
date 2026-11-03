@@ -1,4 +1,4 @@
-/* Sim Wrestling v7.0.3 — weekly and leader recruiting points */
+/* Sim Wrestling v7.0.4 — Prospects view and class/points ordering */
 (async function () {
   'use strict';
   const root = document.getElementById('coach-recruiting-root');
@@ -44,7 +44,6 @@
   let searchRows = [];
   let activeTab = ['search','board','overview'].includes(String(SimSite.query('recruiting_tab') || ''))
     ? String(SimSite.query('recruiting_tab')) : 'board';
-  let boardMode = 'top';
   let topOverrides = {};
   const expandedWeights = new Set();
   const requestedPackage = String(SimSite.query('package') || '').trim() || null;
@@ -272,9 +271,15 @@
       <section class="panel recruit-results" id="scouting-results" hidden></section>`;
   }
 
+  const classRanks = {HIGH_SCHOOL_SENIOR:4,HIGH_SCHOOL_JUNIOR:3,HIGH_SCHOOL_SOPHOMORE:2,HIGH_SCHOOL_FRESHMAN:1};
+  const classRank = item => classRanks[String(item.prospect?.academic_stage || '').toUpperCase()] || number(item.stage_rank);
+  function comparePoints(a,b) {
+    return number(b.recruiting_points)-number(a.recruiting_points)
+      || prospectName(a.prospect || {}).localeCompare(prospectName(b.prospect || {}))
+      || String(a.prospect?.wrestler_guid || '').localeCompare(String(b.prospect?.wrestler_guid || ''));
+  }
   function filteredBoard() {
-    return board.slice().sort((a, b) => number(b.recruiting_points) - number(a.recruiting_points)
-      || prospectName(a.prospect || {}).localeCompare(prospectName(b.prospect || {})));
+    return board.slice().sort((a,b)=>classRank(b)-classRank(a) || comparePoints(a,b));
   }
 
   function pipelineColumn(title, rows) {
@@ -298,7 +303,9 @@
 
   const highSchoolWeights = ['106','113','120','126','132','138','144','150','157','165','175','190','215','HWT'];
   function chosenTop(weight, rows) {
-    return rows.find(item => String(item.prospect?.wrestler_guid) === topOverrides[weight]) || rows[0] || null;
+    // Keep the existing points-based default when no saved selection exists.
+    return rows.find(item => String(item.prospect?.wrestler_guid) === topOverrides[weight])
+      || rows.reduce((best,item)=>!best || comparePoints(item,best)<0 ? item : best,null);
   }
   function recordFor(item) {
     const p = item.prospect || {};
@@ -326,7 +333,7 @@
     const sections = highSchoolWeights.map(weight => {
       const rows = sorted.filter(item=>String(item.prospect?.weight_class_code || '')===weight);
       const chosen = chosenTop(weight, rows);
-      const showAll = boardMode === 'all' || expandedWeights.has(weight);
+      const showAll = expandedWeights.has(weight);
       const other = rows.filter(item => item !== chosen);
       const main = chosen ? `<tr class="recruit-weight-top"><th scope="row"><button type="button" class="recruit-weight-expand" data-expand-weight="${esc(weight)}" aria-expanded="${showAll}">${showAll ? '▾' : '▸'} ${esc(weight)}</button></th>${prospectCells(chosen,weight,false,chosen.prospect?.wrestler_guid)}</tr>` : `<tr class="recruit-weight-empty"><th scope="row">${esc(weight)}</th><td colspan="11">No prospects on your Big Board</td></tr>`;
       const extra = showAll ? other.map(item => `<tr class="recruit-weight-backup"><td></td>${prospectCells(item,weight,true,chosen?.prospect?.wrestler_guid)}</tr>`).join('') : '';
@@ -336,7 +343,7 @@
   }
   function renderBoard() {
     if(resources.board.status!=='ready')return `<section class="panel recruit-section"><h2>Big Board</h2>${resourceMessage('board','Big Board')}</section>`;
-    return `<section class="panel recruit-section"><div class="panel-heading"><div><p class="eyebrow">YOUR TARGETS</p><h2>Big Board</h2><p class="recruit-heading-note">High school weights 106 through HWT. Expand any weight to see all your recruits; choose one Top Prospect per weight.</p></div><div class="coach-roster-switch" role="group" aria-label="Prospect view"><button type="button" data-board-mode="top" class="${boardMode === 'top' ? 'active' : ''}">Top Prospects</button><button type="button" data-board-mode="all" class="${boardMode === 'all' ? 'active' : ''}">All Prospects</button></div></div><div id="big-board-list">${boardRows()}</div></section>`;
+    return `<section class="panel recruit-section"><div class="panel-heading"><div><p class="eyebrow">YOUR TARGETS</p><h2>Big Board</h2><p class="recruit-heading-note">High school weights 106 through HWT. Expand any weight to see all your recruits; choose one Top Prospect per weight.</p></div><div class="coach-roster-switch" role="group" aria-label="Prospect view"><button type="button" class="active" aria-pressed="true">Prospects</button></div></div><div id="big-board-list">${boardRows()}</div></section>`;
   }
   function refreshBoardResults() {
     const host = document.getElementById('big-board-list');
@@ -512,8 +519,6 @@
     if (view) { viewPackage(view.dataset.viewPackage); return; }
     const close = event.target.closest('[data-close-results]');
     if (close) { const host=document.getElementById('scouting-results'); if(host)host.hidden=true; openPackage=null; openPackageData=null; return; }
-    const mode = event.target.closest('[data-board-mode]');
-    if (mode) {boardMode=mode.dataset.boardMode;renderPanel();return;}
     const expand = event.target.closest('[data-expand-weight]');
     if (expand) {const weight=expand.dataset.expandWeight;expandedWeights.has(weight)?expandedWeights.delete(weight):expandedWeights.add(weight);refreshBoardResults();return;}
   });
