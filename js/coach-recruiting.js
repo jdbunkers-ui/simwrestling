@@ -1,4 +1,4 @@
-/* Sim Wrestling v7.0.4 — Prospects view and class/points ordering */
+/* Sim Wrestling v7.0.5 compact — focused Big Board response */
 (async function () {
   'use strict';
   const root = document.getElementById('coach-recruiting-root');
@@ -105,7 +105,7 @@
       try {
         if(key==='board') {
           const [data,selections]=await Promise.all([
-            rpc('get_my_big_board_v4_4_0'),rpc('get_my_top_prospects_v4_4_4')
+            rpc('get_my_big_board_compact_v7_0_5'),rpc('get_my_top_prospects_v4_4_4')
           ]);
           if(!pageActive)return false;
           board=Array.isArray(data?.recruits)?data.recruits:[];
@@ -291,14 +291,6 @@
     if(resources.pipeline.status!=='ready')return `<section class="panel recruit-pipeline-panel"><h2>Pipeline Strength</h2>${resourceMessage('pipeline','Pipeline')}</section>`;
     const rules = pipeline.bonus_rules || {};
     return `<section class="panel recruit-pipeline-panel"><div class="panel-heading"><div><p class="eyebrow">PRIVATE PROGRAM ADVANTAGE</p><h2>Pipeline Strength</h2><p class="recruit-heading-note">Current college wrestlers by hometown. Senior bonuses combine region, state and county matches.</p></div><span class="record-pill">${number(pipeline.roster_wrestler_qty)} wrestlers</span></div><div class="recruit-pipeline-grid">${pipelineColumn('Regions', pipeline.region_strengths)}${pipelineColumn('States', pipeline.state_strengths)}${pipelineColumn('Counties', pipeline.county_strengths)}</div><p class="recruit-pipeline-rule">Signing-weight bonus: ${number(rules.region_rate_percent, 2)}% per regional wrestler + ${number(rules.state_rate_percent, 2)}% per state wrestler + ${number(rules.county_rate_percent, 2)}% per county wrestler, capped at ${number(rules.maximum_bonus_percent)}%.</p></section>`;
-  }
-
-  function seniorOutlook(item) {
-    const senior = item.senior_outlook;
-    if (!senior) return '';
-    const schools = Array.isArray(senior.considered_schools) ? senior.considered_schools : [];
-    const status = label(senior.recruiting_status || 'No Longer Serious Contender');
-    return `<div class="recruit-senior-outlook"><div class="recruit-senior-metrics"><dl><dt>Team standing</dt><dd>${esc(status)}</dd></dl><dl><dt>Estimated signing chance</dt><dd>${number(senior.estimated_signing_probability_percent, 1).toFixed(1)}%</dd></dl><dl><dt>Pipeline bonus</dt><dd>+${number(senior.pipeline_bonus_percent, 1).toFixed(1)}%</dd></dl><dl><dt>Signing weight</dt><dd>${number(senior.adjusted_signing_weight, 3).toFixed(3)}</dd></dl></div><div class="recruit-pipeline-breakdown"><span>${number(senior.region_roster_qty)} region</span><span>${number(senior.state_roster_qty)} state</span><span>${number(senior.county_roster_qty)} county</span></div><div class="recruit-considered"><strong>Schools being considered</strong>${schools.length ? `<ul>${schools.map(school => `<li class="${school.is_my_team ? 'is-my-team' : ''}"><span>${esc(school.team_name)}${school.is_my_team ? ' · Your college' : ''}</span><b>${number(school.estimated_signing_probability_percent, 1).toFixed(1)}%</b></li>`).join('')}</ul>` : '<p>No frozen senior contenders.</p>'}</div></div>`;
   }
 
   const highSchoolWeights = ['106','113','120','126','132','138','144','150','157','165','175','190','215','HWT'];
