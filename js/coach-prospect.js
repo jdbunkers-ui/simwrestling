@@ -1,4 +1,4 @@
-/* Sim Wrestling v7.0.1 — progressive prospect profile and targeted recruiting lookup */
+/* Sim Wrestling v7.0.6 — progressive profile with clear Big Board capacity errors */
 (async function () {
   'use strict';
   const root = document.getElementById('prospect-profile-root');
@@ -128,7 +128,9 @@
       // A successful paid action remains successful if a subsequent read fails.
       showActionFeedback(`${name} recorded. ${profilePayload.details_error || recruiting.loadError ? 'Use Retry to reload unavailable details.' : 'Big Board and match access refreshed.'}`);
     } catch (error) {
-      showActionFeedback(error?.message || 'The action could not be submitted.', true);
+      showActionFeedback(String(error?.message || '').includes('BIG_BOARD_LIMIT_50_REMOVE_A_PROSPECT_FIRST')
+        ? 'Your Big Board is full (50 / 50). Remove a prospect from your Big Board, then try again. This action was not recorded and no points were spent.'
+        : error?.message || 'The action could not be submitted.', true);
       if (button) button.disabled = false;
     } finally {submitting = false;}
   }

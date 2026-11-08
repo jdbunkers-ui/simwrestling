@@ -1,4 +1,4 @@
-/* Sim Wrestling v7.0.5 compact — focused Big Board response */
+/* Sim Wrestling v7.0.6 — Big Board capacity and removal controls */
 (async function () {
   'use strict';
   const root = document.getElementById('coach-recruiting-root');
@@ -54,6 +54,7 @@
   const searchDraft = {};
   const resources = Object.fromEntries(['board','catalog','pipeline'].map(key =>
     [key,{status:'idle',error:'',pending:null}]));
+  const BOARD_LIMIT = 50;
   const boardCount = () => resources.board.status === 'ready' ? board.length : number(overview.active_big_board_qty);
 
   async function rpc(name, args) {
@@ -151,7 +152,7 @@
       </div>
       <div class="recruit-workspace">
         <nav class="recruit-tabs" role="tablist" aria-label="Recruiting workspace">
-          <button type="button" data-tab="board" class="${activeTab === 'board' ? 'active' : ''}" aria-selected="${activeTab === 'board'}">Big Board <span>${boardCount()}</span></button>
+          <button type="button" data-tab="board" class="${activeTab === 'board' ? 'active' : ''}" aria-selected="${activeTab === 'board'}">Big Board <span>${boardCount()} / ${BOARD_LIMIT}</span></button>
           <button type="button" data-tab="search" class="${activeTab === 'search' ? 'active' : ''}" aria-selected="${activeTab === 'search'}">Search &amp; Scout</button>
           <button type="button" data-tab="overview" class="${activeTab === 'overview' ? 'active' : ''}" aria-selected="${activeTab === 'overview'}">Overview</button>
         </nav>
@@ -183,7 +184,7 @@
       if (el) el.textContent = number(overview[source]);
     });
     const badge = root.querySelector('[data-tab="board"] span');
-    if (badge) badge.textContent = boardCount();
+    if (badge) badge.textContent = `${boardCount()} / ${BOARD_LIMIT}`;
     const pointsDetail=root.querySelector('.college-hero-meta');
     if(pointsDetail)pointsDetail.textContent=[collegeIdentity?.mascot,SimSite.seasonLabel(overview),number(overview.available_points)+' recruiting points available'].filter(Boolean).join(' · ');
   }
@@ -194,7 +195,7 @@
     return `
       <div class="recruit-overview-grid">
         <section class="panel recruit-card recruit-callout"><p class="eyebrow">THIS WEEK</p><h2>Build information, then build relationships.</h2><p>Search the free geographic inventory, purchase completed result packages, open a prospect and submit one eligible action per recruit each week. Your first point adds him to your Big Board and unlocks his current-season matches.</p><button type="button" class="recruit-primary" data-open-tab="search">Search prospects</button></section>
-        <section class="panel recruit-card"><p class="eyebrow">YOUR PIPELINE</p><h2>${boardCount()} active targets</h2><dl class="recruit-mini-stats"><div><dt>Scouting packages</dt><dd>${owned}</dd></div><div><dt>Week</dt><dd>${number(overview.recruiting_week)}</dd></div><div><dt>Unused points</dt><dd>${number(overview.available_points)}</dd></div></dl><button type="button" class="recruit-secondary" data-open-tab="board">Open Big Board</button></section>
+        <section class="panel recruit-card"><p class="eyebrow">YOUR PIPELINE</p><h2>${boardCount()} / ${BOARD_LIMIT} active targets</h2><dl class="recruit-mini-stats"><div><dt>Scouting packages</dt><dd>${owned}</dd></div><div><dt>Week</dt><dd>${number(overview.recruiting_week)}</dd></div><div><dt>Unused points</dt><dd>${number(overview.available_points)}</dd></div></dl><button type="button" class="recruit-secondary" data-open-tab="board">Open Big Board</button></section>
       </div>
       <section class="panel recruit-section"><div class="panel-heading"><div><p class="eyebrow">PERSUASION MENU</p><h2>Available recruiting actions</h2></div></div>
         <div class="recruit-action-menu">${types.map(action => `<article><strong>${esc(text(action.action_name, action.display_name, label(action.action_code)))}</strong><span>${number(action.point_cost)} points</span><small>${action.once_per_stage_ind ? 'Once per high-school stage' : 'Up to weekly action limits'} · ${esc(stageLabel(action.minimum_stage_rank))}</small></article>`).join('') || empty('No active recruiting actions were returned.')}</div>
@@ -316,18 +317,18 @@
   function prospectCells(item, weight, selectable, selectedGuid) {
     const p = item.prospect || {};
     const selected = selectedGuid === p.wrestler_guid;
-    return `<td class="recruit-prospect-name${selected ? ' is-top' : ''}"><a href="${esc(SimSite.prospectUrl(p.wrestler_guid))}">${esc(prospectName(p))}</a></td><td>${esc(gradeLabel(p.academic_stage))}</td><td>${esc(text(p.state_code,'—'))}</td><td>${esc(text(p.county_name,'—'))}</td><td class="recruit-stat-center">${esc(recordFor(item))}</td><td class="recruit-stat-center">${number(item.recruiting_points)}</td><td class="recruit-stat-center">${item.current_week_points == null ? '—' : number(item.current_week_points)}</td><td class="recruit-stat-center">${item.leader_recruiting_points == null ? '—' : number(item.leader_recruiting_points)}</td><td class="recruit-stat-center">${selectable ? `<input type="radio" name="top-${esc(weight)}" data-set-top="${esc(p.wrestler_guid)}" data-weight="${esc(weight)}" ${selected ? 'checked' : ''} aria-label="Make ${esc(prospectName(p))} top prospect at ${esc(weight)}" />` : '<span class="recruit-top-mark">Top</span>'}</td><td class="recruit-stat-center">${esc(standingFor(item))}</td><td class="recruit-stat-center">${esc(chanceFor(item))}</td>`;
+    return `<td class="recruit-prospect-name${selected ? ' is-top' : ''}"><a href="${esc(SimSite.prospectUrl(p.wrestler_guid))}">${esc(prospectName(p))}</a></td><td>${esc(gradeLabel(p.academic_stage))}</td><td>${esc(text(p.state_code,'—'))}</td><td>${esc(text(p.county_name,'—'))}</td><td class="recruit-stat-center">${esc(recordFor(item))}</td><td class="recruit-stat-center">${number(item.recruiting_points)}</td><td class="recruit-stat-center">${item.current_week_points == null ? '—' : number(item.current_week_points)}</td><td class="recruit-stat-center">${item.leader_recruiting_points == null ? '—' : number(item.leader_recruiting_points)}</td><td class="recruit-stat-center">${selectable ? `<input type="radio" name="top-${esc(weight)}" data-set-top="${esc(p.wrestler_guid)}" data-weight="${esc(weight)}" ${selected ? 'checked' : ''} aria-label="Make ${esc(prospectName(p))} top prospect at ${esc(weight)}" />` : '<span class="recruit-top-mark">Top</span>'}</td><td class="recruit-stat-center">${esc(standingFor(item))}</td><td class="recruit-stat-center">${esc(chanceFor(item))}</td><td><button type="button" class="recruit-remove" data-remove-recruit="${esc(p.wrestler_guid)}" aria-label="Remove ${esc(prospectName(p))} from Big Board" ${working ? 'disabled' : ''}>Remove</button></td>`;
   }
   function boardRows() {
     if (!board.length) return empty('Your Big Board is empty. Add prospects through Search & Scout.');
-    const head = '<thead><tr><th>Weight</th><th>Prospect</th><th>Year</th><th>State</th><th>County</th><th class="recruit-stat-center">W–L</th><th class="recruit-stat-center" title="Your college’s total recorded recruiting points across seasons">Recruiting Points</th><th class="recruit-stat-center" title="Your college’s recruiting points spent in the current season and week">This week</th><th class="recruit-stat-center" title="Highest total recorded recruiting points invested by any college in this prospect, including your college">Leader</th><th class="recruit-stat-center">Top Prospect</th><th class="recruit-stat-center">Team Standing</th><th class="recruit-stat-center">Signing Chance</th></tr></thead>';
+    const head = '<thead><tr><th>Weight</th><th>Prospect</th><th>Year</th><th>State</th><th>County</th><th class="recruit-stat-center">W–L</th><th class="recruit-stat-center" title="Your college’s total recorded recruiting points across seasons">Recruiting Points</th><th class="recruit-stat-center" title="Your college’s recruiting points spent in the current season and week">This week</th><th class="recruit-stat-center" title="Highest total recorded recruiting points invested by any college in this prospect, including your college">Leader</th><th class="recruit-stat-center">Top Prospect</th><th class="recruit-stat-center">Team Standing</th><th class="recruit-stat-center">Signing Chance</th><th>Manage</th></tr></thead>';
     const sorted=filteredBoard();
     const sections = highSchoolWeights.map(weight => {
       const rows = sorted.filter(item=>String(item.prospect?.weight_class_code || '')===weight);
       const chosen = chosenTop(weight, rows);
       const showAll = expandedWeights.has(weight);
       const other = rows.filter(item => item !== chosen);
-      const main = chosen ? `<tr class="recruit-weight-top"><th scope="row"><button type="button" class="recruit-weight-expand" data-expand-weight="${esc(weight)}" aria-expanded="${showAll}">${showAll ? '▾' : '▸'} ${esc(weight)}</button></th>${prospectCells(chosen,weight,false,chosen.prospect?.wrestler_guid)}</tr>` : `<tr class="recruit-weight-empty"><th scope="row">${esc(weight)}</th><td colspan="11">No prospects on your Big Board</td></tr>`;
+      const main = chosen ? `<tr class="recruit-weight-top"><th scope="row"><button type="button" class="recruit-weight-expand" data-expand-weight="${esc(weight)}" aria-expanded="${showAll}">${showAll ? '▾' : '▸'} ${esc(weight)}</button></th>${prospectCells(chosen,weight,false,chosen.prospect?.wrestler_guid)}</tr>` : `<tr class="recruit-weight-empty"><th scope="row">${esc(weight)}</th><td colspan="12">No prospects on your Big Board</td></tr>`;
       const extra = showAll ? other.map(item => `<tr class="recruit-weight-backup"><td></td>${prospectCells(item,weight,true,chosen?.prospect?.wrestler_guid)}</tr>`).join('') : '';
       return main + extra;
     }).join('');
@@ -335,7 +336,7 @@
   }
   function renderBoard() {
     if(resources.board.status!=='ready')return `<section class="panel recruit-section"><h2>Big Board</h2>${resourceMessage('board','Big Board')}</section>`;
-    return `<section class="panel recruit-section"><div class="panel-heading"><div><p class="eyebrow">YOUR TARGETS</p><h2>Big Board</h2><p class="recruit-heading-note">High school weights 106 through HWT. Expand any weight to see all your recruits; choose one Top Prospect per weight.</p></div><div class="coach-roster-switch" role="group" aria-label="Prospect view"><button type="button" class="active" aria-pressed="true">Prospects</button></div></div><div id="big-board-list">${boardRows()}</div></section>`;
+    return `<section class="panel recruit-section"><div class="panel-heading"><div><p class="eyebrow">YOUR TARGETS</p><h2>Big Board <span class="recruit-board-count">${boardCount()} / ${BOARD_LIMIT}</span></h2><p class="recruit-heading-note">High school weights 106 through HWT. Expand any weight to see all your recruits; choose one Top Prospect per weight.</p></div><div class="coach-roster-switch" role="group" aria-label="Prospect view"><button type="button" class="active" aria-pressed="true">Prospects</button></div></div><p class="recruit-capacity-note${boardCount() >= BOARD_LIMIT ? ' is-full' : ''}" role="status">${boardCount() >= BOARD_LIMIT ? 'Your Big Board is full. Remove a prospect before adding another. You can still recruit prospects already on your board.' : 'Your Big Board holds up to 50 prospects. Removing one frees a place; past recruiting points remain in league history.'}</p><div id="big-board-list">${boardRows()}</div></section>`;
   }
   function refreshBoardResults() {
     const host = document.getElementById('big-board-list');
@@ -478,13 +479,26 @@
   }
 
   async function removeBoard(wrestlerGuid) {
-    if (working || !window.confirm('Remove this recruit from your Big Board? Prior recruiting actions will remain in league history.')) return;
-    working = true; setFeedback('Removing recruit…');
+    const item=board.find(x=>String(x.prospect?.wrestler_guid)===String(wrestlerGuid));
+    if (working || !item || !window.confirm(`Remove ${prospectName(item.prospect || {})} from your Big Board? Points already spent will remain in recruiting history and will not be refunded.`)) return;
+    working = true; refreshBoardResults(); setFeedback('Removing prospect…');
     try {
       await rpc('remove_my_big_board_recruit_v4_3_0', {p_wrestler_guid:wrestlerGuid});
-      const refreshed=await refreshBoardAndOverview(); setFeedback(`Recruit removed from your Big Board.${refreshed?'':' Some details could not refresh; reload the page.'}`, 'success');
-    } catch (error) { setFeedback(error.message || 'The recruit could not be removed.', 'error'); }
-    finally { working = false; if(pageActive && activeTab==='search')renderPackages(); }
+      // The write succeeded. Keep that fact even if a subsequent read fails.
+      board=board.filter(x=>String(x.prospect?.wrestler_guid)!==String(wrestlerGuid));
+      Object.keys(topOverrides).forEach(weight=>{if(String(topOverrides[weight])===String(wrestlerGuid))delete topOverrides[weight];});
+      overview.active_big_board_qty=board.length;
+      updateSummary();
+      const refreshed=await refreshBoardAndOverview();
+      setFeedback(`Prospect removed from your Big Board.${refreshed?'':' Some details could not refresh; use Retry or reload the page.'}`, 'success');
+    } catch (error) { setFeedback(error.message || 'The prospect could not be removed.', 'error'); }
+    finally {
+      working = false;
+      if(pageActive && activeTab==='board' && resources.board.status==='ready') {
+        const panel=document.getElementById('recruit-panel');if(panel)panel.innerHTML=renderBoard();
+      }
+      if(pageActive && activeTab==='search')renderPackages();
+    }
   }
 
   root.addEventListener('input',event=>{
@@ -503,6 +517,8 @@
       selectTab(openTab.dataset.openTab);
       return;
     }
+    const remove=event.target.closest('[data-remove-recruit]');
+    if(remove && !remove.disabled){void removeBoard(remove.dataset.removeRecruit);return;}
     const flag = event.target.closest('[data-flag-recruit]');
     if (flag && !flag.disabled) { flagRecruit(flag.dataset.flagRecruit, flag.dataset.package || null); return; }
     const buy = event.target.closest('[data-buy-package]');
