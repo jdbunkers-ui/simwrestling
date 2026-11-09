@@ -6,6 +6,8 @@
    // Public team profiles supply their own team-specific wall link.
    if(nav.getAttribute('aria-label')==='College profile sections')return;
    let link=nav.querySelector('[data-team-wall-nav]');
+   const existing=[...nav.querySelectorAll('a[href]')].find(a=>a!==link && /(?:^|\/)team-wall\.html(?:\?|$)/.test(a.getAttribute('href')||''));
+   if(existing){if(link)link.remove();link=existing;link.dataset.teamWallNav='';}
    if(!link){link=document.createElement('a');link.dataset.teamWallNav='';link.href='team-wall.html';link.append(document.createTextNode('Team Wall'));nav.append(link);}
    const viewedTeam=new URLSearchParams(location.search).get('team');
    const ownPage=location.pathname.endsWith('/team-wall.html')&&(!viewedTeam||viewedTeam===status?.coach?.team_guid);
