@@ -449,3 +449,35 @@
 [data-page="coach-recruiting"] .recruit-remove:focus-visible{outline:2px solid #174b8e;outline-offset:3px}
 [data-page="coach-recruiting"] .recruit-remove:disabled{opacity:.55;cursor:wait}
 [data-page="coach-recruiting"] .recruit-weight-table{min-width:1180px}
+
+
+/* Sim Wrestling v8.0.0: frontend-only presentation refinements */
+.sw-return-button{display:inline-flex;align-items:center;justify-content:center;min-width:90px;margin:0 0 16px;padding:10px 18px;border:1px solid #1c4f87;border-radius:7px;background:#eef5ff;color:#123d70;text-decoration:none;font-size:.9rem;font-weight:850}
+.sw-return-button:hover,.sw-return-button:focus-visible{background:#dfeeff;outline-offset:3px}
+.coach-live-table.sw-roster-table{min-width:1050px;width:100%;table-layout:auto}
+.sw-roster-table th:nth-child(n+3),.sw-roster-table td:nth-child(n+3){text-align:center!important;vertical-align:middle}
+.sw-roster-table th:nth-child(2),.sw-roster-table td:nth-child(2){text-align:left!important}
+.sw-roster-table th:nth-child(n+8),.sw-roster-table td:nth-child(n+8){width:105px;min-width:88px;text-align:center!important}
+.sw-roster-table .coach-select-starter,.sw-roster-table .coach-wrestle-action{padding:7px 5px;font-size:.72rem;min-width:82px;max-width:100%;white-space:normal}
+.sw-roster-table .coach-decision{display:block;margin:auto}
+.sw-roster-table .coach-roster-state{display:none}
+.sw-recruit-v8-table{min-width:1500px;table-layout:auto}
+.sw-recruit-v8-table th,.sw-recruit-v8-table td{vertical-align:middle}
+.sw-recruit-v8-table th:nth-child(n+5),.sw-recruit-v8-table td:nth-child(n+5){text-align:center!important}
+.sw-recruit-v8-table th:nth-child(2),.sw-recruit-v8-table td:nth-child(2),.sw-recruit-v8-table th:nth-child(3),.sw-recruit-v8-table td:nth-child(3),.sw-recruit-v8-table th:nth-child(4),.sw-recruit-v8-table td:nth-child(4){text-align:left!important}
+.sw-recruit-v8-table .recruit-remove{padding:6px 8px;font-size:.72rem}
+.sw-v8-schedule-heading,.sw-v8-schedule-row{display:grid;grid-template-columns:minmax(125px,1.3fr) minmax(75px,.8fr) minmax(85px,.9fr) minmax(200px,2.2fr) minmax(115px,1.2fr) minmax(120px,1.1fr);gap:12px;align-items:center}
+.sw-v8-schedule-heading{padding:12px 29px;background:#f3f5f8;text-transform:uppercase;color:#64748b;font-size:.7rem;font-weight:850}
+.sw-v8-schedule-row .sw-v8-schedule-rank,.sw-v8-schedule-row .sw-v8-schedule-record{font-size:.91rem;text-align:center;font-weight:850}
+.sw-v8-schedule-row .sw-v8-schedule-state{text-align:left;font-size:.85rem}
+.sw-v8-schedule-row .coach-match-opponent h3{font-size:.94rem}
+.sw-v8-schedule-row .coach-match-date .sw-v8-day{font-size:.95rem;font-weight:850;color:#173d64}
+.sw-v8-schedule-row .coach-match-date strong{font-size:.96rem}
+@media(max-width:900px){.sw-v8-schedule-heading{display:none}.sw-v8-schedule-row{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.sw-v8-schedule-row .coach-match-date,.sw-v8-schedule-row .sw-v8-schedule-opponent{grid-column:1/-1}.sw-v8-schedule-row .coach-match-action{grid-column:1/-1;align-items:flex-start;text-align:left}.sw-v8-schedule-row .sw-v8-schedule-rank,.sw-v8-schedule-row .sw-v8-schedule-record{text-align:left}}
+.sw-fame-collapse{margin:4px 20px 16px;padding:8px 12px;border:1px solid #b9cbe2;border-radius:6px;background:#eff5ff;color:#143b65;font-size:.83rem;font-weight:800;cursor:pointer}
+.sw-fame-team-section,.sw-fame-individual-section{margin-bottom:20px}
+.sw-fame-team-section .fame-season-table th:not(:first-child),.sw-fame-team-section .fame-season-table td:not(:first-child){text-align:center!important}
+.sw-fame-team-section .fame-season-table .fame-detail-row td{text-align:left!important}
+.sw-fame-individual-section .fame-alumni-table th:not(:first-child),.sw-fame-individual-section .fame-alumni-table td:not(:first-child){text-align:center!important}
+.sw-fame-individual-season{padding:12px 20px 20px;border-top:1px solid #dce4ed}
+.sw-fame-individual-section [hidden],.sw-fame-team-section [hidden]{display:none!important}
