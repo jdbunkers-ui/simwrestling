@@ -439,3 +439,13 @@
 /* v6.0.8 recruiting discovery controls */
 .recruit-market-filters{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}.recruit-market-filters select:disabled{background:#eef2f6;color:#6b7887}.prospect-season-matches table{width:100%}.prospect-season-matches .table-wrap{margin-top:12px}.recruit-entry-chips button{cursor:pointer}.recruit-heading-note{max-width:76ch}
 @media(max-width:600px){.recruit-market-filters{grid-template-columns:1fr}.prospect-season-matches th,.prospect-season-matches td{white-space:nowrap}}
+
+/* v7.0.6: capacity and explicit removal on the recruiting board. */
+[data-page="coach-recruiting"] .recruit-board-count{display:inline-block;margin-left:8px;font-size:.8rem;font-weight:750;color:#425976;white-space:nowrap}
+[data-page="coach-recruiting"] .recruit-capacity-note{padding:11px 14px;border:1px solid #d8e1ed;border-radius:7px;background:#f6f9fc;color:#425976;font-size:.84rem;line-height:1.5;margin:0 0 14px}
+[data-page="coach-recruiting"] .recruit-capacity-note.is-full{background:#fff7e8;border-color:#e7c98b;color:#714b0d}
+[data-page="coach-recruiting"] .recruit-remove{padding:7px 10px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;color:#9a2838;font:inherit;font-size:.78rem;font-weight:750;cursor:pointer;white-space:nowrap}
+[data-page="coach-recruiting"] .recruit-remove:hover{background:#fff1f2;border-color:#c78992}
+[data-page="coach-recruiting"] .recruit-remove:focus-visible{outline:2px solid #174b8e;outline-offset:3px}
+[data-page="coach-recruiting"] .recruit-remove:disabled{opacity:.55;cursor:wait}
+[data-page="coach-recruiting"] .recruit-weight-table{min-width:1180px}
