@@ -33,7 +33,7 @@
       ${nav}
       <section class="panel coach-matches-panel"><div class="coach-matches-heading"><div><p class="eyebrow">SEASON SCHEDULE</p><h2>From Opening Dual to Season Finale</h2><p class="coach-matches-intro">Watch every completed meet without seeing the score first. Opponent rankings and records reflect the current season.</p></div><button type="button" id="coach-reveal-results" class="coach-results-toggle" aria-pressed="false">Show Results</button></div>
         <div class="coach-match-summary"><span><strong>${matches.length}</strong> Dual meets</span><span><strong>${completed.length}</strong> Available to watch</span><span id="coach-spoiler-status" class="coach-spoiler-hidden">Results hidden</span></div>
-        <div class="sw-v8-schedule-heading"><span>Week / Day</span><span>State Rank</span><span>Record</span><span>College Name</span><span>State</span><span>Result</span></div><div id="coach-matches-list" class="coach-matches-list" aria-live="polite"></div>
+        <div class="sw-v8-schedule-heading"><span>Week / Day</span><span>State Rank</span><span>College Name</span><span>Record</span><span>State</span><span>Result</span></div><div id="coach-matches-list" class="coach-matches-list" aria-live="polite"></div>
       </section>`;
     CoachIdentityBanner.apply(root,collegeIdentity);
     const list = document.getElementById('coach-matches-list');
@@ -56,8 +56,8 @@
         return `<article class="coach-match-row sw-v8-schedule-row" aria-label="Dual ${i+1}">
           <div class="coach-match-date"><strong>Week ${esc(m.week_number ?? '—')}</strong><span class="sw-v8-day">${esc(SimSite.gameDay(m.scheduled_date))}</span><small>${esc(type)}</small></div>
           <div class="sw-v8-schedule-rank">${rank && rank>0 ? `#${rank}` : '—'}</div>
-          <div class="sw-v8-schedule-record">${record}</div>
           <div class="coach-match-opponent sw-v8-schedule-opponent"><h3>${opponentBadge}${opp}</h3><p class="coach-match-coach">${cpu ? '▣ Computer Coach' : 'Coach: '+coachName}</p></div>
+          <div class="sw-v8-schedule-record">${record}</div>
           <div class="sw-v8-schedule-state">${esc(stateFull(state))}</div>
           <div class="coach-match-action">${result}${done ? `<a class="coach-watch-dual" href="dual.html?dual=${encodeURIComponent(m.dual_guid)}" aria-label="Watch dual versus ${opp}">Watch Dual <span aria-hidden="true">↗</span></a>` : `<span class="coach-watch-pending">Awaiting simulation</span>`}</div>
         </article>`;
