@@ -1,0 +1,17 @@
+/* NCAA V2 navigation extension: keeps original recruitment styling intact. */
+.ncaa-browser{padding:1.15rem 0}.ncaa-browser-head{margin-bottom:1rem}.ncaa-browser-head h2{margin:.1rem 0 .4rem}
+.ncaa-browser-filters{display:flex;flex-wrap:wrap;gap:.75rem;align-items:end;margin-bottom:1rem}
+.ncaa-browser-filters label{display:flex;flex-direction:column;gap:.25rem;font-size:.82rem;font-weight:700;min-width:140px}
+.ncaa-browser-filters select,.ncaa-browser-filters input{min-height:40px;border:1px solid #c3ced9;border-radius:6px;padding:.5rem;background:#fff;color:#102b43}
+.ncaa-browser-summary{margin:.75rem 0;color:#496078;font-size:.88rem}.ncaa-browser-events{display:grid;gap:.5rem;max-height:520px;overflow:auto}
+.ncaa-event-choice{width:100%;display:flex;justify-content:space-between;gap:.75rem;align-items:center;padding:.75rem .9rem;border:1px solid #c4cfde;border-radius:7px;cursor:pointer;background:#fff;color:#142b43;text-align:left}
+.ncaa-event-choice:hover,.ncaa-event-choice[aria-expanded=true]{border-color:#1765aa;background:#edf5fc}
+.ncaa-event-choice small{display:block;color:#526779;margin-top:.2rem}
+.ncaa-weights{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.6rem;margin-top:1rem}
+.ncaa-weight-card{border:1px solid #bdccdb;background:#fff;border-radius:8px;padding:.8rem;color:#173047}
+.ncaa-weight-card strong{display:block;font-size:1.1rem}.ncaa-weight-card small{display:block;margin:.35rem 0;color:#566b7e}
+.ncaa-weight-card a{display:inline-block;margin-top:.3rem;font-weight:700;color:#075a9f}
+.ncaa-browser-note{background:#eef4fa;border-left:3px solid #2b669c;padding:.8rem 1rem;border-radius:4px;margin-top:1rem;color:#294965}
+.ncaa-browser-empty{padding:1rem;border:1px dashed #bdccdb;border-radius:6px;color:#50657a}
+.main-nav{column-gap:clamp(.55rem,1.2vw,1.25rem)!important}
+@media(max-width:760px){.ncaa-browser-filters label{flex:1 1 140px}.ncaa-event-choice{align-items:flex-start;flex-direction:column}}
