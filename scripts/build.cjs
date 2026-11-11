@@ -26,6 +26,17 @@ try {
   }
   const config = {supabaseUrl: url.origin, supabasePublishableKey: key, environment};
   fs.writeFileSync(path.join(out, 'js/config.js'), '// Generated during deployment. Browser-public configuration only.\nwindow.SIM_WRESTLING_CONFIG = ' + JSON.stringify(config, null, 2) + ';\n');
+
+  // NCAA V2 website integration: load navigation enhancement after the existing site scripts.
+  // No modifications to legacy source JS or protected database permissions.
+  const injection = '<link rel="stylesheet" href="assets/ncaa-navigation.css?v=1">\n<script src="js/ncaa-navigation.js?v=1"></script>';
+  for (const filename of fs.readdirSync(out).filter(file => file.endsWith('.html'))) {
+    const filepath = path.join(out, filename);
+    const original = fs.readFileSync(filepath, 'utf8');
+    if (!original.includes('js/ncaa-navigation.js') && /<\/body\s*>/i.test(original)) {
+      fs.writeFileSync(filepath, original.replace(/<\/body\s*>/i, injection + '\n</body>'));
+    }
+  }
   console.log('Static site built successfully for ' + environment + '.');
 } catch (error) {
   fs.rmSync(out, {recursive: true, force: true});
