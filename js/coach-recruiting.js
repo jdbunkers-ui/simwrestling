@@ -87,6 +87,10 @@
       const host=document.getElementById('pipeline-dashboard');
       if(host)host.innerHTML=renderPipelineDashboard();
     }
+    if(key==='catalog' && activeTab==='overview') {
+      const host=document.getElementById('owned-package-list');
+      if(host)host.innerHTML=renderOwnedPackages();
+    }
     if(key==='catalog' && activeTab==='search') {
       const host=document.getElementById('scouting-market-content');
       if(host){
@@ -154,7 +158,7 @@
         <nav class="recruit-tabs" role="tablist" aria-label="Recruiting workspace">
           <button type="button" data-tab="board" class="${activeTab === 'board' ? 'active' : ''}" aria-selected="${activeTab === 'board'}">Big Board <span>${boardCount()} / ${BOARD_LIMIT}</span></button>
           <button type="button" data-tab="search" class="${activeTab === 'search' ? 'active' : ''}" aria-selected="${activeTab === 'search'}">Search &amp; Scout</button>
-          <button type="button" data-tab="overview" class="${activeTab === 'overview' ? 'active' : ''}" aria-selected="${activeTab === 'overview'}">Overview</button>
+          <button type="button" data-tab="overview" class="${activeTab === 'overview' ? 'active' : ''}" aria-selected="${activeTab === 'overview'}">HS Brackets</button>
         </nav>
         <p class="recruit-feedback" id="recruit-feedback" role="status" aria-live="polite"></p>
         <section id="recruit-panel"></section>
@@ -187,6 +191,40 @@
     if (badge) badge.textContent = `${boardCount()} / ${BOARD_LIMIT}`;
     const pointsDetail=root.querySelector('.college-hero-meta');
     if(pointsDetail)pointsDetail.textContent=[collegeIdentity?.mascot,SimSite.seasonLabel(overview),number(overview.available_points)+' recruiting points available'].filter(Boolean).join(' · ');
+  }
+
+  // The server-side catalog marks packages purchased by the signed-in coach.
+  // Never use the public event schedule to decide which brackets a coach owns.
+  function renderOwnedPackages() {
+    if(resources.catalog.status!=='ready') return resourceMessage('catalog','Purchased HS brackets');
+    const owned=catalog.filter(item=>item.purchased===true && item.scouting_package_guid);
+    if(!owned.length)return empty('No purchased HS brackets were returned for this coach. If older purchases are missing, the database catalog may need a historical lookup fix.');
+    const seasonOf=item=>item.season_number ?? item.season_no ?? item.season ?? item.season_label ?? null;
+    const sorted=owned.slice().sort((a,b)=>Number(seasonOf(b)||0)-Number(seasonOf(a)||0)
+      || Number(b.week_number||0)-Number(a.week_number||0)
+      || String(a.package_name||'').localeCompare(String(b.package_name||'')));
+    return `<div class="recruit-package-list">${sorted.map(item=>{
+      const season=seasonOf(item);
+      const details=[season==null?'Season unavailable':(/^Season/i.test(String(season))?String(season):'Season '+season),
+        item.week_number==null?null:'Week '+item.week_number,
+        item.scope_level?label(item.scope_level):null,
+        item.weight_class_code || (item.legacy_full_event?'All weights':null)]
+        .filter(Boolean).join(' · ');
+      return `<article class="recruit-package-row"><div>
+        <span class="recruit-scope">${esc(details)}</span>
+        <strong>${esc(item.package_name||'High-school bracket')}</strong>
+        <small>Purchased · ${number(item.points_paid??item.point_cost)} points paid</small>
+        </div><div class="recruit-package-actions">
+        <button type="button" class="recruit-primary" data-view-package="${esc(item.scouting_package_guid)}">View Bracket</button>
+        </div></article>`;
+    }).join('')}</div>`;
+  }
+  function renderHsBrackets() {
+    return `<section class="panel recruit-section">
+      <div class="panel-heading"><div><p class="eyebrow">YOUR PURCHASES</p><h2>HS Brackets</h2>
+      <p class="recruit-heading-note">Purchased high-school tournament results, including earlier seasons when available from the scouting catalog.</p>
+      </div></div><div id="owned-package-list">${renderOwnedPackages()}</div></section>
+      <section class="panel recruit-results" id="scouting-results" hidden></section>`;
   }
 
   function renderOverview() {
@@ -345,7 +383,7 @@
   function renderPanel() {
     const panel = document.getElementById('recruit-panel');
     if (!panel) return;
-    panel.innerHTML = activeTab === 'search' ? renderSearch() : activeTab === 'overview' ? renderOverview() : renderBoard();
+    panel.innerHTML = activeTab === 'search' ? renderSearch() : activeTab === 'overview' ? renderHsBrackets() : renderBoard();
     if (activeTab === 'search') {
       document.getElementById('prospect-search-form')?.addEventListener('submit', runSearch);
       const form=document.getElementById('prospect-search-form');
@@ -353,6 +391,9 @@
       if(resources.catalog.status==='ready'){renderPackageControls();renderPackages();}
       if(openPackage && openPackageData)renderPackageResults(openPackageData,openPackage,false);
       void loadResource('catalog');void loadResource('pipeline');
+    } else if(activeTab==='overview') {
+      if(openPackage && openPackageData)renderPackageResults(openPackageData,openPackage,false);
+      void loadResource('catalog');
     } else if(activeTab==='board') {void loadResource('board');}
   }
   async function setTopProspect(weight, wrestlerGuid) {
